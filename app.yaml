@@ -1,0 +1,17 @@
+application: whotookmybook
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+- url: /stylesheets
+  static_dir: stylesheets
+
+- url: /suggest
+  static_dir: suggest
+
+- url: /test.*
+  script: gaeunit.py
+
+- url: /.*
+  script: mybooks.py  

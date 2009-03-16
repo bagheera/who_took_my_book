@@ -1,0 +1,56 @@
+<html>
+<head>
+    <title>who took my book</title>
+    <link type="text/css" rel="stylesheet" href="/stylesheets/pres.css"/>
+    <script type="text/javascript" src="/suggest/autosuggest_v2.1.3/js/bsn.AutoSuggest_2.1.3.js"
+            charset="utf-8"></script>
+    <link rel="stylesheet" href="/suggest/autosuggest_v2.1.3/css/autosuggest_inquisitor.css" type="text/css"/>
+</head>
+<body>
+<div id="page">
+    <div id="dataentry">
+        <p id="letterhead">
+        <strong>Who took my book?</strong><br>
+        <em>Never lose your book again</em></p>
+    <form action="/addBook" method="post">
+    <div id="quick">
+        <strong>Quick data entry</strong><br>
+        <label>Lookup amazon:</label>
+        <input type="text" id="suggestbox" value="" title="Type a word of author or title and pause for auto suggest"/>
+        <!--<input type="submit" value="Add Book"/>-->
+    </div>
+    <div id="manual">
+        <strong>Manual entry</strong><br>
+        <label>Title:</label><input type="text" name="book_title" id="book_title"/>
+        <label>Author:</label><input type="text" name="book_author" id="book_author"/>
+        <input type="hidden" name="book_asin" id="book_asin"/>
+        <input type="submit" value="Add Book"/>
+    </div>
+    </form>
+    </div>
+<div id="listing">
+
+    <h3>Hi {{ current_user.googleUser }}</h3>
+    {{ listings }}
+    <em>note: the actions lend, borrow, return are merely meant to track offline book transactions.</em>
+
+    <div><a href="{{ url }}">{{ url_linktext }}</a></div>
+</div>
+<script type="text/javascript">
+    var options = {
+        script:"/lookup_amz?",
+        varname:"fragment",
+        json:true,
+        shownoresults:false,
+        maxresults:6,
+        callback: function (obj) {
+            document.getElementById('book_title').value = obj.value;
+            document.getElementById('book_author').value = obj.info;
+            document.getElementById('book_asin').value = obj.id;
+        }
+    };
+    var as_json = new bsn.AutoSuggest('suggestbox', options);
+</script>
+</div>
+</body>
+</html>

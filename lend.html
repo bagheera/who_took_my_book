@@ -1,0 +1,21 @@
+<html>
+  <head>
+    <title>who took my book</title>
+    <link type="text/css" rel="stylesheet" href="/stylesheets/pres.css" />
+  </head>
+  <body>
+  <div id="page">
+  <div id="listing">
+    <H4>Lend {{book.summary}} to:</H4>
+    {% for user in members%}
+      <blockquote>
+        {{ user.display_name }}
+        ( {{ user.email }} )
+        <a href="/lendTo/{{ book.key }}/{{ user.key }}">mark as lent</a>
+      </blockquote>
+    {% endfor %}
+    <a href="{{ url }}">{{ url_linktext }}</a>
+    </div>
+    </div>
+  </body>
+</html>

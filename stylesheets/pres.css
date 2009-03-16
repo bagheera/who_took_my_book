@@ -1,0 +1,41 @@
+body {
+  font-family: Verdana, Helvetica, sans-serif;
+  background-color: silver;
+}
+
+#quick{
+    float: left;
+}
+
+#manual{
+    float: right;
+}
+#page{
+    margin: 1% 10% 3% 10%;
+}
+#dataentry{
+    padding: 0px  0px 50px 0px;
+}
+
+#listing{
+    background-color: white;
+    border-style: solid;
+    border-width: 2px;
+    padding: 10px;
+}
+#letterhead{
+    text-align: center;
+}
+br {
+	clear: left;
+}
+
+blockquote {
+    border-style: solid;
+    border-width: 1px;
+    padding: 5px;
+}
+
+.mine {
+    background-color: #FFFACD;
+}

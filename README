@@ -1,0 +1,19 @@
+Per book
+
+3 caches - borrower_of_bookid, owner_of_bookid, viewer_of_bookid
+value = listing string
+
+Per appuser
+
+2 caches
+
+books_owned_by_appUserId
+books_borrowed_by_appUserId
+
+value = csv of book ids
+
+============
+Status
+
+bug still pending - i see return link when anand has lent to irfan
+also my borrowed book listing should say borrowed from who?

@@ -11,12 +11,15 @@
 # make sure that only owner can delete, only owner/borrower can return etc
 # disallow adding the same book multiple times
 # allow users to enter name
+# about page
+# show_all, show_tech should be persistent user pref - not memcache 
 # Done
 # welcome email - badly
 # show only tech - using isbn - what abt existing books??
 # fix look and feel of lending page
 # Bug
-# I can see return for book lent by chaman to irfan
+# I can see return for book lent by chaman to irfan - fixed?
+# manual entry broken because of asin? - works ok as long as there is network
 
 import cgi
 import wsgiref.handlers
@@ -27,6 +30,7 @@ from google.appengine.ext.webapp import template
 from google.appengine.ext import webapp
 from google.appengine.api import urlfetch
 from google.appengine.api import mail
+from google.appengine.api import memcache
 from xml.dom import minidom
 from wtmb import *
 ###################################################################
@@ -112,7 +116,7 @@ class Lend(webapp.RequestHandler):
 ###################################################################    
 class Suggest(webapp.RequestHandler):
   def get(self, *args):
-    logging.debug("looking up amz")  
+    logging.info("looking up amz for: "+ self.request.get('fragment'))  
     result = urlfetch.fetch('http://webservices.amazon.com/onca/xml?Service=AWSECommerceService&SubscriptionId=1PKXRTEQQV19XXDW3ZG2&&Operation=ItemSearch&Keywords='+self.request.get('fragment')+'&SearchIndex=Books&ResponseGroup=Small')
     r = '{ results: ['
     list = []

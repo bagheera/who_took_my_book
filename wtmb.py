@@ -1,6 +1,5 @@
 from google.appengine.ext import db
 from google.appengine.api import users
-from google.appengine.api import memcache
 from google.appengine.api import mail
 
 import logging
@@ -69,7 +68,19 @@ class Book(db.Model):
     elif self.belongs_to_someone_else():
       links += (' <a href="/borrow/' + str(self.key()) + '">borrow</a>')
     return links
+
+  def transition_if_borrowable(self):
+    links = ''
+    if self.belongs_to_someone_else() and self.is_available():
+      links += (' <a href="/borrow/' + str(self.key()) + '">borrow</a>')
+    return links
     
+  def is_available(self):
+    return None == self.borrower
+
+  def is_lent(self):
+    return None != self.borrower
+
   def belongs_to_someone_else(self):
     return users.get_current_user() != self.owner.googleUser
     

@@ -6,20 +6,8 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from wtmb import *
 from bookactions import *
-###################################################################  
-# global stuff
-def post_process(f, after):
-    def g(self):
-        f(self)
-        after(self)
-    return g
+from bookcache import *
 
-def pre_process(f, before):
-    def g(self, *args):
-        before(self)
-        f(self, *args)
-    return g
-###################################################################  
 class BookListPage(webapp.RequestHandler):
   def get(self, *args):
     if self.request.path_info != '/mybooks':
@@ -89,97 +77,43 @@ class BookListing:
   start_block_quote = "<blockquote>"
   start_block_quote_mine = "<blockquote class=\"mine\">"
   end_block_quote = "</blockquote>"
-  line_break = "<br />"
   
   def books_owned_by(self, appUser):
-    k = self.bo_listing_key(appUser)
-    listing = memcache.get(k)
-    if not listing:
-      listing = self.start_block_quote
-      for book in appUser.books_owned:
-          listing += book.summary_loan()
-          listing += book.transitions()
-          listing += self.line_break
-      listing += self.end_block_quote
-      memcache.set(k, listing)
+    books_owned = CacheBookIdsOwned(str(appUser.key())).get()
+    listing = self.start_block_quote
+    for book_id in books_owned:
+        book_listing = CacheListingForViewer(str(book_id)).get()
+        listing += book_listing
+    listing += self.end_block_quote
     return listing
 
-  def technical(self, book):
-    return book.is_technical
-  
   def tech_books_owned_by(self, appUser):
-    k = self.bo_tech_listing_key(appUser)
-    listing = memcache.get(k)
-    if not listing:
-      listing = self.start_block_quote
-      for book in filter(self.technical, appUser.books_owned):
-          listing += book.summary_loan()
-          listing += book.transitions()
-          listing += self.line_break
-      listing += self.end_block_quote
-      memcache.set(k, listing)
+    books_owned = CacheTechBookIdsOwned(str(appUser.key())).get()
+    listing = self.start_block_quote
+    for book_id in books_owned:
+        book_listing = CacheListingForViewer(str(book_id)).get()
+        listing += book_listing
+    listing += self.end_block_quote
     return listing
   
   def books_owned_by_me(self, appUser):
-    k = self.bome_listing_key(appUser)
-    listing = memcache.get(k)
-    if not listing:
-      listing = self.start_block_quote_mine
-      for book in appUser.books_owned:
-          listing += book.summary_loan()
-          listing += book.transitions()
-          listing += self.line_break
-      listing += self.end_block_quote
-      memcache.set(k, listing)
+    books_owned = CacheBookIdsOwned(str(appUser.key())).get()
+    listing = self.start_block_quote
+    for book_id in books_owned:
+        book_listing = CacheListingForOwner(str(book_id)).get()
+        listing += book_listing
+    listing += self.end_block_quote
     return listing
 
   def books_borrowed_by(self, appUser):
-    k = self.bb_listing_key(appUser)
-    listing = memcache.get(k)
-    if not listing:
-      listing = self.start_block_quote_mine
-      for book in appUser.books_borrowed:
-          listing += book.summary_belong()
-          listing += book.transitions()
-          listing += self.line_break
-      listing += self.end_block_quote
-      memcache.set(k, listing)
+    books_owned = CacheBookIdsBorrowed(str(appUser.key())).get()
+    listing = self.start_block_quote
+    for book_id in books_owned:
+        book_listing = CacheListingForBorrower(str(book_id)).get()
+        listing += book_listing
+    listing += self.end_block_quote
     return listing
 
-  def bo_listing_key(self, appUser):
-    return 'listing_books_owned_by_' + str(appUser.key())
-
-  def bo_tech_listing_key(self, appUser):
-    return 'listing_tech_books_owned_by_' + str(appUser.key())
-
-  def bome_listing_key(self, appUser):
-    return 'listing_books_owned_by_me_' + str(appUser.key())
-
-  def bb_listing_key(self, appUser):
-    return 'listing_books_borrowed_by_' + str(appUser.key())
-      
-  def bo_listing_cache_reset(self, appUser):
-    memcache.delete(self.bo_listing_key(appUser))
-    memcache.delete(self.bo_tech_listing_key(appUser))
-
-  def bome_listing_cache_reset(self, appUser):
-    memcache.delete(self.bome_listing_key(appUser))
-
-  def bb_listing_cache_reset(self, appUser):
-    memcache.delete(self.bb_listing_key(appUser))
-    
-  def clear_cache(self, book):
-    logging.info("clear_owner_cache for %s", book.owner.display_name())  
-    self.bo_listing_cache_reset(book.owner)
-    self.bome_listing_cache_reset(book.owner)
-    # this won't clear borrow cache of abc when abc adds a book - which is correct
-    if book.borrower:
-      logging.info("clear_borrow_cache for %s", book.borrower.display_name())  
-      self.bb_listing_cache_reset(book.borrower)    
-
-Book.put = post_process(Book.put, BookListing().clear_cache)
-Book.delete = pre_process(Book.delete, BookListing().clear_cache)
-Book.change_borrower = pre_process(Book.change_borrower, BookListing().clear_cache)
 
 ###################################################################    
 def real_main():

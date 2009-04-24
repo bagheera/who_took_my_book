@@ -1,26 +1,3 @@
-#http://localhost:8080/_ah/admin/datastore
-
-# did memcache to cache query result - now trying caching template render o/p instead
-# GAE Unit!
-# message box - tricky with redirect - do away with redirects and use front controller?
-# lookup a book from db
-# request a book, set up reminders
-# notify current borrower when someone else borrows
-# mark - not for lending - so that it can't be borrowed
-# should lend link appear on lent books?
-# make sure that only owner can delete, only owner/borrower can return etc
-# disallow adding the same book multiple times
-# allow users to enter name
-# about page
-# show_all, show_tech should be persistent user pref - not memcache 
-# Done
-# welcome email - badly
-# show only tech - using isbn - what abt existing books??
-# fix look and feel of lending page
-# Bug
-# I can see return for book lent by chaman to irfan - fixed?
-# manual entry broken because of asin? - works ok as long as there is network
-
 import cgi
 import wsgiref.handlers
 import os

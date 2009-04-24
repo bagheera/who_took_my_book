@@ -7,6 +7,12 @@ handlers:
 - url: /stylesheets
   static_dir: stylesheets
 
+- url: /s
+  static_dir: s
+
+- url: /jslib
+  static_dir: jslib
+
 - url: /suggest
   static_dir: suggest
 

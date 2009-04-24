@@ -7,6 +7,7 @@ from google.appengine.ext.webapp import template
 from wtmb import *
 from bookactions import *
 from bookcache import *
+from full import *
 
 class BookListPage(webapp.RequestHandler):
   def get(self, *args):
@@ -119,13 +120,14 @@ class BookListing:
 def real_main():
   application = webapp.WSGIApplication(
                                        [(r'/lookup_amz(.*)', Suggest),
-                                        ('/mybooks', BookListPage),
+#                                        ('/mybooks', BookListPage),
                                         ('/addBook', AddToBookshelf),
                                         (r'/delete/(.*)', DeleteBook),
                                         (r'/borrow/(.*)', Borrow),
                                         (r'/return/(.*)', ReturnBook),
                                         (r'/lend/(.*)', Lend),
                                         (r'/lendTo/(.*)', LendTo),
+                                        ('/mybooksj', FullListing),
                                         (r'/show_all_books', ShowAll),
                                         (r'/show_tech_only', ShowTechOnly),
                                         (r'(/?)(.*)', BookListPage)],

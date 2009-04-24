@@ -35,7 +35,9 @@ blockquote {
     border-width: 1px;
     padding: 5px;
 }
-
+#about{
+  float: right;
+}
 .mine {
     background-color: #FFFACD;
 }

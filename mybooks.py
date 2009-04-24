@@ -128,6 +128,7 @@ def real_main():
                                         (r'/lend/(.*)', Lend),
                                         (r'/lendTo/(.*)', LendTo),
                                         ('/mybooksj', FullListing),
+                                        ('/asin-import', ImportASINs),
                                         (r'/show_all_books', ShowAll),
                                         (r'/show_tech_only', ShowTechOnly),
                                         (r'(/?)(.*)', BookListPage)],

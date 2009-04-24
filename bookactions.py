@@ -12,6 +12,32 @@ from xml.dom import minidom
 from wtmb import *
 ###################################################################
 WTMB_SENDER = "whotookmybook@gmail.com"
+class ImportASINs(webapp.RequestHandler):
+    def post(self):
+        if users.get_current_user():
+          appuser = AppUser.getAppUserFor(AppUser(), users.get_current_user())
+        asins = self.request.get("asins")
+        logging.info("asins= "+asins)
+        try:  
+            result = urlfetch.fetch('http://webservices.amazon.com/onca/xml?Service=AWSECommerceService&SubscriptionId=1PKXRTEQQV19XXDW3ZG2&&Operation=ItemLookup&IdType=ASIN&ItemId='+asins+'&ResponseGroup=ItemAttributes')
+            amz_ns = 'http://webservices.amazon.com/AWSECommerceService/2005-10-05'
+            if result.status_code == 200:
+                dom = minidom.parseString(result.content)
+                items = dom.getElementsByTagNameNS(amz_ns,'Item')
+                logging.info(str(items.length)+" items found")
+                for item in items:
+                    bk_title = item.getElementsByTagNameNS(amz_ns,'Title')[0].firstChild.data
+                    bk_author = item.getElementsByTagNameNS(amz_ns,'Author')[0].firstChild.data
+                    dewey = item.getElementsByTagNameNS(amz_ns,'DeweyDecimalNumber')[0].firstChild.data
+                    is_tech = dewey.startswith("004") or  dewey.startswith("005") 
+                    book = Book(title = bk_title, author = bk_author, owner = appuser, is_technical = is_tech)
+                    logging.info("adding "+book.summary())
+                    book.put()
+            else:
+                logging.info("amz lookup failed with code "+ result.status_code)
+        except:
+            raise
+        
 class AddToBookshelf(webapp.RequestHandler):
   def post(self):
     if users.get_current_user():

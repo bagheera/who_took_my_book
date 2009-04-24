@@ -20,4 +20,5 @@ handlers:
   script: gaeunit.py
 
 - url: /.*
-  script: mybooks.py  
+  script: mybooks.py
+  login: required

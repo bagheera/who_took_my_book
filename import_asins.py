@@ -6,11 +6,11 @@ import urllib2
 import cookielib
 import getpass
 
-print "Trying to authenticate with Google. Credentials not stored, only relayed."
+print "***Need to authenticate with Google. Credentials not stored, only relayed.***\n***Please make sure you have asins.csv in the current directory***"
 users_email_address = raw_input("Google/Gmail account id (e.g myemail@gmail.com): ")
 users_password      = getpass.getpass()
 
-target_authenticated_google_app_engine_uri = 'http://whotookmybook.appspot.com/asin-import'
+target_authenticated_google_app_engine_uri = 'http://whotookmybook.appspot.com/mybooks'
 my_app_name = "whotookmybook"
 
 # we use a cookie to authenticate with Google App Engine
@@ -32,8 +32,8 @@ authreq_data = urllib.urlencode({ "Email":   users_email_address,
 auth_req = urllib2.Request(auth_uri, data=authreq_data)
 auth_resp = urllib2.urlopen(auth_req)
 auth_resp_body = auth_resp.read()
-print "auth resp body is..."
-print auth_resp_body
+# print "auth resp body is..."
+# print auth_resp_body
 # auth response includes several fields - we're interested in
 #  the bit after Auth=
 auth_resp_dict = dict(x.split("=")
@@ -56,27 +56,18 @@ serv_args['continue'] = serv_uri
 serv_args['auth']     = authtoken
 
 full_serv_uri = "http://whotookmybook.appspot.com/_ah/login?%s" % (urllib.urlencode(serv_args))
-
-'''values = {'name' : 'Michael Foord',
-          'location' : 'Northampton',
-          'language' : 'Python' }
-
-data = urllib.urlencode(values)
-req = urllib2.Request(url, data)'''
-asin_file = open("asins.csv")
-asins = asin_file.readline()
-asin_file.close()
-print "importing asins:"
-print asins.strip()
-serv_req = urllib2.Request(full_serv_uri, asins.strip())
-serv_resp = urllib2.urlopen(serv_req)
-serv_resp_body = serv_resp.read()
-
-# serv_resp_body should contain the contents of the
-#  target_authenticated_google_app_engine_uri page - as we will have been
-#  redirected to that page automatically
-#
-# to prove this, I'm just gonna print it out
-print "final resp body is..."
-print serv_resp_body
-
+#just read it to move on. since can't redirect POST 
+urllib2.urlopen(full_serv_uri).read()
+try:
+  asin_file = open("asins.csv")
+  asins = asin_file.readline()
+  asin_file.close()
+  print "importing asins:"
+  post_body = "asins=" + asins.strip()
+  print post_body
+  serv_resp = urllib2.urlopen("http://whotookmybook.appspot.com/asin-import", data = post_body)
+  serv_resp_body = serv_resp.read()
+  print serv_resp_body
+except:
+  print "Error reading asins.csv"
+  raise

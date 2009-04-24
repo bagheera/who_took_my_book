@@ -17,24 +17,34 @@ class ImportASINs(webapp.RequestHandler):
         if users.get_current_user():
           appuser = AppUser.getAppUserFor(AppUser(), users.get_current_user())
         asins = self.request.get("asins")
-        logging.info("asins= "+asins)
+        messages = []
+        msg = "asins= "+asins
+        logging.info(msg)
+        messages.append(msg) #replace this with interception of log.info
         try:  
             result = urlfetch.fetch('http://webservices.amazon.com/onca/xml?Service=AWSECommerceService&SubscriptionId=1PKXRTEQQV19XXDW3ZG2&&Operation=ItemLookup&IdType=ASIN&ItemId='+asins+'&ResponseGroup=ItemAttributes')
             amz_ns = 'http://webservices.amazon.com/AWSECommerceService/2005-10-05'
             if result.status_code == 200:
                 dom = minidom.parseString(result.content)
                 items = dom.getElementsByTagNameNS(amz_ns,'Item')
-                logging.info(str(items.length)+" items found")
+                msg = str(items.length)+" items found"
+                logging.info(msg)
+                messages.append(msg)
                 for item in items:
                     bk_title = item.getElementsByTagNameNS(amz_ns,'Title')[0].firstChild.data
                     bk_author = item.getElementsByTagNameNS(amz_ns,'Author')[0].firstChild.data
                     dewey = item.getElementsByTagNameNS(amz_ns,'DeweyDecimalNumber')[0].firstChild.data
                     is_tech = dewey.startswith("004") or  dewey.startswith("005") 
                     book = Book(title = bk_title, author = bk_author, owner = appuser, is_technical = is_tech)
-                    logging.info("adding "+book.summary())
+                    msg = "adding "+book.summary()
+                    logging.info(msg)
+                    messages.append(msg)
                     book.put()
             else:
-                logging.info("amz lookup failed with code "+ result.status_code)
+                msg = "amz lookup failed with code "+ result.status_code
+                logging.info(msg)
+                messages.append(msg)
+            self.response.out.write('\n'.join(messages))
         except:
             raise
         

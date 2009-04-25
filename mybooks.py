@@ -152,4 +152,4 @@ def profile_main():
  logging.info(memcache.get_stats())
               
 if __name__ == "__main__":
-  profile_main()
+  real_main()

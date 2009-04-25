@@ -92,7 +92,12 @@ class Borrow(webapp.RequestHandler):
     if bookToLoan.belongs_to_someone_else():
       bookToLoan.change_borrower(AppUser.getAppUserFor(AppUser(), users.get_current_user()))
       bookToLoan.put()
-      mail.send_mail(WTMB_SENDER,[users.get_current_user().email(), bookToLoan.owner.email()], '[whotookmybook] '+bookToLoan.title, users.get_current_user().nickname() + "has borrowed this book from " + bookToLoan.owner.display_name())
+      mail.send_mail(
+                     sender = WTMB_SENDER, 
+                     to = [users.get_current_user().email(), bookToLoan.owner.email()],
+                     cc=WTMB_SENDER, 
+                     subject= '[whotookmybook] '+bookToLoan.title, 
+                     body = users.get_current_user().nickname() + "has borrowed this book from " + bookToLoan.owner.display_name())
     self.redirect('/mybooks')
 ###################################################################    
 class DeleteBook(webapp.RequestHandler):
@@ -106,7 +111,12 @@ class ReturnBook(webapp.RequestHandler):
     if rtnd_book.borrowed_by_me():
       rtnd_book.return_to_owner()
       rtnd_book.put()
-      mail.send_mail(WTMB_SENDER, [users.get_current_user().email(), rtnd_book.owner.email()], '[whotookmybook] '+rtnd_book.title, users.get_current_user().nickname()+" has returned this book to "+rtnd_book.owner.display_name())
+      mail.send_mail(
+                     sender = WTMB_SENDER, 
+                     to = [users.get_current_user().email(), rtnd_book.owner.email()],
+                     cc = WTMB_SENDER,
+                     subject = '[whotookmybook] '+rtnd_book.title, 
+                     body= users.get_current_user().nickname()+" has returned this book to "+rtnd_book.owner.display_name())
     self.redirect('/mybooks')
 ###################################################################    
 class LendTo(webapp.RequestHandler):
@@ -118,7 +128,12 @@ class LendTo(webapp.RequestHandler):
     if bookToLoan.belongs_to_me():
       bookToLoan.change_borrower(AppUser.get(db.Key(lendTo)))
       bookToLoan.put()
-      mail.send_mail(WTMB_SENDER, [users.get_current_user().email(), bookToLoan.borrower.email()], '[whotookmybook] '+bookToLoan.title, users.get_current_user().nickname() + " has lent this book to " + bookToLoan.borrower.display_name())
+      mail.send_mail(
+                     sender = WTMB_SENDER, 
+                     to = [users.get_current_user().email(), bookToLoan.borrower.email()], 
+                     cc = WTMB_SENDER,
+                     subject = '[whotookmybook] '+bookToLoan.title, 
+                     body = users.get_current_user().nickname() + " has lent this book to " + bookToLoan.borrower.display_name())
     self.redirect('/mybooks')
 ###################################################################    
 class Lend(webapp.RequestHandler):

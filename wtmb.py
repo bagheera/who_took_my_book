@@ -15,7 +15,12 @@ class AppUser(db.Model):
         appuser = AppUser(googleUser=users.get_current_user())
         appuser.put()
         #bad place for mail
-        mail.send_mail(WTMB_SENDER, users.get_current_user().email(), '[whotookmybook] Welcome', "Thanks for choosing to use http://whotookmybook.appspot.com")
+        mail.send_mail(
+                       sender = WTMB_SENDER, 
+                       to = [users.get_current_user().email()], 
+                       cc = WTMB_SENDER,
+                       subject = '[whotookmybook] Welcome', 
+                       body = "Thanks for choosing to use http://whotookmybook.appspot.com")
     return appuser
     
   def display_name(self):

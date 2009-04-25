@@ -13,6 +13,13 @@ from wtmb import *
 ###################################################################
 WTMB_SENDER = "whotookmybook@gmail.com"
 class ImportASINs(webapp.RequestHandler):
+    def breakup(self, my_list): 
+     sublist_length = 10    # desired length of the "inner" lists
+     list_of_lists = []
+     for i in xrange(0, len(my_list), sublist_length):
+         list_of_lists.append(my_list[i: i+sublist_length])
+     return list_of_lists
+    
     def post(self):
         if users.get_current_user():
           appuser = AppUser.getAppUserFor(AppUser(), users.get_current_user())
@@ -21,30 +28,37 @@ class ImportASINs(webapp.RequestHandler):
         msg = "asins= "+asins
         logging.info(msg)
         messages.append(msg) #replace this with interception of log.info
+        asin_lst = asins.split(',')
+        msg = str(len(asin_lst))+" ASINs"
+        logging.info(msg)
+        messages.append(msg)
+        chunks = self.breakup(asin_lst)
         try:  
-            result = urlfetch.fetch('http://webservices.amazon.com/onca/xml?Service=AWSECommerceService&SubscriptionId=1PKXRTEQQV19XXDW3ZG2&&Operation=ItemLookup&IdType=ASIN&ItemId='+asins+'&ResponseGroup=ItemAttributes')
+         for chunk in chunks:
+            result = urlfetch.fetch('http://webservices.amazon.com/onca/xml?Service=AWSECommerceService&SubscriptionId=1PKXRTEQQV19XXDW3ZG2&&Operation=ItemLookup&IdType=ASIN&ItemId='+','.join(chunk)+'&ResponseGroup=ItemAttributes')
             amz_ns = 'http://webservices.amazon.com/AWSECommerceService/2005-10-05'
             if result.status_code == 200:
                 dom = minidom.parseString(result.content)
                 items = dom.getElementsByTagNameNS(amz_ns,'Item')
-                msg = str(items.length)+" items found"
-                logging.info(msg)
-                messages.append(msg)
                 for item in items:
                     bk_title = item.getElementsByTagNameNS(amz_ns,'Title')[0].firstChild.data
                     bk_author = item.getElementsByTagNameNS(amz_ns,'Author')[0].firstChild.data
-                    dewey = item.getElementsByTagNameNS(amz_ns,'DeweyDecimalNumber')[0].firstChild.data
-                    is_tech = dewey.startswith("004") or  dewey.startswith("005") 
+                    is_tech = False
+                    try:
+                      dewey = item.getElementsByTagNameNS(amz_ns,'DeweyDecimalNumber')[0].firstChild.data
+                      is_tech = dewey.startswith("004") or  dewey.startswith("005")
+                    except:
+                      pass 
                     book = Book(title = bk_title, author = bk_author, owner = appuser, is_technical = is_tech)
-                    msg = "adding "+book.summary()
+                    book.put()
+                    msg = "added:  "+book.summary()
                     logging.info(msg)
                     messages.append(msg)
-                    book.put()
             else:
                 msg = "amz lookup failed with code "+ result.status_code
                 logging.info(msg)
                 messages.append(msg)
-            self.response.out.write('\n'.join(messages))
+         self.response.out.write('\n'.join(messages))
         except:
             raise
         

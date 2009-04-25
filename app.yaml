@@ -9,7 +9,8 @@ handlers:
 
 - url: /s
   static_dir: s
-
+  login: required
+  
 - url: /jslib
   static_dir: jslib
 

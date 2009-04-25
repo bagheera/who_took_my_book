@@ -35,8 +35,9 @@ blockquote {
     border-width: 1px;
     padding: 5px;
 }
-#about{
+#about,#import,#lo{
   float: right;
+  padding: 10px;
 }
 .mine {
     background-color: #FFFACD;

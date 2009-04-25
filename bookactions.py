@@ -55,9 +55,10 @@ class ImportASINs(webapp.RequestHandler):
                     logging.info(msg)
                     messages.append(msg)
             else:
-                msg = "amz lookup failed with code "+ result.status_code
+                msg = "Did you enter comma separated ASINs?\namz lookup failed with code "+ str(result.status_code)
                 logging.info(msg)
                 messages.append(msg)
+         self.response.headers['Content-Type'] = "text/plain"
          self.response.out.write('\n'.join(messages))
         except:
             raise

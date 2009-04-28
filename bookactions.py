@@ -2,6 +2,7 @@ import cgi
 import wsgiref.handlers
 import os
 import logging
+import urllib
 
 from google.appengine.ext.webapp import template
 from google.appengine.ext import webapp
@@ -12,80 +13,136 @@ from xml.dom import minidom
 from wtmb import *
 ###################################################################
 WTMB_SENDER = "whotookmybook@gmail.com"
+messages = []
+
+def report(msg):
+    logging.info(msg)
+    messages.append(msg)
+###################################################################
+class Amz:
+
+    def __init__(self):
+        self.amz_ns = 'http://webservices.amazon.com/AWSECommerceService/2005-10-05'
+        self.amz_url = 'http://webservices.amazon.com/onca/xml?Service=AWSECommerceService&SubscriptionId=1PKXRTEQQV19XXDW3ZG2&'
+
+    def __asin_of(self, item):
+        return item.getElementsByTagNameNS(self.amz_ns, 'ASIN')[0].firstChild.data
+
+
+    def __is_tech_dewey(self, dewey):
+        return dewey.startswith("004") or dewey.startswith("005")
+
+
+    def __dewey_decimal_of(self, node):
+        return node.getElementsByTagNameNS(self.amz_ns, 'DeweyDecimalNumber')[0].firstChild.data
+
+    def __author_of(self, node):
+        try:
+            return node.getElementsByTagNameNS(self.amz_ns, 'Author')[0].firstChild.data
+        except:
+            return None
+
+    def __title_of(self, node):
+        return node.getElementsByTagNameNS(self.amz_ns, 'Title')[0].firstChild.data
+
+    def get_items_from_result(self, result):
+        dom = minidom.parseString(result.content)
+        return dom.getElementsByTagNameNS(self.amz_ns, 'Item')
+
+    def get_attribs_for_items(self, asin_csv):
+        return urlfetch.fetch(self.amz_url + 'Operation=ItemLookup&IdType=ASIN&ItemId=' + asin_csv + '&ResponseGroup=ItemAttributes')
+
+    def get_books_for_asins(self, asin_lst):
+        books = []
+        asin_lst = map(unicode.strip, asin_lst)
+        result = self.get_attribs_for_items(','.join(asin_lst))
+        if result.status_code == 200:
+            items = self.get_items_from_result(result)
+            for item in items:
+                bk_title = self.__title_of(item)
+                bk_author = self.__author_of(item)
+                is_tech = False
+                try:
+                  dewey = self.__dewey_decimal_of(item)
+                  is_tech = self.__is_tech_dewey(dewey)
+                except:
+                  pass
+                book = Book(title = bk_title, author = bk_author, is_technical = is_tech)
+                books.append(book)
+        else:
+            report("Did you enter comma separated ASINs?\namz lookup failed with code " + str(result.status_code))
+        return books
+
+    def lookup_if_technical(self, asin):
+        logging.info("looking up amz for deway")
+        try:
+            result = self.get_attribs_for_items(asin)
+            if result.status_code == 200:
+                item = self.get_items_from_result(result)[0]
+                dewey = self.__dewey_decimal_of(item)
+                logging.info("dewey is " + dewey)
+                return self.__is_tech_dewey(dewey)
+            else:
+                return False;
+        except:
+            logging.error("exception in dewey lookup")
+            return False;
+
+    def search_by(self, searchString):
+        result = urlfetch.fetch(self.amz_url + 'Operation=ItemSearch&Keywords=' + urllib.quote(searchString) + '&SearchIndex=Books&ResponseGroup=Small')
+        list = []
+        if result.status_code == 200:
+            for item in self.get_items_from_result(result):
+               asin = self.__asin_of(item)
+               node = item.getElementsByTagNameNS(self.amz_ns, 'ItemAttributes')[0]
+               title = self.__title_of(node)
+               author = self.__author_of(node)
+               if not author:
+                   author = 'unknown'
+               list.append('{ id:"' + asin + '",value:"' + cgi.escape(title) + '",info:"' + cgi.escape(author) + '"}')
+        return list
+###################################################################
 class ImportASINs(webapp.RequestHandler):
-    def breakup(self, my_list): 
+    def breakup(self, my_list):
      sublist_length = 10    # desired length of the "inner" lists
      list_of_lists = []
      for i in xrange(0, len(my_list), sublist_length):
-         list_of_lists.append(my_list[i: i+sublist_length])
+         list_of_lists.append(my_list[i: i + sublist_length])
      return list_of_lists
-    
+
     def post(self):
         if users.get_current_user():
-          appuser = AppUser.getAppUserFor(AppUser(), users.get_current_user())
+            appuser = AppUser.getAppUserFor(AppUser(), users.get_current_user())
         asins = self.request.get("asins")
-        messages = []
-        msg = "asins= "+asins
-        logging.info(msg)
-        messages.append(msg) #replace this with interception of log.info
+        report("asins= " + asins)
         asin_lst = asins.split(',')
-        msg = str(len(asin_lst))+" ASINs"
-        logging.info(msg)
-        messages.append(msg)
+        report(str(len(asin_lst)) + " ASINs")
         chunks = self.breakup(asin_lst)
-        try:  
-         for chunk in chunks:
-            result = urlfetch.fetch('http://webservices.amazon.com/onca/xml?Service=AWSECommerceService&SubscriptionId=1PKXRTEQQV19XXDW3ZG2&&Operation=ItemLookup&IdType=ASIN&ItemId='+','.join(chunk)+'&ResponseGroup=ItemAttributes')
-            amz_ns = 'http://webservices.amazon.com/AWSECommerceService/2005-10-05'
-            if result.status_code == 200:
-                dom = minidom.parseString(result.content)
-                items = dom.getElementsByTagNameNS(amz_ns,'Item')
-                for item in items:
-                    bk_title = item.getElementsByTagNameNS(amz_ns,'Title')[0].firstChild.data
-                    bk_author = item.getElementsByTagNameNS(amz_ns,'Author')[0].firstChild.data
-                    is_tech = False
-                    try:
-                      dewey = item.getElementsByTagNameNS(amz_ns,'DeweyDecimalNumber')[0].firstChild.data
-                      is_tech = dewey.startswith("004") or  dewey.startswith("005")
-                    except:
-                      pass 
-                    book = Book(title = bk_title, author = bk_author, owner = appuser, is_technical = is_tech)
-                    book.put()
-                    msg = "added:  "+book.summary()
-                    logging.info(msg)
-                    messages.append(msg)
-            else:
-                msg = "Did you enter comma separated ASINs?\namz lookup failed with code "+ str(result.status_code)
-                logging.info(msg)
-                messages.append(msg)
-         self.response.headers['Content-Type'] = "text/plain"
-         self.response.out.write('\n'.join(messages))
+        try:
+            for chunk in chunks:
+               # can the fetch and persist be parallelised like in scala?
+               books = Amz().get_books_for_asins(chunk)
+               for book in books:
+                   book.owner = appuser
+                   book.put()
+                   report("added:  " + book.summary())
+            self.response.headers['Content-Type'] = "text/plain"
+            self.response.out.write('\n'.join(messages))
+            del messages[:]
         except:
             raise
-        
+###################################################################
 class AddToBookshelf(webapp.RequestHandler):
   def post(self):
     if users.get_current_user():
-      appuser = AppUser.getAppUserFor(AppUser(), users.get_current_user())
-    book = Book(title = self.request.get('book_title'), author = self.request.get('book_author'), owner = appuser, is_technical = self.dewey_4_or_5(self.request.get('book_asin')))
+        appuser = AppUser.getAppUserFor(AppUser(), users.get_current_user())
+    book = Book(
+                    title = self.request.get('book_title'),
+                    author = self.request.get('book_author'),
+                    owner = appuser,
+                    is_technical = Amz().lookup_if_technical(self.request.get('book_asin')))
     book.put()
     self.redirect('/mybooks')
-    
-  def dewey_4_or_5(self, asin):
-    logging.debug("looking up amz for deway")
-    try:  
-        result = urlfetch.fetch('http://webservices.amazon.com/onca/xml?Service=AWSECommerceService&SubscriptionId=1PKXRTEQQV19XXDW3ZG2&&Operation=ItemLookup&IdType=ASIN&ItemId='+asin+'&ResponseGroup=ItemAttributes')
-        amz_ns = 'http://webservices.amazon.com/AWSECommerceService/2005-10-05'
-        if result.status_code == 200:
-            dom = minidom.parseString(result.content)
-            item = dom.getElementsByTagNameNS(amz_ns,'Item')[0]
-            dewey = item.getElementsByTagNameNS(amz_ns,'DeweyDecimalNumber')[0].firstChild.data
-            logging.debug("dewey is "+ dewey)
-            return dewey.startswith("004") or  dewey.startswith("005") 
-        else:
-            return False;
-    except:
-        return False;
 ###################################################################
 class Borrow(webapp.RequestHandler):
   def get(self, bookid):
@@ -94,10 +151,10 @@ class Borrow(webapp.RequestHandler):
       bookToLoan.change_borrower(AppUser.getAppUserFor(AppUser(), users.get_current_user()))
       bookToLoan.put()
       mail.send_mail(
-                     sender = WTMB_SENDER, 
+                     sender = WTMB_SENDER,
                      to = [users.get_current_user().email(), bookToLoan.owner.email()],
-                     cc=WTMB_SENDER, 
-                     subject= '[whotookmybook] '+bookToLoan.title, 
+                     cc = WTMB_SENDER,
+                     subject = '[whotookmybook] ' + bookToLoan.title,
                      body = users.get_current_user().nickname() + "has borrowed this book from " + bookToLoan.owner.display_name())
     self.redirect('/mybooks')
 ###################################################################    
@@ -113,11 +170,11 @@ class ReturnBook(webapp.RequestHandler):
       rtnd_book.return_to_owner()
       rtnd_book.put()
       mail.send_mail(
-                     sender = WTMB_SENDER, 
+                     sender = WTMB_SENDER,
                      to = [users.get_current_user().email(), rtnd_book.owner.email()],
                      cc = WTMB_SENDER,
-                     subject = '[whotookmybook] '+rtnd_book.title, 
-                     body= users.get_current_user().nickname()+" has returned this book to "+rtnd_book.owner.display_name())
+                     subject = '[whotookmybook] ' + rtnd_book.title,
+                     body = users.get_current_user().nickname() + " has returned this book to " + rtnd_book.owner.display_name())
     self.redirect('/mybooks')
 ###################################################################    
 class LendTo(webapp.RequestHandler):
@@ -130,10 +187,10 @@ class LendTo(webapp.RequestHandler):
       bookToLoan.change_borrower(AppUser.get(db.Key(lendTo)))
       bookToLoan.put()
       mail.send_mail(
-                     sender = WTMB_SENDER, 
-                     to = [users.get_current_user().email(), bookToLoan.borrower.email()], 
+                     sender = WTMB_SENDER,
+                     to = [users.get_current_user().email(), bookToLoan.borrower.email()],
                      cc = WTMB_SENDER,
-                     subject = '[whotookmybook] '+bookToLoan.title, 
+                     subject = '[whotookmybook] ' + bookToLoan.title,
                      body = users.get_current_user().nickname() + " has lent this book to " + bookToLoan.borrower.display_name())
     self.redirect('/mybooks')
 ###################################################################    
@@ -159,31 +216,17 @@ class Lend(webapp.RequestHandler):
 ###################################################################    
 class Suggest(webapp.RequestHandler):
   def get(self, *args):
-    logging.info("looking up amz for: "+ self.request.get('fragment'))  
-    result = urlfetch.fetch('http://webservices.amazon.com/onca/xml?Service=AWSECommerceService&SubscriptionId=1PKXRTEQQV19XXDW3ZG2&&Operation=ItemSearch&Keywords='+self.request.get('fragment')+'&SearchIndex=Books&ResponseGroup=Small')
+    logging.info("looking up amz for: " + self.request.get('fragment'))
     r = '{ results: ['
-    list = []
-    amz_ns = 'http://webservices.amazon.com/AWSECommerceService/2005-10-05'
-    if result.status_code == 200:
-        dom = minidom.parseString(result.content)
-        for item in dom.getElementsByTagNameNS(amz_ns,'Item'):
-           asin = item.getElementsByTagNameNS(amz_ns,'ASIN')[0].firstChild.data
-           node = item.getElementsByTagNameNS(amz_ns,'ItemAttributes')[0]
-           title = node.getElementsByTagNameNS(amz_ns,'Title')[0].firstChild.data
-           authors = node.getElementsByTagNameNS(amz_ns,'Author')
-           author = 'unknown'
-           if authors.length > 0 :
-             author = authors[0].firstChild.data
-           list.append('{ id:"'+  asin +'",value:"'+ cgi.escape(title) +'",info:"' + cgi.escape(author)+'"}')
-
-        r += ','.join(list)
-        r += ']}'
-        self.response.headers['Content-Type'] = "text/javascript"
-        self.response.out.write(r)
+    list = Amz().search_by(self.request.get('fragment'))
+    r += ','.join(list)
+    r += ']}'
+    self.response.headers['Content-Type'] = "text/javascript"
+    self.response.out.write(r)
 ###################################################################    
 class ShowAll(webapp.RequestHandler):
   def get(self):
-    memcache.delete(self.tech_option_key_for(AppUser.getAppUserFor(AppUser(), users.get_current_user())))  
+    memcache.delete(self.tech_option_key_for(AppUser.getAppUserFor(AppUser(), users.get_current_user())))
     self.redirect('/mybooks')
 #  how to not dup this
   def tech_option_key_for(self, appuser):
@@ -191,7 +234,7 @@ class ShowAll(webapp.RequestHandler):
 ###################################################################    
 class ShowTechOnly(webapp.RequestHandler):
   def get(self):
-    memcache.set(self.tech_option_key_for(AppUser.getAppUserFor(AppUser(), users.get_current_user())), "yes")  
+    memcache.set(self.tech_option_key_for(AppUser.getAppUserFor(AppUser(), users.get_current_user())), "yes")
     self.redirect('/mybooks')
 #  how to not dup this
   def tech_option_key_for(self, appuser):

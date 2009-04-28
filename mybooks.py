@@ -15,11 +15,11 @@ class BookListPage(webapp.RequestHandler):
        self.redirect('/mybooks')
     user = users.get_current_user()
     if user:
-      logging.debug('creating logout url')
+      logging.info('creating logout url for ' + user.nickname())
       url = users.create_logout_url("/mybooks")
       logging.debug(url)
       url_linktext = 'Logout'
-      current_appuser = AppUser.getAppUserFor(AppUser(), user)
+      current_appuser = AppUser.getAppUserFor(user)
       others = current_appuser.others()
       listings = BookListing().listings_for(current_appuser, others, BookListing.show_tech_only(BookListing(), current_appuser))
       template_values = {
@@ -35,7 +35,7 @@ class BookListPage(webapp.RequestHandler):
     else:
       url = users.create_login_url(self.request.uri)
       url_linktext = 'Login'
-      self.redirect(users.create_login_url(self.request.uri))      
+      self.redirect(users.create_login_url(self.request.uri))
 ###################################################################
 # putting this on hold  
 #class NickName:
@@ -51,7 +51,7 @@ class BookListing:
         return '<a href="/show_all_books">See all books</a>'
     else:
         return '<a href="/show_tech_only">See tech books only </a>(experimental feature)'
-        
+
   def tech_option_key_for(self, appuser):
     return "tech_option_key_for_" + str(appuser.key())
 
@@ -78,7 +78,7 @@ class BookListing:
   start_block_quote = "<blockquote>"
   start_block_quote_mine = "<blockquote class=\"mine\">"
   end_block_quote = "</blockquote>"
-  
+
   def books_owned_by(self, appUser):
     books_owned = CacheBookIdsOwned(str(appUser.key())).get()
     listing = self.start_block_quote
@@ -96,7 +96,7 @@ class BookListing:
         listing += book_listing
     listing += self.end_block_quote
     return listing
-  
+
   def books_owned_by_me(self, appUser):
     books_owned = CacheBookIdsOwned(str(appUser.key())).get()
     listing = self.start_block_quote
@@ -120,7 +120,7 @@ class BookListing:
 def real_main():
   application = webapp.WSGIApplication(
                                        [(r'/lookup_amz(.*)', Suggest),
-#                                        ('/mybooks', BookListPage),
+                                        ('/mybooks', BookListPage),
                                         ('/addBook', AddToBookshelf),
                                         (r'/delete/(.*)', DeleteBook),
                                         (r'/borrow/(.*)', Borrow),
@@ -132,7 +132,7 @@ def real_main():
                                         (r'/show_all_books', ShowAll),
                                         (r'/show_tech_only', ShowTechOnly),
                                         (r'(/?)(.*)', BookListPage)],
-                                       debug=True)
+                                       debug = True)
   wsgiref.handlers.CGIHandler().run(application)
 
 def profile_main():
@@ -142,7 +142,7 @@ def profile_main():
  prof = cProfile.Profile()
  prof = prof.runctx("real_main()", globals(), locals())
  stream = StringIO.StringIO()
- stats = pstats.Stats(prof, stream=stream)
+ stats = pstats.Stats(prof, stream = stream)
  stats.sort_stats("time")  # Or cumulative
  stats.print_stats(80)  # 80 = how many to print
  # The rest is optional.
@@ -150,6 +150,6 @@ def profile_main():
  # stats.print_callers()
  #logging.debug("Profile data:\n%s", stream.getvalue())
  logging.info(memcache.get_stats())
-              
+
 if __name__ == "__main__":
   real_main()

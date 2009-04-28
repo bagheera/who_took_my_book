@@ -112,7 +112,7 @@ class ImportASINs(webapp.RequestHandler):
 
     def post(self):
         if users.get_current_user():
-            appuser = AppUser.getAppUserFor(AppUser(), users.get_current_user())
+            appuser = AppUser.getAppUserFor(users.get_current_user())
         asins = self.request.get("asins")
         report("asins= " + asins)
         asin_lst = asins.split(',')
@@ -135,7 +135,7 @@ class ImportASINs(webapp.RequestHandler):
 class AddToBookshelf(webapp.RequestHandler):
   def post(self):
     if users.get_current_user():
-        appuser = AppUser.getAppUserFor(AppUser(), users.get_current_user())
+        appuser = AppUser.getAppUserFor(users.get_current_user())
     book = Book(
                     title = self.request.get('book_title'),
                     author = self.request.get('book_author'),
@@ -148,7 +148,7 @@ class Borrow(webapp.RequestHandler):
   def get(self, bookid):
     bookToLoan = Book.get(bookid)
     if bookToLoan.belongs_to_someone_else():
-      bookToLoan.change_borrower(AppUser.getAppUserFor(AppUser(), users.get_current_user()))
+      bookToLoan.change_borrower(AppUser.getAppUserFor(users.get_current_user()))
       bookToLoan.put()
       mail.send_mail(
                      sender = WTMB_SENDER,
@@ -207,7 +207,7 @@ class Lend(webapp.RequestHandler):
       url_linktext = 'Login'
     template_values = {
       'book': Book.get(db.Key(what)),
-      'members': AppUser.others(AppUser()),
+      'members': AppUser.others(),
       'url': url,
       'url_linktext': url_linktext,
       }
@@ -226,7 +226,7 @@ class Suggest(webapp.RequestHandler):
 ###################################################################    
 class ShowAll(webapp.RequestHandler):
   def get(self):
-    memcache.delete(self.tech_option_key_for(AppUser.getAppUserFor(AppUser(), users.get_current_user())))
+    memcache.delete(self.tech_option_key_for(AppUser.getAppUserFor(users.get_current_user())))
     self.redirect('/mybooks')
 #  how to not dup this
   def tech_option_key_for(self, appuser):
@@ -234,7 +234,7 @@ class ShowAll(webapp.RequestHandler):
 ###################################################################    
 class ShowTechOnly(webapp.RequestHandler):
   def get(self):
-    memcache.set(self.tech_option_key_for(AppUser.getAppUserFor(AppUser(), users.get_current_user())), "yes")
+    memcache.set(self.tech_option_key_for(AppUser.getAppUserFor(users.get_current_user())), "yes")
     self.redirect('/mybooks')
 #  how to not dup this
   def tech_option_key_for(self, appuser):

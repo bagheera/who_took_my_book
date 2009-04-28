@@ -5,6 +5,95 @@
     <script type="text/javascript" src="/suggest/autosuggest_v2.1.3/js/bsn.AutoSuggest_2.1.3.js"
             charset="utf-8"></script>
     <link rel="stylesheet" href="/suggest/autosuggest_v2.1.3/css/autosuggest_inquisitor.css" type="text/css"/>
+    <script type="text/javascript" src="/jslib/jq.js"></script>
+    <script>
+    	var book_data = null;
+    	var show = "all";
+		function del_link(book){
+			return '<a href="/delete/' + book.key + '">delete</a>';
+		}
+		function lend_link(book){
+			return '<a href="/lend/' + book.key + '">lend</a>';
+		}
+		function return_link(book){
+			return '<a href="/return/' + book.key + '">return</a>';
+		}
+		function borrow_link(book){
+			return (book.borrowed_by == "None") ? 
+						'<a href="/borrow/' + book.key + '">borrow</a>' :
+						"";
+		}
+		function borrower(book) {
+			return ((book.borrowed_by == "None") ? "" : book.borrowed_by);
+		}
+		function not_to_be_shown(book){
+			if (show == "all") return false;
+			if (show == "tech" && book.is_tech) return false;
+			if (show == "non-tech" && (!book.is_tech)) return false;
+			return true; 
+		}
+		function othersbookrow(i){
+			if (not_to_be_shown(this)) return;
+			$("#othersbooks_table").append("<tr><td>" + this.owner +
+													"</td><td>" + this.title +
+													"</td><td>" + this.author +
+													"</td><td>"+borrower(this) +
+													"</td><td class='action'>"+borrow_link(this) +
+													"</td></tr>");
+	    }
+		function mybookrow(i){
+			if (not_to_be_shown(this)) return;
+			$("#mybooks_table").append(
+													"<tr><td class='action'>" + del_link(this) +
+													"</td><td>" + this.title +
+													"</td><td>" + this.author +
+													"</td><td>"+ borrower(this) +
+													"</td><td class='action'>" + lend_link(this) +
+													"</td></tr>");
+	    }
+		function borrowedBookrow(i){
+			if (not_to_be_shown(this)) return;
+			$("#borrowed_books_table").append(
+													"<tr><td>" + this.owner +
+													"</td><td>" + this.title +
+													"</td><td>"+ this.author +
+													"</td><td class='action'>" + return_link(this) +
+													"</td></tr>");
+	    }
+	    function renderBooks(data) {
+	    	book_data = data;
+	    	$("#borrowed_books_table").empty();
+	    	$("#borrowed_books_table").append('<tr><th class="userid">From</th><th class="book_title">Title</th><th class="author">Author</th><th class="action"></th><th class="action"></th></tr>');
+	    	$("#mybooks_table").empty();
+	    	$("#mybooks_table").append('<tr><th class="del_action"></th><th class="book_title">Title</th><th class="author">Author</th><th class="userid">Lent to</th><th class="action"></th></tr>');
+	    	$("#othersbooks_table").empty();
+	    	$("#othersbooks_table").append('<tr><th class="userid">Owner</th><th class="book_title">Title</th><th class="author">Author</th><th class="userid">Lent to</th><th class="action"></th></tr>');
+	    	
+		    $.each(data.mybooks, mybookrow);
+		    $.each(data.borrowedBooks, borrowedBookrow);
+		    $.each(data.others, othersbookrow);
+		}
+		
+		function show_tech_only(){
+			show = "tech";
+			renderBooks(book_data);
+		}
+		function show_non_tech_only(){
+			show = "non-tech";
+			renderBooks(book_data);
+		}
+		function show_all(){
+			show = "all";
+			renderBooks(book_data);
+		}
+		function dojson(){
+			$.getJSON("/mybooksj", renderBooks);
+			$("#tech_only").click(show_tech_only);        
+			$("#non_tech_only").click(show_non_tech_only);        
+			$("#show_all").click(show_all);        
+		}
+        $(document).ready(dojson);
+    </script>
 </head>
 <body>
 <div id="page">
@@ -13,29 +102,38 @@
         <span id="import"><a href="/s/import.html">Import</a></span>
         <span id="lo"><a href="{{ url }}">{{ url_linktext }}</a></span>
         <p id="letterhead">
-        <strong>Who took my book?</strong><br/>
-        <em>Never lose your book again</em></p>
-    <form action="/addBook" method="post">
-    <div id="quick">
-        <strong>Quick data entry</strong><br/>
-        <label>Lookup amazon:</label>
-        <input type="text" id="suggestbox" value="" title="Type a word of author or title and pause for auto suggest"/>
-        <!--<input type="submit" value="Add Book"/>-->
+	        <strong>Who took my book?</strong><br/>
+    	    <em>Never lose your book again</em></p>
+    		<form action="/addBook" method="post">
+			    <div id="quick">
+			        <strong>Quick data entry</strong><br/>
+			        <label>Lookup amazon:</label>
+			        <input type="text" id="suggestbox" value="" title="Type a word of author or title and pause for auto suggest"/>
+			        <!--<input type="submit" value="Add Book"/>-->
+			    </div>
+			    <div id="manual">
+			        <strong>Manual entry</strong><br/>
+			        <label>Title:</label><input type="text" name="book_title" id="book_title"/>
+			        <label>Author:</label><input type="text" name="book_author" id="book_author"/>
+			        <input type="hidden" name="book_asin" id="book_asin"/>
+			        <input type="submit" value="Add Book"/>
+			    </div>
+	    </form>
     </div>
-    <div id="manual">
-        <strong>Manual entry</strong><br/>
-        <label>Title:</label><input type="text" name="book_title" id="book_title"/>
-        <label>Author:</label><input type="text" name="book_author" id="book_author"/>
-        <input type="hidden" name="book_asin" id="book_asin"/>
-        <input type="submit" value="Add Book"/>
+    
+    <div id="bookshelf">
+    	<p id="show_options"><a id="tech_only" href="#">Show tech books only</a>  <a id="non_tech_only" href="#">Show non-tech books only</a>  <a id="show_all" href="#">Show all</a></p>
+	    <h3>Hi {{ current_user.googleUser }}</h3>
+    	<h3>Books you own</h3>
+    	<table id="mybooks_table"></table>
+    	<h3>Books you have borrowed</h3>
+    	<table id="borrowed_books_table"></table>
+    	<h3>Other Books</h3>
+    	<table id="othersbooks_table"></table>
     </div>
-    </form>
-    </div>
-<div id="listing">
-
-    <h3>Hi {{ current_user.googleUser }}</h3>
-    {{ listings }}
+    <p>
     <em>note: the actions lend, borrow, return are merely meant to track offline book transactions.</em>
+    </p>
 </div>
 <script type="text/javascript">
     var options = {
@@ -52,6 +150,5 @@
     };
     var as_json = new bsn.AutoSuggest('suggestbox', options);
 </script>
-</div>
 </body>
 </html>

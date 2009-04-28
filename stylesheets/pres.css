@@ -2,6 +2,19 @@ body {
   font-family: Verdana, Helvetica, sans-serif;
   background-color: silver;
 }
+table {
+    border-style: dotted;
+    border-width: 1px;  
+    border-collapse: collapse;
+    empty-cells: show;
+}
+
+td, th {
+    border-bottom: 1px #000000 dotted;
+    padding: 5px;
+    text-align: left;
+}
+
 
 #quick{
     float: left;
@@ -17,7 +30,7 @@ body {
     padding: 0px  0px 50px 0px;
 }
 
-#listing{
+#bookshelf{
     background-color: white;
     border-style: solid;
     border-width: 2px;
@@ -41,4 +54,26 @@ blockquote {
 }
 .mine {
     background-color: #FFFACD;
+}
+
+.userid {
+  width: 15%;
+}
+.book_title {
+  width: 50%;
+}
+.author {
+  width: 15%;
+}
+.action {
+   width: 10%;
+   text-align: center;
+}
+.del_action {
+   width: 15%;
+   text-align: center;
+}
+
+#show_options {
+  float: right;
 }

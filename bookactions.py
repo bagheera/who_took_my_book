@@ -8,7 +8,6 @@ from google.appengine.ext.webapp import template
 from google.appengine.ext import webapp
 from google.appengine.api import urlfetch
 from google.appengine.api import mail
-from google.appengine.api import memcache
 from xml.dom import minidom
 from wtmb import *
 ###################################################################
@@ -136,46 +135,57 @@ class AddToBookshelf(webapp.RequestHandler):
   def post(self):
     if users.get_current_user():
         appuser = AppUser.getAppUserFor(users.get_current_user())
-    book = Book(
-                    title = self.request.get('book_title'),
-                    author = self.request.get('book_author'),
-                    owner = appuser,
-                    is_technical = Amz().lookup_if_technical(self.request.get('book_asin')))
-    book.put()
-    self.redirect('/mybooks')
+        book = Book(
+                        title = self.request.get('book_title'),
+                        author = self.request.get('book_author'),
+                        owner = appuser,
+                        is_technical = Amz().lookup_if_technical(self.request.get('book_asin')))
+        book.put()
+        self.redirect('/mybooks')
+    else:
+        self.error(401) #need to include www-auth??
+
 ###################################################################
 class Borrow(webapp.RequestHandler):
-  def get(self, bookid):
-    bookToLoan = Book.get(bookid)
-    if bookToLoan.belongs_to_someone_else():
-      bookToLoan.change_borrower(AppUser.getAppUserFor(users.get_current_user()))
-      bookToLoan.put()
-      mail.send_mail(
+    def get(self, bookid):
+        bookToLoan = Book.get(bookid)
+        try:
+            bookToLoan.borrow()
+            mail.send_mail(
                      sender = WTMB_SENDER,
                      to = [users.get_current_user().email(), bookToLoan.owner.email()],
                      cc = WTMB_SENDER,
                      subject = '[whotookmybook] ' + bookToLoan.title,
                      body = users.get_current_user().nickname() + "has borrowed this book from " + bookToLoan.owner.display_name())
-    self.redirect('/mybooks')
+            self.redirect('/mybooks')
+        except IllegalStateTransition:
+            self.error(403)
+
 ###################################################################    
 class DeleteBook(webapp.RequestHandler):
   def get(self, bookid):
-    Book.get(bookid).obliterate()
-    self.redirect('/mybooks')
+    try:
+        Book.get(bookid).obliterate()
+        self.redirect('/mybooks')
+    except IllegalStateTransition:
+        self.error(403)
+
 ###################################################################    
 class ReturnBook(webapp.RequestHandler):
   def get(self, bookid):
     rtnd_book = Book.get(bookid)
-    if rtnd_book.borrowed_by_me():
-      rtnd_book.return_to_owner()
-      rtnd_book.put()
-      mail.send_mail(
+    try:
+        rtnd_book.return_to_owner()
+        mail.send_mail(
                      sender = WTMB_SENDER,
                      to = [users.get_current_user().email(), rtnd_book.owner.email()],
                      cc = WTMB_SENDER,
                      subject = '[whotookmybook] ' + rtnd_book.title,
                      body = users.get_current_user().nickname() + " has returned this book to " + rtnd_book.owner.display_name())
-    self.redirect('/mybooks')
+        self.redirect('/mybooks')
+    except IllegalStateTransition:
+        self.error(403)
+
 ###################################################################    
 class LendTo(webapp.RequestHandler):
   def get(self, what_and_who):
@@ -183,16 +193,18 @@ class LendTo(webapp.RequestHandler):
     bookid = parts[len(parts) - 2]
     lendTo = parts[len(parts) - 1]
     bookToLoan = Book.get(bookid)
-    if bookToLoan.belongs_to_me():
-      bookToLoan.change_borrower(AppUser.get(db.Key(lendTo)))
-      bookToLoan.put()
-      mail.send_mail(
+    try:
+        bookToLoan.lend_to(AppUser.get(db.Key(lendTo)))
+        mail.send_mail(
                      sender = WTMB_SENDER,
                      to = [users.get_current_user().email(), bookToLoan.borrower.email()],
                      cc = WTMB_SENDER,
                      subject = '[whotookmybook] ' + bookToLoan.title,
                      body = users.get_current_user().nickname() + " has lent this book to " + bookToLoan.borrower.display_name())
-    self.redirect('/mybooks')
+        self.redirect('/mybooks')
+    except IllegalStateTransition:
+        self.error(403)
+
 ###################################################################    
 class Lend(webapp.RequestHandler):
   def get(self, what):
@@ -213,6 +225,7 @@ class Lend(webapp.RequestHandler):
       }
     path = os.path.join(os.path.dirname(__file__), 'lend.html')
     self.response.out.write(template.render(path, template_values))
+
 ###################################################################    
 class Suggest(webapp.RequestHandler):
   def get(self, *args):
@@ -223,19 +236,4 @@ class Suggest(webapp.RequestHandler):
     r += ']}'
     self.response.headers['Content-Type'] = "text/javascript"
     self.response.out.write(r)
-###################################################################    
-class ShowAll(webapp.RequestHandler):
-  def get(self):
-    memcache.delete(self.tech_option_key_for(AppUser.getAppUserFor(users.get_current_user())))
-    self.redirect('/mybooks')
-#  how to not dup this
-  def tech_option_key_for(self, appuser):
-        return "tech_option_key_for_" + str(appuser.key())
-###################################################################    
-class ShowTechOnly(webapp.RequestHandler):
-  def get(self):
-    memcache.set(self.tech_option_key_for(AppUser.getAppUserFor(users.get_current_user())), "yes")
-    self.redirect('/mybooks')
-#  how to not dup this
-  def tech_option_key_for(self, appuser):
-        return "tech_option_key_for_" + str(appuser.key())
+###################################################################

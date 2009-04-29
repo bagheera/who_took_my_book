@@ -63,15 +63,27 @@
 	    function renderBooks(data) {
 	    	book_data = data;
 	    	$("#borrowed_books_table").empty();
-	    	$("#borrowed_books_table").append('<tr><th class="userid">From</th><th class="book_title">Title</th><th class="author">Author</th><th class="action"></th><th class="action"></th></tr>');
 	    	$("#mybooks_table").empty();
-	    	$("#mybooks_table").append('<tr><th class="del_action"></th><th class="book_title">Title</th><th class="author">Author</th><th class="userid">Lent to</th><th class="action"></th></tr>');
 	    	$("#othersbooks_table").empty();
-	    	$("#othersbooks_table").append('<tr><th class="userid">Owner</th><th class="book_title">Title</th><th class="author">Author</th><th class="userid">Lent to</th><th class="action"></th></tr>');
 	    	
-		    $.each(data.mybooks, mybookrow);
-		    $.each(data.borrowedBooks, borrowedBookrow);
-		    $.each(data.others, othersbookrow);
+		    if (data.mybooks){
+		    	$("#mybooks_table").append('<tr><th class="del_action"></th><th class="book_title">Title</th><th class="author">Author</th><th class="userid">Lent to</th><th class="action"></th></tr>');
+		    	$.each(data.mybooks, mybookrow);
+		    }else{
+		    	$("#mybooks_table").append('<tr><td>Nothing yet. Use the lookup box above to start adding to your collection.</td></tr>');
+		    }
+		    if (data.borrowedBooks){
+		    	$("#borrowed_books_table").append('<tr><th class="userid">From</th><th class="book_title">Title</th><th class="author">Author</th><th class="action"></th><th class="action"></th></tr>');
+		    	$.each(data.borrowedBooks, borrowedBookrow);
+		    }else{
+		    	$("#borrowed_books_table").append('<tr><td>Nothing yet. Don&apos;t you want to read any of the books below?</td></tr>');
+		    }
+		    if (data.others.length > 0) {
+		    	$("#othersbooks_table").append('<tr><th class="userid">Owner</th><th class="book_title">Title</th><th class="author">Author</th><th class="userid">Lent to</th><th class="action"></th></tr>');
+		    	$.each(data.others, othersbookrow);
+		    }else{
+		    	$("#othersbooks_table").append('<tr><td>Nothing here? That can&apos;t be true!</td></tr>');
+		    }
 		}
 		
 		function show_tech_only(){

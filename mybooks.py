@@ -19,13 +19,11 @@ class BookListPage(webapp.RequestHandler):
       url = users.create_logout_url("/mybooks")
       logging.debug(url)
       url_linktext = 'Logout'
-      current_appuser = AppUser.getAppUserFor(user)
+      current_appuser = AppUser.getAppUserFor(user) #registers new user
       others = current_appuser.others()
-      listings = BookListing().listings_for(current_appuser, others, BookListing.show_tech_only(BookListing(), current_appuser))
       template_values = {
         'others': others,
         'current_user': current_appuser,
-        "listings": listings,
         'url': url,
         'url_linktext': url_linktext
 #        'nickname': NickName().wtmb_name_for(current_appuser)
@@ -45,78 +43,7 @@ class BookListPage(webapp.RequestHandler):
 #        else:
 #            return some_user.display_name()
 ###################################################################  
-class BookListing:
-  def tech_option(self, appuser):
-    if self.show_tech_only(appuser):
-        return '<a href="/show_all_books">See all books</a>'
-    else:
-        return '<a href="/show_tech_only">See tech books only </a>(experimental feature)'
 
-  def tech_option_key_for(self, appuser):
-    return "tech_option_key_for_" + str(appuser.key())
-
-  def show_tech_only(self, appuser):
-    return memcache.get(self.tech_option_key_for(appuser)) == "yes"
-
-  def listings_for(self, me, others, show_tech_only):
-      listing = "<h4>Books you own</h4>"
-      listing += self.books_owned_by_me(me)
-      listing += "<h4>Books you have borrowed</h4>"
-      listing += self.books_borrowed_by(me)
-      listing += "<h3>Others' Books</h3>"
-      listing += self.tech_option(me)
-      if show_tech_only:
-          for user in others:
-            listing += "<h4>" + user.googleUser.nickname() + " owns:</h4>"
-            listing += self.tech_books_owned_by(user)
-      else:
-          for user in others:
-            listing += "<h4>" + user.googleUser.nickname() + " owns:</h4>"
-            listing += self.books_owned_by(user)
-      return listing
-
-  start_block_quote = "<blockquote>"
-  start_block_quote_mine = "<blockquote class=\"mine\">"
-  end_block_quote = "</blockquote>"
-
-  def books_owned_by(self, appUser):
-    books_owned = CacheBookIdsOwned(str(appUser.key())).get()
-    listing = self.start_block_quote
-    for book_id in books_owned:
-        book_listing = CacheListingForViewer(str(book_id)).get()
-        listing += book_listing
-    listing += self.end_block_quote
-    return listing
-
-  def tech_books_owned_by(self, appUser):
-    books_owned = CacheTechBookIdsOwned(str(appUser.key())).get()
-    listing = self.start_block_quote
-    for book_id in books_owned:
-        book_listing = CacheListingForViewer(str(book_id)).get()
-        listing += book_listing
-    listing += self.end_block_quote
-    return listing
-
-  def books_owned_by_me(self, appUser):
-    books_owned = CacheBookIdsOwned(str(appUser.key())).get()
-    listing = self.start_block_quote
-    for book_id in books_owned:
-        book_listing = CacheListingForOwner(str(book_id)).get()
-        listing += book_listing
-    listing += self.end_block_quote
-    return listing
-
-  def books_borrowed_by(self, appUser):
-    books_owned = CacheBookIdsBorrowed(str(appUser.key())).get()
-    listing = self.start_block_quote
-    for book_id in books_owned:
-        book_listing = CacheListingForBorrower(str(book_id)).get()
-        listing += book_listing
-    listing += self.end_block_quote
-    return listing
-
-
-###################################################################    
 def real_main():
   application = webapp.WSGIApplication(
                                        [(r'/lookup_amz(.*)', Suggest),
@@ -129,8 +56,6 @@ def real_main():
                                         (r'/lendTo/(.*)', LendTo),
                                         ('/mybooksj', FullListing),
                                         ('/asin-import', ImportASINs),
-                                        (r'/show_all_books', ShowAll),
-                                        (r'/show_tech_only', ShowTechOnly),
                                         (r'(/?)(.*)', BookListPage)],
                                        debug = True)
   wsgiref.handlers.CGIHandler().run(application)

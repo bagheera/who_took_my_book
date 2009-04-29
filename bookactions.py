@@ -73,7 +73,7 @@ class Amz:
         return books
 
     def lookup_if_technical(self, asin):
-        logging.info("looking up amz for deway")
+        logging.info("deway lookup")
         try:
             result = self.get_attribs_for_items(asin)
             if result.status_code == 200:
@@ -123,7 +123,7 @@ class ImportASINs(webapp.RequestHandler):
                books = Amz().get_books_for_asins(chunk)
                for book in books:
                    book.owner = appuser
-                   book.put()
+                   book.create()
                    report("added:  " + book.summary())
             self.response.headers['Content-Type'] = "text/plain"
             self.response.out.write('\n'.join(messages))
@@ -139,8 +139,7 @@ class AddToBookshelf(webapp.RequestHandler):
                         title = self.request.get('book_title'),
                         author = self.request.get('book_author'),
                         owner = appuser,
-                        is_technical = Amz().lookup_if_technical(self.request.get('book_asin')))
-        book.put()
+                        is_technical = Amz().lookup_if_technical(self.request.get('book_asin'))).create()
         self.redirect('/mybooks')
     else:
         self.error(401) #need to include www-auth??

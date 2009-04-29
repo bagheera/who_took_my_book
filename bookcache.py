@@ -106,3 +106,4 @@ Book.return_to_owner = pre_process(Book.return_to_owner, before_change)
 Book.return_to_owner = post_process(Book.return_to_owner, after_change)
 
 Book.obliterate = pre_process(Book.obliterate, before_delete)
+Book.create = post_process(Book.create, after_change)

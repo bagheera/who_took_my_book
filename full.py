@@ -20,10 +20,12 @@ class FullListing(webapp.RequestHandler):
             self.response.out.write(",".join(books))
             self.response.out.write(']')
         self.response.out.write(', others: [') if exist else self.response.out.write('others: [')
+        others_books = []
         for user in AppUser.others():
             books = self.books_owned_by(user)
             if not len(books) == 0:
-                self.response.out.write(",".join(books))
+                others_books.extend(books)
+        self.response.out.write(",".join(others_books))
         self.response.out.write(']}')
 
     def books_owned_by(self, appUser):

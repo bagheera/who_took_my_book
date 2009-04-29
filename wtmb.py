@@ -99,6 +99,9 @@ class Book(db.Model):
     def __change_borrower(self, new_borrower):
         self.borrower = new_borrower
 
+    def create(self):
+        self.put()
+
     def return_to_owner(self):
         if self.borrowed_by_me():
             self.__change_borrower(None)

@@ -17,6 +17,10 @@ handlers:
 - url: /suggest
   static_dir: suggest
 
+- url: /cc
+  script: cc.py
+  login: admin
+  
 - url: /test.*
   script: gaeunit.py
 

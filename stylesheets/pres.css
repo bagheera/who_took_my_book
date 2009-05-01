@@ -56,22 +56,20 @@ blockquote {
     background-color: #FFFACD;
 }
 
-.userid {
+.colone {
   width: 15%;
 }
-.book_title {
-  width: 50%;
+.coltwo {
+  width: 60%;
 }
-.author {
-  width: 15%;
-}
-.action {
-   width: 10%;
-   text-align: center;
-}
-.del_action {
+.colthree {
    width: 15%;
-   text-align: center;
+}
+.colfour {
+   width: 10%;
+}
+.action{
+   text-align: right;
 }
 
 #show_options {

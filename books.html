@@ -18,13 +18,16 @@
 		function return_link(book){
 			return '<a href="/return/' + book.key + '">return</a>';
 		}
+		function available(book){
+			return (book.borrowed_by == "None");
+		}
 		function borrow_link(book){
-			return (book.borrowed_by == "None") ? 
+			return available(book) ? 
 						'<a href="/borrow/' + book.key + '">borrow</a>' :
 						"";
 		}
 		function borrower(book) {
-			return ((book.borrowed_by == "None") ? "" : book.borrowed_by);
+			return (available(book) ? "" : book.borrowed_by);
 		}
 		function not_to_be_shown(book){
 			if (show == "all") return false;
@@ -36,7 +39,7 @@
 			if (not_to_be_shown(this)) return;
 			$("#othersbooks_table").append("<tr><td>" + this.owner +
 													"</td><td>" + this.title +
-													"</td><td>" + this.author +
+													" by " + this.author +
 													"</td><td>"+borrower(this) +
 													"</td><td class='action'>"+borrow_link(this) +
 													"</td></tr>");
@@ -44,9 +47,9 @@
 		function mybookrow(i){
 			if (not_to_be_shown(this)) return;
 			$("#mybooks_table").append(
-													"<tr><td class='action'>" + del_link(this) +
+													"<tr><td class>" + del_link(this) +
 													"</td><td>" + this.title +
-													"</td><td>" + this.author +
+													" by " + this.author +
 													"</td><td>"+ borrower(this) +
 													"</td><td class='action'>" + lend_link(this) +
 													"</td></tr>");
@@ -56,34 +59,64 @@
 			$("#borrowed_books_table").append(
 													"<tr><td>" + this.owner +
 													"</td><td>" + this.title +
-													"</td><td>"+ this.author +
-													"</td><td class='action'>" + return_link(this) +
+													" by "+ this.author +
+													"</td><td></td><td class='action'>" + return_link(this) +
 													"</td></tr>");
+	    }
+	    function showgif(){
+	    		
+	    		//script from: http://www.sitepoint.com/forums/showthread.php?t=581377
+	    		//loading.gif from http://www.ajaxload.info/
+	    		
+			     $('<div id="overlay"/>').css({
+			        position: 'fixed',
+			        top: 0,
+			        left: 0,
+			        width: '100%',
+			        height: $(window).height() + 'px',
+			        background: 'white url(/s/loading.gif) no-repeat center'
+				    }).appendTo('body');
+	    }
+	    
+	    function lent_count(list){
+     		count = 0;
+	    	if (list){
+	    		$.each(list,
+	    			function(i){
+	    				if (!available(this)) count ++;
+	    			}
+	    			);
+	    	}
+    		return count;
 	    }
 	    function renderBooks(data) {
 	    	book_data = data;
 	    	$("#borrowed_books_table").empty();
 	    	$("#mybooks_table").empty();
 	    	$("#othersbooks_table").empty();
-	    	
+	    	$("#book_count").empty();
+	    	own_count = data.mybooks ? data.mybooks.length : 0
+	    	borrow_count = data.borrowedBooks ? data.borrowedBooks.length : 0
+	    	$("#book_count").append("Overall summary of your books: " + own_count + " owned, " + lent_count(data.mybooks) + " lent, "+ borrow_count+ " borrowed.");
 		    if (data.mybooks){
-		    	$("#mybooks_table").append('<tr><th class="del_action"></th><th class="book_title">Title</th><th class="author">Author</th><th class="userid">Lent to</th><th class="action"></th></tr>');
+		    	$("#mybooks_table").append('<tr><th class="colone"></th><th class="coltwo">Book</th><th class="colthree">Lent to</th><th class="colfour"></th></tr>');
 		    	$.each(data.mybooks, mybookrow);
 		    }else{
 		    	$("#mybooks_table").append('<tr><td>Nothing yet. Use the lookup box above to start adding to your collection.</td></tr>');
 		    }
 		    if (data.borrowedBooks){
-		    	$("#borrowed_books_table").append('<tr><th class="userid">From</th><th class="book_title">Title</th><th class="author">Author</th><th class="action"></th><th class="action"></th></tr>');
+		    	$("#borrowed_books_table").append('<tr><th class="colone">From</th><th class="coltwo">Book</th><th class="colthree"></th><th class="colfour"></th></tr>');
 		    	$.each(data.borrowedBooks, borrowedBookrow);
 		    }else{
 		    	$("#borrowed_books_table").append('<tr><td>Nothing yet. Don&apos;t you want to read any of the books below?</td></tr>');
 		    }
 		    if (data.others.length > 0) {
-		    	$("#othersbooks_table").append('<tr><th class="userid">Owner</th><th class="book_title">Title</th><th class="author">Author</th><th class="userid">Lent to</th><th class="action"></th></tr>');
+		    	$("#othersbooks_table").append('<tr><th class="colone">Owner</th><th class="coltwo">Book</th><th class="colthree">Lent to</th><th class="colfour"></th></tr>');
 		    	$.each(data.others, othersbookrow);
 		    }else{
 		    	$("#othersbooks_table").append('<tr><td>Nothing here? That can&apos;t be true!</td></tr>');
 		    }
+		    $('#overlay').hide();
 		}
 		
 		function show_tech_only(){
@@ -99,6 +132,7 @@
 			renderBooks(book_data);
 		}
 		function dojson(){
+	    	showgif();
 			$.getJSON("/mybooksj", renderBooks);
 			$("#tech_only").click(show_tech_only);        
 			$("#non_tech_only").click(show_non_tech_only);        
@@ -136,6 +170,7 @@
     <div id="bookshelf">
     	<p id="show_options"><a id="tech_only" href="#">Show tech books only</a>  <a id="non_tech_only" href="#">Show non-tech books only</a>  <a id="show_all" href="#">Show all</a></p>
 	    <h3>Hi {{ current_user.googleUser }}</h3>
+	    <p id="book_count"></p>
     	<h3>Books you own</h3>
     	<table id="mybooks_table"></table>
     	<h3>Books you have borrowed</h3>

@@ -101,6 +101,7 @@ class Book(db.Model):
 
     def create(self):
         self.put()
+        return self
 
     def return_to_owner(self):
         if self.borrowed_by_me():

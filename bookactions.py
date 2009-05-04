@@ -10,8 +10,10 @@ from google.appengine.api import urlfetch
 from google.appengine.api import mail
 from xml.dom import minidom
 from wtmb import *
+
 ###################################################################
 WTMB_SENDER = "whotookmybook@gmail.com"
+WTMB_LINK = '\nGo to <a href="http://whotookmybook.appspot.com/mybooks">who took my book</a>'
 messages = []
 
 def report(msg):
@@ -116,11 +118,13 @@ class ImportASINs(webapp.RequestHandler):
         report("asins= " + asins)
         asin_lst = asins.split(',')
         report(str(len(asin_lst)) + " ASINs")
-        chunks = self.breakup(asin_lst)
         try:
+            chunks = self.breakup(asin_lst)
             for chunk in chunks:
                # can the fetch and persist be parallelised like in scala?
                books = Amz().get_books_for_asins(chunk)
+               if len(books) == 0:
+                   report("Amazon returned no results for these ASINs")
                for book in books:
                    book.owner = appuser
                    book.create()
@@ -133,16 +137,21 @@ class ImportASINs(webapp.RequestHandler):
 ###################################################################
 class AddToBookshelf(webapp.RequestHandler):
   def post(self):
-    if users.get_current_user():
-        appuser = AppUser.getAppUserFor(users.get_current_user())
-        book = Book(
-                        title = self.request.get('book_title'),
-                        author = self.request.get('book_author'),
-                        owner = appuser,
-                        is_technical = Amz().lookup_if_technical(self.request.get('book_asin'))).create()
-        self.redirect('/mybooks')
-    else:
-        self.error(401) #need to include www-auth??
+    try:
+        if users.get_current_user():
+            appuser = AppUser.getAppUserFor(users.get_current_user())
+            book = Book(
+                            title = self.request.get('book_title'),
+                            author = self.request.get('book_author'),
+                            owner = appuser,
+                            is_technical = Amz().lookup_if_technical(self.request.get('book_asin')))
+            book.create() # doesn't work if create is chained to constr above!
+            self.response.headers['content-type'] = "application/json"
+            self.response.out.write(book.to_json())
+        else:
+            self.error(401) #need to include www-auth??
+    except:
+        raise
 
 ###################################################################
 class Borrow(webapp.RequestHandler):
@@ -155,7 +164,7 @@ class Borrow(webapp.RequestHandler):
                      to = [users.get_current_user().email(), bookToLoan.owner.email()],
                      cc = WTMB_SENDER,
                      subject = '[whotookmybook] ' + bookToLoan.title,
-                     body = users.get_current_user().nickname() + "has borrowed this book from " + bookToLoan.owner.display_name())
+                     body = users.get_current_user().nickname() + " has borrowed this book from " + bookToLoan.owner.display_name())
             self.redirect('/mybooks')
         except IllegalStateTransition:
             self.error(403)
@@ -233,6 +242,6 @@ class Suggest(webapp.RequestHandler):
     list = Amz().search_by(self.request.get('fragment'))
     r += ','.join(list)
     r += ']}'
-    self.response.headers['Content-Type'] = "text/javascript"
+    self.response.headers['Content-Type'] = "application/json"
     self.response.out.write(r)
 ###################################################################

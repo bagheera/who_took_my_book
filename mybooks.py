@@ -19,11 +19,8 @@ class BookListPage(webapp.RequestHandler):
       url = users.create_logout_url("/mybooks")
       logging.debug(url)
       url_linktext = 'Logout'
-      current_appuser = AppUser.getAppUserFor(user) #registers new user
-      others = current_appuser.others()
+      AppUser.getAppUserFor(user) #registers new user
       template_values = {
-        'others': others,
-        'current_user': current_appuser,
         'url': url,
         'url_linktext': url_linktext
 #        'nickname': NickName().wtmb_name_for(current_appuser)

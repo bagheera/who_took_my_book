@@ -250,6 +250,16 @@ function dojson() {
 	$("#show_all").click(show_all);
 }
 
+function on_add(book){
+		myBooks.newRow(book);
+		$("#suggestbox").val("");
+		if(!book_data['mybooks']) {
+			book_data['mybooks'] = [];
+		}
+		book_data['mybooks'].push(book);
+		updateBookCount(book_data);
+}
+
 function setup_auto_suggest() {
 	var options = {
 		script : "/lookup_amz?",
@@ -260,19 +270,19 @@ function setup_auto_suggest() {
 		callback : function(obj) {
 			$.post("/addBook", 
 					{"book_title": obj.value, "book_author": obj.info, "book_asin": obj.id},
-					function(book){
-						myBooks.newRow(book);
-						$("#suggestbox").val("");
-						if(!book_data['mybooks']) {
-							book_data['mybooks'] = [];
-						}
-						book_data['mybooks'].push(book);
-						updateBookCount(book_data);
-					},
+					  on_add,
 					"json");
 		}
 	};
 	var as_json = new bsn.AutoSuggest('suggestbox', options);
+	$("#btn_add_book").click(
+		function(){
+			$.post("/addBook", 
+					{"book_title": $("#book_title").val(), "book_author": $("#book_author").val(), "book_asin": 0},
+					  on_add,
+					"json");			
+		}
+		);
 }
 
 var myBooks = new MyBooks();

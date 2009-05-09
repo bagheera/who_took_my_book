@@ -21,43 +21,39 @@ line_break = "<br />"
 ###################################################################
 class CacheBookIdsBorrowed:
     @classmethod
-    def key(cls, user):
-        return "book_ids_borrowed_by_" + user
+    def key(cls, user_key):
+        return "book_ids_borrowed_by_" + str(user_key)
 
     @classmethod
-    def get(cls, user):
-      books = memcache.get(cls.key(user))
+    def get(cls, user_key):
+      books = memcache.get(cls.key(user_key))
       if not books:
-        #TODO  should be a better way of doing this - not fetch each full book from db
-        books = [str(book.key()) for book in AppUser.get(user).books_borrowed]
-        logging.info("cbb books " + str(books))
-        memcache.set(cls.key(user), books)
+        books = [str(book_key) for book_key in Book.borrowed_by(user_key)]
+        memcache.set(cls.key(user_key), books)
       return books
 
     @classmethod
-    def reset(cls, user):
-        logging.info("Reset CacheBookIdsBorrowed for " + AppUser.get(user).display_name())
-        memcache.delete(cls.key(user))
+    def reset(cls, str_user_key):
+        logging.info("Reset CacheBookIdsBorrowed for " + AppUser.get(str_user_key).display_name())
+        memcache.delete(cls.key(str_user_key))
 #########################################################
 class CacheBookIdsOwned:
     @classmethod
-    def key(cls, owner):
-        return "book_ids_owned_by_" + owner
+    def key(cls, owner_key):
+        return "book_ids_owned_by_" + str(owner_key)
 
     @classmethod
-    def get(cls, owner):
-      books_owned = memcache.get(cls.key(owner))
+    def get(cls, owner_key):
+      books_owned = memcache.get(cls.key(owner_key))
       if not books_owned:
-        #TODO  should be a better way of doing this - not fetch each full book from db
-        books_owned = [str(book.key()) for book in AppUser.get(owner).books_owned]
-        logging.info("cbo books " + str(books_owned))
-        memcache.set(cls.key(owner), books_owned)
+        books_owned = [str(book_key) for book_key in Book.owned_by(owner_key)]
+        memcache.set(cls.key(owner_key), books_owned)
       return books_owned
 
     @classmethod
-    def reset(cls, owner):
-        logging.info("Reset CacheBookIdsOwned for " + AppUser.get(owner).display_name())
-        memcache.delete(cls.key(owner))
+    def reset(cls, str_owner_key):
+        logging.info("Reset CacheBookIdsOwned for " + AppUser.get(str_owner_key).display_name())
+        memcache.delete(cls.key(str_owner_key))
 #########################################################
 class CachedBook:
     @classmethod

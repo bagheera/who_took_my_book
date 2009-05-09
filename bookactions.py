@@ -84,6 +84,7 @@ class Amz:
                 logging.info("dewey is " + dewey)
                 return self.__is_tech_dewey(dewey)
             else:
+                logging.error("exception in dewey lookup: code: " + result.status_code)
                 return False;
         except:
             logging.error("exception in dewey lookup")
@@ -137,21 +138,26 @@ class ImportASINs(webapp.RequestHandler):
 ###################################################################
 class AddToBookshelf(webapp.RequestHandler):
   def post(self):
-    try:
         if users.get_current_user():
             appuser = AppUser.getAppUserFor(users.get_current_user())
-            book = Book(
+            book_asin = self.request.get('book_asin')
+            try:
+                book = Book(
                             title = self.request.get('book_title'),
                             author = self.request.get('book_author'),
                             owner = appuser,
-                            is_technical = Amz().lookup_if_technical(self.request.get('book_asin')))
-            book.create() # doesn't work if create is chained to constr above!
-            self.response.headers['content-type'] = "application/json"
-            self.response.out.write(book.to_json())
+                            asin = book_asin,
+                            is_technical = Amz().lookup_if_technical(book_asin))
+                book.create()
+                self.response.headers['content-type'] = "application/json"
+                self.response.out.write(book.to_json())
+#                how to say as dupbook?
+            except DuplicateBook:
+                self.response.set_status(412, "You already have this book. Cannot add again.")
+            except BookWithoutTitle:
+                self.response.set_status(412, "Title required")
         else:
             self.error(401) #need to include www-auth??
-    except:
-        raise
 
 ###################################################################
 class Borrow(webapp.RequestHandler):

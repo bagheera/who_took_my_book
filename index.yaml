@@ -10,6 +10,13 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
+# Used 16 times in query history.
+- kind: Book
+  properties:
+  - name: asin
+  - name: owner
+  - name: asin
+
 # Unused in query history -- copied from input.
 - kind: Greeting
   properties:

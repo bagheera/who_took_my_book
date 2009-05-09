@@ -1,12 +1,27 @@
 from google.appengine.ext import db
 from google.appengine.api import users
 from google.appengine.api import mail
+
 from django.utils import simplejson
 
 import logging
 ###################################################################
 WTMB_SENDER = "whotookmybook@gmail.com"
 class IllegalStateTransition(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
+class DuplicateBook(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
+class BookWithoutTitle(Exception):
     def __init__(self, value):
         self.value = value
 
@@ -52,10 +67,15 @@ class Book(db.Model):
     title = db.StringProperty()
     borrower = db.ReferenceProperty(AppUser, collection_name = "books_borrowed", required = False)
     uniq = db.StringProperty()
+    asin = db.StringProperty()
     is_technical = db.BooleanProperty()
 
     def __init__(self, parent = None, key_name = None, **kw):
         super(Book, self).__init__(parent, key_name, **kw)
+        if self.title.strip() == "":
+            raise BookWithoutTitle("Title required")
+        if self.author.strip() == "":
+            self.author = "anonymous"
         if not self.uniq:
             uniq_separator = "_#.,^_"
             self.uniq = self.title + uniq_separator + self.author
@@ -99,7 +119,12 @@ class Book(db.Model):
     def __change_borrower(self, new_borrower):
         self.borrower = new_borrower
 
+    def __duplicate(self):
+        return True if db.GqlQuery("SELECT __key__ from Book WHERE owner = :1 and title =:2 and author = :3", AppUser.me().key(), self.title, self.author).get() else False
+
     def create(self):
+        if self.__duplicate():
+            raise DuplicateBook("Add failed: You (" + AppUser.me().display_name() + ") already have added '" + self.title + "'");
         self.put()
         return self
 
@@ -135,14 +160,10 @@ class Book(db.Model):
             raise IllegalStateTransition("illegal attempt to lend")
 
     @staticmethod
-    def my_books():
-        return Book.gql("WHERE owner = :1", AppUser.me())
+    def owned_by(appuser_key):
+        return db.GqlQuery("SELECT __key__ from Book WHERE owner = :1 LIMIT 1000", appuser_key).fetch(1000)
 
     @staticmethod
-    def borrowed_books():
-        return Book.gql("WHERE borrower = :1", AppUser.me())
-
-    @staticmethod
-    def others_books():
-        return Book.gql("WHERE owner != :1 ORDER BY owner", AppUser.me())
+    def borrowed_by(appuser_key):
+        return db.GqlQuery("SELECT __key__ from Book WHERE borrower = :1 LIMIT 1000", appuser_key).fetch(1000)
 ###################################################################

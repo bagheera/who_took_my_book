@@ -75,7 +75,7 @@ class Book(db.Model):
         if self.title.strip() == "":
             raise BookWithoutTitle("Title required")
         if self.author.strip() == "":
-            self.author = "anonymous"
+            self.author = "unknown"
         if not self.uniq:
             uniq_separator = "_#.,^_"
             self.uniq = self.title + uniq_separator + self.author
@@ -120,7 +120,7 @@ class Book(db.Model):
         self.borrower = new_borrower
 
     def __duplicate(self):
-        return True if db.GqlQuery("SELECT __key__ from Book WHERE owner = :1 and title =:2 and author = :3", AppUser.me().key(), self.title, self.author).get() else False
+        return bool(db.GqlQuery("SELECT __key__ from Book WHERE owner = :1 and title =:2 and author = :3", AppUser.me().key(), self.title, self.author).get())
 
     def create(self):
         if self.__duplicate():

@@ -16,8 +16,6 @@ def pre_process(f, before):
         f(self, *args)
     return g
 
-line_break = "<br />"
-
 ###################################################################
 class CacheBookIdsBorrowed:
     @classmethod

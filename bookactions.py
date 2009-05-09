@@ -46,6 +46,9 @@ class Amz:
     def __title_of(self, node):
         return node.getElementsByTagNameNS(self.amz_ns, 'Title')[0].firstChild.data
 
+    def __asin_of(self, node):
+        return node.getElementsByTagNameNS(self.amz_ns, 'ASIN')[0].firstChild.data
+
     def get_items_from_result(self, result):
         dom = minidom.parseString(result.content)
         return dom.getElementsByTagNameNS(self.amz_ns, 'Item')
@@ -60,16 +63,17 @@ class Amz:
         if result.status_code == 200:
             items = self.get_items_from_result(result)
             for item in items:
-                bk_title = self.__title_of(item)
-                bk_author = self.__author_of(item)
-                is_tech = False
                 try:
-                  dewey = self.__dewey_decimal_of(item)
-                  is_tech = self.__is_tech_dewey(dewey)
+                    bk_title = self.__title_of(item)
+                    bk_author = self.__author_of(item)
+                    bk_asin = self.__asin_of(item)
+                    is_tech = False
+                    dewey = self.__dewey_decimal_of(item)
+                    is_tech = self.__is_tech_dewey(dewey)
+                    book = Book(title = bk_title, author = bk_author, is_technical = is_tech, asin = bk_asin)
+                    books.append(book)
                 except:
                   pass
-                book = Book(title = bk_title, author = bk_author, is_technical = is_tech)
-                books.append(book)
         else:
             report("Did you enter comma separated ASINs?\namz lookup failed with code " + str(result.status_code))
         return books
@@ -127,9 +131,14 @@ class ImportASINs(webapp.RequestHandler):
                if len(books) == 0:
                    report("Amazon returned no results for these ASINs")
                for book in books:
-                   book.owner = appuser
-                   book.create()
-                   report("added:  " + book.summary())
+                   try:
+                       book.owner = appuser
+                       book.create()
+                       report("added:  " + book.summary())
+                   except DuplicateBook:
+                        report("duplicate book: " + book.summary())
+                   except:
+                        report("could not add: " + book.summary())
             self.response.headers['Content-Type'] = "text/plain"
             self.response.out.write('\n'.join(messages))
             del messages[:]

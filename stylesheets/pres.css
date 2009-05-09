@@ -1,6 +1,6 @@
 body {
   font-family: Verdana, Helvetica, sans-serif;
-  background-color: silver;
+  background-color: #BCD2EE;
 }
 table {
     border-style: dotted;
@@ -14,7 +14,9 @@ td, th {
     padding: 5px;
     text-align: left;
 }
-
+input:focus{
+   background-color:#FFEC8B;
+}
 
 #quick{
     float: left;
@@ -30,14 +32,11 @@ td, th {
     padding: 0px  0px 50px 0px;
 }
 
-#bookshelf{
+#bookshelf, #userlist, #about_wtmb{
     background-color: white;
     border-style: solid;
     border-width: 2px;
     padding: 10px;
-}
-#letterhead{
-    text-align: center;
 }
 br {
 	clear: left;
@@ -51,9 +50,6 @@ blockquote {
 #about,#import,#lo{
   float: right;
   padding: 10px;
-}
-.mine {
-    background-color: #FFFACD;
 }
 
 .colone {

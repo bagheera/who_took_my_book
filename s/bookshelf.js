@@ -265,7 +265,6 @@ function dojson(){
 
 function on_add(book){
     myBooks.newRow(book);
-    $("#suggestbox").val("");
     if (!book_data['mybooks']) {
         book_data['mybooks'] = [];
     }
@@ -278,6 +277,7 @@ function on_add_error(xhr, desc, exceptionobj){
 }
 
 function post_new_book(title, author, asin){
+    $("#suggestbox").val("");
     $.ajax({
         url: "/addBook",
         type: "POST",
@@ -315,11 +315,6 @@ var otherBooks = new OtherBooks();
 
 
 $(document).ready(function(){
-    /*	$(document).ajaxError(function(){//from:http://www.thefutureoftheweb.com/blog/hidden-ajax-errors-in-jquery
-     if (window.console && window.console.error) {
-     console.error(arguments);
-     }
-     });*/
     dojson();
     setup_auto_suggest();
 });

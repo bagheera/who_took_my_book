@@ -19,12 +19,12 @@ class BookListPage(webapp.RequestHandler):
       url = users.create_logout_url("/mybooks")
       logging.debug(url)
       url_linktext = 'Logout'
-      AppUser.getAppUserFor(user) #registers new user
+      me = AppUser.getAppUserFor(user) #registers new user
       template_values = {
         'url': url,
-        'url_linktext': url_linktext
-#        'nickname': NickName().wtmb_name_for(current_appuser)
-        }
+        'url_linktext': url_linktext,
+        "username": me.display_name()
+      }
       path = os.path.join(os.path.dirname(__file__), 'books.html')
       self.response.out.write(template.render(path, template_values)) # render o/p can be cached
     else:
@@ -53,6 +53,7 @@ def real_main():
                                         (r'/lendTo/(.*)', LendTo),
                                         ('/mybooksj', FullListing),
                                         ('/asin-import', ImportASINs),
+                                        ('/nickname', Nickname),
                                         (r'(/?)(.*)', BookListPage)],
                                        debug = True)
   wsgiref.handlers.CGIHandler().run(application)

@@ -255,7 +255,7 @@ function show_all(){
     renderBooks(book_data);
 }
 
-function dojson(){
+function fetch_books(){
     showgif();
     $.getJSON("/mybooksj", renderBooks);
     $("#tech_only").click(show_tech_only);
@@ -289,10 +289,10 @@ function post_new_book(title, author, asin){
         success: on_add,
         error: on_add_error,
         dataType: "json"
-    });    
+    });
 }
 
-function setup_auto_suggest(){
+function setup_handlers(){
     var options = {
         script: "/lookup_amz?",
         varname: "fragment",
@@ -300,12 +300,40 @@ function setup_auto_suggest(){
         shownoresults: false,
         maxresults: 6,
         callback: function(obj){
-			post_new_book(obj.value, obj.info, obj.id);
+            post_new_book(obj.value, obj.info, obj.id);
         }
     };
-    var as_json = new bsn.AutoSuggest('suggestbox', options);
+    new bsn.AutoSuggest('suggestbox', options);
+    
     $("#btn_add_book").click(function(){
         post_new_book($("#book_title").val(), $("#book_author").val(), 0);
+    });
+    
+    $("#edit_nick").click(function(){
+        $(this).hide();
+        $("#nick_text").show().focus();
+    });
+    
+    $("#nick_text").keypress(function(e){
+        c = e.which ? e.which : e.keyCode;
+        if (c == 13) {
+			nickname = jQuery(this).val();
+            this.blur();
+            $.ajax({
+                url: "/nickname",
+                type: "POST",
+                data: {
+                    "new_nick": nickname
+                },
+                success: function(msg){
+					$("#nick_text").hide();
+					$("#hi_msg").text("Hi "+ nickname);				
+				},
+                error: function(xhr){
+					alert(xhr.statusText);
+				}
+            });
+        }
     });
 }
 
@@ -313,8 +341,8 @@ var myBooks = new MyBooks();
 var borrowedBooks = new BorrowedBooks();
 var otherBooks = new OtherBooks();
 
-
 $(document).ready(function(){
-    dojson();
-    setup_auto_suggest();
+	$("#nick_text").hide();
+    fetch_books();
+    setup_handlers();
 });

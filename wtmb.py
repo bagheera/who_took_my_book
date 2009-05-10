@@ -27,7 +27,7 @@ class BookWithoutTitle(Exception):
 
     def __str__(self):
         return repr(self.value)
-
+###################################################################
 class AppUser(db.Model):
     googleUser = db.UserProperty()
     wtmb_nickname = db.StringProperty()
@@ -48,10 +48,20 @@ class AppUser(db.Model):
         return appuser
 
     def display_name(self):
-        return self.googleUser.nickname()
+        return self.wtmb_nickname if self.wtmb_nickname else self.googleUser.nickname()
 
     def email(self):
         return self.googleUser.email()
+
+    def change_nickname(self, new_nick):
+        self.wtmb_nickname = new_nick
+        self.put()
+
+    def to_json(self):
+        return simplejson.dumps({
+                                 "nickname": self.display_name(),
+                                 "email": self.email()
+                                        })
 
     @staticmethod
     def me():

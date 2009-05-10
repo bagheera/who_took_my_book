@@ -58,7 +58,7 @@ class Amz:
 
     def get_books_for_asins(self, asin_lst):
         books = []
-        asin_lst = map(unicode.strip, asin_lst)
+        asin_lst = map(lambda asin: unicode.strip(asin).zfill(10), asin_lst)
         result = self.get_attribs_for_items(','.join(asin_lst))
         if result.status_code == 200:
             items = self.get_items_from_result(result)
@@ -260,3 +260,7 @@ class Suggest(webapp.RequestHandler):
     self.response.headers['Content-Type'] = "application/json"
     self.response.out.write(r)
 ###################################################################
+class Nickname(webapp.RequestHandler):
+    def post(self):
+        me = AppUser.me()
+        me.change_nickname(cgi.escape(self.request.get('new_nick')))

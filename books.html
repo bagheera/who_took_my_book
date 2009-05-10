@@ -50,7 +50,12 @@
             <div id="bookshelf">
                 <!--
                 <p id="show_options">Show<sup>1</sup> <a id="tech_only" href="#">tech</a>::<a id="non_tech_only" href="#">non-tech</a>::<a id="show_all" href="#">all</a></p>
-                --><h3>Hi {{ current_user.googleUser }}</h3>
+                --><strong id="hi_msg">Hi {{ username }}</strong>
+                <sub>
+                    <a href="#" id="edit_nick">edit nick</a>
+                </sub>
+                <input type="text" id="nick_text" size="10" value="new nick">
+                </input>
                 <p id="book_count">
                 </p>
                 <h3>Books you own</h3>

@@ -270,9 +270,9 @@ function on_add(book){
     }
     book_data['mybooks'].push(book);
     updateBookCount(book_data);
-	$("#book_title").val("");
-	$("#book_author").val("");
-	$("#suggestbox").focus();
+    $("#book_title").val("");
+    $("#book_author").val("");
+    $("#suggestbox").focus();
 }
 
 function on_add_error(xhr, desc, exceptionobj){
@@ -318,7 +318,7 @@ function setup_handlers(){
     $("#nick_text").keypress(function(e){
         c = e.which ? e.which : e.keyCode;
         if (c == 13) {
-			nickname = jQuery(this).val();
+            nickname = jQuery(this).val();
             this.blur();
             $.ajax({
                 url: "/nickname",
@@ -327,13 +327,20 @@ function setup_handlers(){
                     "new_nick": nickname
                 },
                 success: function(msg){
-					$("#nick_text").hide();
-					$("#hi_msg").text("Hi "+ nickname);				
-				},
+                    $("#nick_text").hide();
+                    $("#hi_msg").text("Hi " + nickname);
+                },
                 error: function(xhr){
-					alert(xhr.statusText);
-				}
+                    alert(xhr.statusText);
+                }
             });
+        }
+    });
+    
+    $(document).keypress(function(e){
+        c = e.which ? e.which : e.keyCode;
+        if (c == 97) {
+			$("#suggestbox").focus();
         }
     });
 }
@@ -343,15 +350,15 @@ var borrowedBooks = new BorrowedBooks();
 var otherBooks = new OtherBooks();
 
 $(document).ready(function(){
-	$("#nick_text").hide();
-	$("#manual").hide();
-	$("#suggestbox").focus();
-	
-	$("#show_manual").click(function (){
-		$(this).hide();
-		$("#manual").show();
-		$("#book_title").focus();
-	});
+    $("#nick_text").hide();
+    $("#manual").hide();
+    $("#suggestbox").focus();
+    
+    $("#show_manual").click(function(){
+        $(this).hide();
+        $("#manual").show();
+        $("#book_title").focus();
+    });
     fetch_books();
     setup_handlers();
 });

@@ -95,7 +95,7 @@ class Amz:
             return False;
 
     def search_by(self, searchString):
-        result = urlfetch.fetch(self.amz_url + 'Operation=ItemSearch&Keywords=' + urllib.quote(searchString) + '&SearchIndex=Books&ResponseGroup=Small')
+        result = urlfetch.fetch(self.amz_url + 'Operation=ItemSearch&Keywords=' + searchString + '&SearchIndex=Books&ResponseGroup=Small')
         list = []
         if result.status_code == 200:
             for item in self.get_items_from_result(result):

@@ -31,11 +31,12 @@ class Amz:
 
 
     def __is_tech_dewey(self, dewey):
-        return dewey.startswith("004") or dewey.startswith("005")
+        return bool(dewey) and (dewey.startswith("004") or dewey.startswith("005"))
 
 
     def __dewey_decimal_of(self, node):
-        return node.getElementsByTagNameNS(self.amz_ns, 'DeweyDecimalNumber')[0].firstChild.data
+        dd = node.getElementsByTagNameNS(self.amz_ns, 'DeweyDecimalNumber')
+        return dd[0].firstChild.data if len(dd) > 0 else None
 
     def __author_of(self, node):
         try:
@@ -79,13 +80,12 @@ class Amz:
         return books
 
     def lookup_if_technical(self, asin):
-        logging.info("deway lookup")
         try:
             result = self.get_attribs_for_items(asin)
             if result.status_code == 200:
                 item = self.get_items_from_result(result)[0]
                 dewey = self.__dewey_decimal_of(item)
-                logging.info("dewey is " + dewey)
+                logging.info("dewey is " + str(dewey))
                 return self.__is_tech_dewey(dewey)
             else:
                 logging.error("exception in dewey lookup: code: " + result.status_code)

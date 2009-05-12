@@ -139,7 +139,7 @@ class Book(db.Model):
         return self
 
     def return_to_owner(self):
-        if self.borrowed_by_me():
+        if self.borrowed_by_me() or self.belongs_to_me():
             self.__change_borrower(None)
             self.put()
         else:

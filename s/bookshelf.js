@@ -19,7 +19,12 @@ var BookShelf = Class.extend({
     borrower: function(book){
         return (available(book) ? "" : book.borrowed_by);
     },
+	
     render: function(){
+    },
+    
+    return_link: function(book, link_text){
+        return '<a href="/return/' + book.key + '">'+ link_text +'</a>';
     },
     
     addBook: function(){
@@ -70,6 +75,14 @@ var MyBooks = BookShelf.extend({
     
     mybookrow: function(i){
         myBooks.newRow(this);
+    },
+    
+    borrower: function(book){
+		result = this._super(book);
+		if(result != ""){
+			result += "  " + this.return_link(book, "x");
+		}
+		return result;
     },
     
     newRow: function(book){
@@ -128,17 +141,13 @@ var BorrowedBooks = BookShelf.extend({
     removeBook: function(){
     },
     
-    return_link: function(book){
-        return '<a href="/return/' + book.key + '">return</a>';
-    },
-    
     borrowedBookrow: function(i){
         if (borrowedBooks.not_to_be_shown(this)) 
             return;
         $("#borrowed_table").append("<tr><td>" + this.owner + "</td><td>" + this.title + " by " +
         this.author +
         "</td><td></td><td class='action'>" +
-        borrowedBooks.return_link(this) +
+        borrowedBooks.return_link(this, "return") +
         "</td></tr>");
     }
 });
@@ -340,7 +349,7 @@ function setup_handlers(){
     $(document).keypress(function(e){
         c = e.which ? e.which : e.keyCode;
         if (c == 97) {
-			$("#suggestbox").focus();
+            $("#suggestbox").focus();
         }
     });
 }

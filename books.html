@@ -24,12 +24,13 @@
                     <em>Never lose your book again</em>
                 </p>
                 <div id="quick">
-                    <strong>Quick data entry</strong>
+                    <strong>Quick data entry...</strong><em><sub>just pick from auto-suggest title or author</sub></em>
                     <br/>
                     <label>
-                        Lookup amazon:
+                        Lookup amazon (min. 4 chars):
                     </label>
-                    <input type="text" id="suggestbox" value="" title="Type a word of author or title and pause for auto suggest" tabindex="1"/>
+                    <input type="text" id="suggestbox" value="" title="Type a word of author or title and pause for auto suggest"/>
+					<span id="show_manual">Having trouble with auto-suggest? Try <a href="#">manual entry</a></span>
                 </div>
                 <div id="manual">
                     <strong>Manual entry</strong>
@@ -37,12 +38,12 @@
                     <label>
                         Title:
                     </label>
-                    <input type="text" name="book_title" id="book_title" tabindex="2"/>
+                    <input type="text" name="book_title" id="book_title"/>
                     <label>
                         Author:
                     </label>
-                    <input type="text" name="book_author" id="book_author" tabindex="3"/>
-                    <button id="btn_add_book" tabindex="4">
+                    <input type="text" name="book_author" id="book_author"/>
+                    <button id="btn_add_book">
                         Add Book
                     </button>
                 </div>

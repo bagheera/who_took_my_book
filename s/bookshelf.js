@@ -40,7 +40,7 @@ var MyBooks = BookShelf.extend({
     },
     
     render_header: function(){
-        $("#my_table").append('<tr><th class="colone"></th><th class="coltwo">Book</th><th class="colthree">Lent to</th><th class="colfour"></th></tr>');
+        $("#my_table").append('<thead><tr><th class="colone"></th><th class="coltwo">Book</th><th class="colthree">Lent to</th><th class="colfour"></th></tr></thead><tbody id="my_table_body"><tr/></tbody>');
     },
     
     render: function(books){
@@ -79,7 +79,7 @@ var MyBooks = BookShelf.extend({
             myBooks.empty();
             myBooks.render_header();
         }
-        $("#my_table").append("<tr><td>" + myBooks.del_link(book) + "</td><td>" + book.title +
+        $("#my_table_body tr:first").before("<tr><td>" + myBooks.del_link(book) + "</td><td>" + book.title +
         " by " +
         book.author +
         "</td><td>" +
@@ -220,11 +220,11 @@ function updateBookCount(data){
     $("#book_count").empty();
     own_count = data.mybooks ? data.mybooks.length : 0
     borrow_count = data.borrowedBooks ? data.borrowedBooks.length : 0
-    $("#book_count").append("Overall summary of your books: " + own_count + " owned, " +
+    $("#book_count").append("Overall summary of your books: <big class='bignum'> " + own_count + "</big> owned, <big class='bignum'>" +
     myBooks.lent_count(data.mybooks) +
-    " lent, " +
+    "</big> lent, <big class='bignum'>" +
     borrow_count +
-    " borrowed.");
+    "</big> borrowed.");
 }
 
 function available(book){
@@ -270,6 +270,9 @@ function on_add(book){
     }
     book_data['mybooks'].push(book);
     updateBookCount(book_data);
+	$("#book_title").val("");
+	$("#book_author").val("");
+	$("#suggestbox").focus();
 }
 
 function on_add_error(xhr, desc, exceptionobj){
@@ -297,8 +300,6 @@ function setup_handlers(){
         script: "/lookup_amz?",
         varname: "fragment",
         json: true,
-        shownoresults: false,
-        maxresults: 6,
         callback: function(obj){
             post_new_book(obj.value, obj.info, obj.id);
         }
@@ -343,6 +344,14 @@ var otherBooks = new OtherBooks();
 
 $(document).ready(function(){
 	$("#nick_text").hide();
+	$("#manual").hide();
+	$("#suggestbox").focus();
+	
+	$("#show_manual").click(function (){
+		$(this).hide();
+		$("#manual").show();
+		$("#book_title").focus();
+	});
     fetch_books();
     setup_handlers();
 });

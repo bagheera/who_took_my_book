@@ -71,3 +71,13 @@ blockquote {
 #show_options {
   float: right;
 }
+
+.bignum{
+  background-color: blue;
+  color: white;
+  border-style: solid;
+  border-width: 2px;
+  border-color: black;
+  padding: 5px 8px 5px 8px;
+  font-weight: bold;
+}

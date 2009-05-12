@@ -66,7 +66,20 @@ _b.AutoSuggest = function (id, param)
 	
 	// defaults	
 	//
-	var k, def = {minchars:1, meth:"get", varname:"input", className:"autosuggest", timeout:2500, delay:500, offsety:-5, shownoresults: true, noresults: "No results!", maxheight: 250, cache: true, maxentries: 25};
+    var k, def = {
+        minchars: 4,
+        meth: "get",
+        varname: "input",
+        className: "autosuggest",
+        timeout: 4000,
+        delay: 400,
+        offsety: -5,
+        shownoresults: true,
+        noresults: "No results!",
+        maxheight: 250,
+        cache: true,
+        maxentries: 10
+    };
 	for (k in def)
 	{
 		if (typeof(this.oP[k]) != typeof(def[k]))
@@ -463,7 +476,7 @@ _b.AutoSuggest.prototype.createList = function(arr)
 	
 	div.style.left 		= pos.x + "px";
 	div.style.top 		= ( pos.y + this.fld.offsetHeight + this.oP.offsety ) + "px";
-	div.style.width 	= this.fld.offsetWidth + "px";
+	div.style.width 	= (this.fld.offsetWidth * 3) + "px";
 	
 	
 	

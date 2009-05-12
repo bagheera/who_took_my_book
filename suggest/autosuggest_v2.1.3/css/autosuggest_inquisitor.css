@@ -14,10 +14,9 @@ div.autosuggest
 {
 	position: absolute;
 	background-image: url(img_inquisitor/as_pointer.gif);
-	background-position: top;
+	background-position: top left;
 	background-repeat: no-repeat;
 	padding: 10px 0 0 0;
-    width: 400%;
 }
 
 div.autosuggest div.as_header,
@@ -68,7 +67,6 @@ div.autosuggest ul
 	padding: 0;
 	overflow: hidden;
 	background-color: #333;
-    width: 400%;
 }
 
 div.autosuggest ul li
@@ -77,7 +75,6 @@ div.autosuggest ul li
 	padding: 0;
 	margin: 0 4px 4px;
 	text-align: left;
-    width: 400%
 }
 
 div.autosuggest ul li a
@@ -89,7 +86,6 @@ div.autosuggest ul li a
 	text-shadow: #000 0px 0px 5px;
 	position: relative;
 	padding: 0;
-	width: 400%;
 }
 div.autosuggest ul li a:hover
 {
@@ -106,7 +102,6 @@ div.autosuggest ul li a span
 	display: block;
 	padding: 3px 6px;
 	font-weight: bold;
-    width: 400%;
 }
 
 div.autosuggest ul li a span small
@@ -171,6 +166,7 @@ div.autosuggest ul li.as_highlight a .tr
 
 div.autosuggest ul li.as_warning
 {
+	color: #ccc;
 	font-weight: bold;
 	text-align: center;
 }

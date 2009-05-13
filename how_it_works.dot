@@ -1,0 +1,21 @@
+ranksep = 1;
+
+
+s [label="book sleeping \nin your bookshelf",color="gray",style="filled"];
+
+a [label="book available"];
+
+u [label="book shared",color="green",style="filled"];
+
+s -> a [label="when you add it into\nwhotookmybook.appspot.com"];
+
+a -> u [label="someone borrows \nor owner lends"];
+
+u -> a [label="borrower returns \n or owner claims \nshe has it"];
+
+a -> s [label="owner deletes"];
+
+u -> s [label="owner deletes"];
+
+u -> u [label="owner lends \nto someone else"];
+

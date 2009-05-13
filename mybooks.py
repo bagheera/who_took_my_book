@@ -31,15 +31,18 @@ class BookListPage(webapp.RequestHandler):
       url = users.create_login_url(self.request.uri)
       url_linktext = 'Login'
       self.redirect(users.create_login_url(self.request.uri))
-###################################################################
-# putting this on hold  
-#class NickName:
-#    def wtmb_name_for(self, some_user):
-#        if some_user.display_name() is None:
-#            return '<input type="text" id="nickname" value="" title="In case you&apos;d like to be referred by a name different from your userid"/><a href="/nickname"> Set Nickname</a>
-#        else:
-#            return some_user.display_name()
-###################################################################  
+###################################################################    
+class LendPage(webapp.RequestHandler):
+  def get(self, what):
+    members = [user.display_name() + " (" + user.email() + ")" for user in AppUser.others()]
+    members.sort()
+    template_values = {
+      'book': Book.get(db.Key(what)),
+      'members': members,
+    }
+    path = os.path.join(os.path.dirname(__file__), 'lend.html')
+    self.response.out.write(template.render(path, template_values))
+
 
 def real_main():
   application = webapp.WSGIApplication(
@@ -49,30 +52,14 @@ def real_main():
                                         (r'/delete/(.*)', DeleteBook),
                                         (r'/borrow/(.*)', Borrow),
                                         (r'/return/(.*)', ReturnBook),
-                                        (r'/lend/(.*)', Lend),
-                                        (r'/lendTo/(.*)', LendTo),
+                                        (r'/lend/(.*)', LendPage),
+                                        (r'/lendTo', LendTo),
                                         ('/mybooksj', FullListing),
                                         ('/asin-import', ImportASINs),
                                         ('/nickname', Nickname),
                                         (r'(/?)(.*)', BookListPage)],
                                        debug = True)
   wsgiref.handlers.CGIHandler().run(application)
-
-def profile_main():
- # This is the main function for profiling 
- # We've renamed our original main() above to real_main()
- import cProfile, pstats, StringIO
- prof = cProfile.Profile()
- prof = prof.runctx("real_main()", globals(), locals())
- stream = StringIO.StringIO()
- stats = pstats.Stats(prof, stream = stream)
- stats.sort_stats("time")  # Or cumulative
- stats.print_stats(80)  # 80 = how many to print
- # The rest is optional.
- # stats.print_callees()
- # stats.print_callers()
- #logging.debug("Profile data:\n%s", stream.getvalue())
- logging.info(memcache.get_stats())
 
 if __name__ == "__main__":
   real_main()

@@ -2,9 +2,6 @@
     <head>
         <title>who took my book</title>
         <link type="text/css" rel="stylesheet" href="/stylesheets/pres.css"/>
-        <script type="text/javascript" src="/suggest/autosuggest_v2.1.3/js/bsn.AutoSuggest_2.1.3.js" charset="utf-8">
-        </script>
-        <link rel="stylesheet" href="/suggest/autosuggest_v2.1.3/css/autosuggest_inquisitor.css" type="text/css"/>
         <script type="text/javascript" src="/jslib/jq.js">
         </script>
         <script type="text/javascript" src="/jslib/ejohn.js">
@@ -19,18 +16,23 @@
                 <span id="import"><a href="/s/import.html">Import</a></span>
                 <span id="lo"><a href="{{ url }}">{{ url_linktext }}</a></span>
                 <p id="letterhead">
-                    <strong>Who took my book?</strong>
+                    <big><strong>Who took my book?</strong></big>
                     <br/>
-                    <em>Never lose your book again</em>
+                    <em>Share and ye shall receive</em>
                 </p>
                 <div id="quick">
-                    <strong>Quick data entry...</strong><em><sub>just pick from auto-suggest title or author</sub></em>
+                    <strong>Add your books...</strong>
+                    <em>
+                        <sub>
+                            just pick from auto-suggest title or author
+                        </sub>
+                    </em>
                     <br/>
                     <label>
-                        Lookup <u>a</u>mazon (min. 4 chars):
+                        Lookup 
+                        <u>a</u>mazon (min. 4 chars):
                     </label>
-                    <input type="text" id="suggestbox" value="" title="Type a word of author or title and pause for auto suggest"/>
-					<span id="show_manual">Having trouble with auto-suggest? Try <a href="#">manual entry</a></span>
+                    <input type="text" id="suggestbox" value="" title="Type a word of author or title and pause for auto suggest"/><span id="show_manual">Having trouble with auto-suggest? Try <a href="#">manual entry</a></span>
                 </div>
                 <div id="manual">
                     <strong>Manual entry</strong>
@@ -59,20 +61,22 @@
                 </input>
                 <p id="book_count">
                 </p>
-                <h3>Books you own</h3>
-                <div id="my_div">
-                    <table id="my_table">
-                    </table>
-                </div>
-                <h3>Books you have borrowed</h3>
-                <div id="borrowed_div">
-                    <table id="borrowed_table">
-                    </table>
-                </div>
-                <h3>Other Books</h3>
-                <div id="others_div">
-                    <table id="others_table">
-                    </table>
+                <div id='bookshelf_inner'>
+                    <h3>Books you own</h3>
+                    <div id="my_div">
+                        <table id="my_table">
+                        </table>
+                    </div>
+                    <h3>Books you have borrowed</h3>
+                    <div id="borrowed_div">
+                        <table id="borrowed_table">
+                        </table>
+                    </div>
+                    <h3>Other Books</h3>
+                    <div id="others_div">
+                        <table id="others_table">
+                        </table>
+                    </div>
                 </div>
             </div>
             <p>
@@ -82,5 +86,8 @@
             <em><sup>1</sup>experimental feature</em>
             </p> -->
         </div>
+        <script type="text/javascript" src="/suggest/autosuggest_v2.1.3/js/bsn.AutoSuggest_2.1.3.js" charset="utf-8">
+        </script>
+        <link rel="stylesheet" href="/suggest/autosuggest_v2.1.3/css/autosuggest_inquisitor.css" type="text/css"/>
     </body>
 </html>

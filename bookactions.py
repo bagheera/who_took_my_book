@@ -211,43 +211,31 @@ class ReturnBook(webapp.RequestHandler):
 
 ###################################################################    
 class LendTo(webapp.RequestHandler):
-  def get(self, what_and_who):
-    parts = what_and_who.split('/')
-    bookid = parts[len(parts) - 2]
-    lendTo = parts[len(parts) - 1]
-    bookToLoan = Book.get(bookid)
+  def post(self):
+    bookid = self.request.get('book_id')
+    lendTo = self.request.get('lend_to')
+    new_user_name = self.request.get('new_user')
+    if (lendTo and new_user_name) or (not lendTo and not new_user_name):
+        self.response.set_status(400, 'Please send exactly one of lendTo and new_user')
+        return
     try:
-        bookToLoan.lend_to(AppUser.get(db.Key(lendTo)))
+        bookToLoan = Book.get(bookid)
+        borrower = None
+        if lendTo:
+            borrower = AppUser.get(db.Key(lendTo))
+        else:
+            borrower = AppUser.create_outsider(new_user_name)
+        bookToLoan.lend_to(borrower)
         mail.send_mail(
                      sender = WTMB_SENDER,
                      to = [users.get_current_user().email(), bookToLoan.borrower.email()],
                      cc = WTMB_SENDER,
                      subject = '[whotookmybook] ' + bookToLoan.title,
                      body = users.get_current_user().nickname() + " has lent this book to " + bookToLoan.borrower.display_name())
-        self.redirect('/mybooks')
     except IllegalStateTransition:
-        self.error(403)
-
-###################################################################    
-class Lend(webapp.RequestHandler):
-  def get(self, what):
-    user = users.get_current_user()
-    if not user:
-      self.redirect(users.create_login_url(self.request.uri))
-    if users.get_current_user():
-      url = users.create_logout_url("/mybooks")
-      url_linktext = 'Logout'
-    else:
-      url = users.create_login_url(self.request.uri)
-      url_linktext = 'Login'
-    template_values = {
-      'book': Book.get(db.Key(what)),
-      'members': AppUser.others(),
-      'url': url,
-      'url_linktext': url_linktext,
-      }
-    path = os.path.join(os.path.dirname(__file__), 'lend.html')
-    self.response.out.write(template.render(path, template_values))
+        self.response.set_status(403, 'Illegal State Transition')
+    except ValueError, v:
+        self.response.set_status(400, str(v))
 
 ###################################################################    
 class Suggest(webapp.RequestHandler):

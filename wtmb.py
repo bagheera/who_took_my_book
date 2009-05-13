@@ -3,7 +3,7 @@ from google.appengine.api import users
 from google.appengine.api import mail
 
 from django.utils import simplejson
-
+import cgi
 import logging
 ###################################################################
 WTMB_SENDER = "whotookmybook@gmail.com"
@@ -32,16 +32,30 @@ class AppUser(db.Model):
     googleUser = db.UserProperty()
     wtmb_nickname = db.StringProperty()
 
+    def is_outsider(self):
+        return not self.googleUser
+
+    @staticmethod
+    def create_outsider(name):
+        if not name or name.strip() == "":
+            raise ValueError("Name cannot be empty")
+        if AppUser.gql('WHERE googleUser = :1 and wtmb_nickname= :2', None, name).get():
+            raise ValueError("This name is already taken")
+        new_user = AppUser(wtmb_nickname = name)
+        new_user.put()
+        return new_user
+
     @staticmethod
     def getAppUserFor(aGoogleUser):
         appuser = AppUser.gql('WHERE googleUser = :1', aGoogleUser).get()
         if appuser is None:
-            appuser = AppUser(googleUser = users.get_current_user())
+            current_user = users.get_current_user()
+            appuser = AppUser(googleUser = current_user, wtmb_nickname = current_user.nickname())
             appuser.put()
             #bad place for mail
             mail.send_mail(
                          sender = WTMB_SENDER,
-                         to = [users.get_current_user().email()],
+                         to = [current_user.email()],
                          cc = WTMB_SENDER,
                          subject = '[whotookmybook] Welcome',
                          body = "Thanks for choosing to use http://whotookmybook.appspot.com")
@@ -51,7 +65,7 @@ class AppUser(db.Model):
         return self.wtmb_nickname if self.wtmb_nickname else self.googleUser.nickname()
 
     def email(self):
-        return self.googleUser.email()
+        return self.googleUser.email() if self.googleUser else "whotookmybook+unregistered_user_" + self.wtmb_nickname + "@gmail.com"
 
     def change_nickname(self, new_nick):
         self.wtmb_nickname = new_nick
@@ -92,11 +106,11 @@ class Book(db.Model):
 
     def to_json(self):
         return simplejson.dumps({
-                                        "title": self.title,
-                                        "author":self.author,
+                                        "title": cgi.escape(self.title),
+                                        "author":cgi.escape(self.author),
                                         "is_tech": self.is_technical,
-                                        "borrowed_by": self.borrower_name(),
-                                        "owner": self.owner.display_name(),
+                                        "borrowed_by": cgi.escape(self.borrower_name()),
+                                        "owner": cgi.escape(self.owner.display_name()),
                                         "key": str(self.key())
                                         })
 

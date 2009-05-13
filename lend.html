@@ -1,21 +1,73 @@
 <html>
-  <head>
-    <title>who took my book</title>
-    <link type="text/css" rel="stylesheet" href="/stylesheets/pres.css" />
-  </head>
-  <body>
-  	<div id="page">
-  <div id="userlist">
-    <H4>Lend {{book.summary}} to:</H4>
-    {% for user in members%}
-      <blockquote>
-        {{ user.display_name }}
-        ( {{ user.email }} )
-        <a href="/lendTo/{{ book.key }}/{{ user.key }}">mark as lent</a>
-      </blockquote>
-    {% endfor %}
-    <a href="{{ url }}">{{ url_linktext }}</a>
-    </div>
-    </div>
-  </body>
+    <head>
+        <title>who took my book</title>
+        <link type="text/css" rel="stylesheet" href="/stylesheets/pres.css" />
+        <script type="text/javascript" src="/jslib/jq.js">
+        </script>
+        <script type="text/javascript">
+           	function create_lease_error(xhr, desc, exceptionobj){
+                alert(xhr.statusText);
+            }
+			
+			function create_lease_success(whatever){
+				window.location.replace("/mybooks");
+			}
+            
+			function create_lease(book_id, borrower_id, new_user_name){
+				payload = {};
+				payload['book_id'] = book_id;
+				if(borrower_id) payload['lend_to'] = borrower_id;
+				if(new_user_name) payload['new_user'] = new_user_name;
+			    $.ajax({
+			        url: "/lendTo",
+			        type: "POST",
+			        data: payload,
+					success: create_lease_success,
+			        error: create_lease_error,
+			    });					
+			}
+
+            $(document).ready(
+				function(){
+	                $('#new_user_dialog_text').hide();
+					
+	                $("#outsider").click(
+						function(){
+	                    	$('#new_user_dialog_text').show();
+	                    	$('#new_user_text').focus();
+							return false;
+	                	});
+					
+					$('#new_user_text').keypress(
+						function(e){
+	        				c = e.which ? e.which : e.keyCode;
+	        				if (c == 13) {
+								create_lease($("#book_id").val(), null, $("#new_user_text").val());
+							}
+	            		});
+               });
+        </script>
+    </head>
+    <body>
+        <div id="page">
+            <input type="hidden" id="book_id" value="{{ book.key }}">
+            </input>
+            <div id="userlist">
+                <H4>Lend Book:</H4>
+                <p>
+                    {{book.summary}}
+                </p>
+                <strong>to: </strong>
+                <select id="choose_borrower">
+                    <option id="dummy">choose a user...</option>
+                    {% for user in members%}<option value="{{ user.key }}">{{ user }}</option>
+                    {% endfor %}<option id="outsider"><em>someone else?...</em></option>
+                </select>
+                <div id="new_user_dialog_text">
+                    Enter name for new unregistered user: <input type="text" id="new_user_text" size="10">
+                    </input>
+                </div>
+            </div>
+        </div>
+    </body>
 </html>

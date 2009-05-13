@@ -23,8 +23,8 @@ var BookShelf = Class.extend({
     render: function(){
     },
     
-    return_link: function(book, link_text){
-        return '<a href="/return/' + book.key + '">'+ link_text +'</a>';
+    return_link: function(book, link_text, tooltip){
+        return '<a title="'+tooltip+'" href="/return/' + book.key + '">'+ link_text +'</a>';
     },
     
     addBook: function(){
@@ -80,7 +80,7 @@ var MyBooks = BookShelf.extend({
     borrower: function(book){
 		result = this._super(book);
 		if(result != ""){
-			result += "  " + this.return_link(book, "x");
+			result += "  " + this.return_link(book, "x", "No. I have it");
 		}
 		return result;
     },
@@ -147,7 +147,7 @@ var BorrowedBooks = BookShelf.extend({
         $("#borrowed_table").append("<tr><td>" + this.owner + "</td><td>" + this.title + " by " +
         this.author +
         "</td><td></td><td class='action'>" +
-        borrowedBooks.return_link(this, "return") +
+        borrowedBooks.return_link(this, "return", "return book to owner") +
         "</td></tr>");
     }
 });
@@ -328,7 +328,6 @@ function setup_handlers(){
         c = e.which ? e.which : e.keyCode;
         if (c == 13) {
             nickname = jQuery(this).val();
-            this.blur();
             $.ajax({
                 url: "/nickname",
                 type: "POST",
@@ -346,7 +345,7 @@ function setup_handlers(){
         }
     });
     
-    $(document).keypress(function(e){
+    $("#bookshelf_inner").keypress(function(e){
         c = e.which ? e.which : e.keyCode;
         if (c == 97) {
             $("#suggestbox").focus();

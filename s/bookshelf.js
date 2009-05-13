@@ -1,5 +1,6 @@
 var book_data = null;
 var show = "all";
+var amz_url = "http://amazon.com/dp/";
 
 var BookShelf = Class.extend({
     init: function(){
@@ -31,7 +32,14 @@ var BookShelf = Class.extend({
     },
     
     removeBook: function(){
-    }
+    },
+	
+	book_link: function(book){
+		text = book.title;
+		if(book.author != "unknown") text = text + " by " +   book.author; 
+		if (book.asin && book.asin.length == 10) return  '<a target="_blank" href="'+amz_url+book.asin+'">'+text+'</a>';
+		return text;
+	}
 });
 /**********************************************************************************/
 var MyBooks = BookShelf.extend({
@@ -92,9 +100,7 @@ var MyBooks = BookShelf.extend({
             myBooks.empty();
             myBooks.render_header();
         }
-        $("#my_table_body tr:first").before("<tr><td>" + myBooks.del_link(book) + "</td><td>" + book.title +
-        " by " +
-        book.author +
+        $("#my_table_body tr:first").before("<tr><td>" + myBooks.del_link(book) + "</td><td>" + myBooks.book_link(book) +
         "</td><td>" +
         myBooks.borrower(book) +
         "</td><td class='action'>" +
@@ -144,8 +150,7 @@ var BorrowedBooks = BookShelf.extend({
     borrowedBookrow: function(i){
         if (borrowedBooks.not_to_be_shown(this)) 
             return;
-        $("#borrowed_table").append("<tr><td>" + this.owner + "</td><td>" + this.title + " by " +
-        this.author +
+        $("#borrowed_table").append("<tr><td>" + this.owner + "</td><td>" + borrowedBooks.book_link(this) +
         "</td><td></td><td class='action'>" +
         borrowedBooks.return_link(this, "return", "return book to owner") +
         "</td></tr>");
@@ -181,8 +186,7 @@ var OtherBooks = BookShelf.extend({
     othersbookrow: function(i){
         if (otherBooks.not_to_be_shown(this)) 
             return;
-        $("#others_table").append("<tr><td>" + this.owner + "</td><td>" + this.title + " by " +
-        this.author +
+        $("#others_table").append("<tr><td>" + this.owner + "</td><td>" + otherBooks.book_link(this) +
         "</td><td>" +
         otherBooks.borrower(this) +
         "</td><td class='action'>" +
@@ -345,7 +349,7 @@ function setup_handlers(){
         }
     });
     
-    $("#bookshelf_inner").keypress(function(e){
+    $("#bookshelf_inner").keypress(function(e){//not working??
         c = e.which ? e.which : e.keyCode;
         if (c == 97) {
             $("#suggestbox").focus();
@@ -363,7 +367,7 @@ $(document).ready(function(){
     $("#suggestbox").focus();
     
     $("#show_manual").click(function(){
-        $(this).hide();
+        $("#show_manual_span").hide();
         $("#manual").show();
         $("#book_title").focus();
     });

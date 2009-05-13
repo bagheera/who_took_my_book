@@ -31,12 +31,17 @@
 				function(){
 	                $('#new_user_dialog_text').hide();
 					
-	                $("#outsider").click(
+					$("#choose_borrower").change(
 						function(){
-	                    	$('#new_user_dialog_text').show();
-	                    	$('#new_user_text').focus();
-							return false;
-	                	});
+							choice = $("#choose_borrower option:selected").val();
+							if(choice == "outsider"){
+		                    	$('#new_user_dialog_text').show();
+		                    	$('#new_user_text').focus();
+								return false;								
+							}
+							if(choice == "dummy") return false;
+							create_lease($("#book_id").val(), choice, null);
+						});
 					
 					$('#new_user_text').keypress(
 						function(e){
@@ -59,9 +64,9 @@
                 </p>
                 <strong>to: </strong>
                 <select id="choose_borrower">
-                    <option id="dummy">choose a user...</option>
-                    {% for user in members%}<option value="{{ user.key }}">{{ user }}</option>
-                    {% endfor %}<option id="outsider"><em>someone else?...</em></option>
+                    <option value="dummy">choose a user...</option>
+                    {% for user in members %}<option value="{{ user.0 }}">{{ user.1 }}</option>
+                    {% endfor %}<option value="outsider"><em>someone else?...</em></option>
                 </select>
                 <div id="new_user_dialog_text">
                     Enter name for new unregistered user: <input type="text" id="new_user_text" size="10">

@@ -111,7 +111,8 @@ class Book(db.Model):
                                         "is_tech": self.is_technical,
                                         "borrowed_by": cgi.escape(self.borrower_name()),
                                         "owner": cgi.escape(self.owner.display_name()),
-                                        "key": str(self.key())
+                                        "key": str(self.key()),
+                                        "asin":self.asin
                                         })
 
     def summary(self):

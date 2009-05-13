@@ -34,8 +34,8 @@ class BookListPage(webapp.RequestHandler):
 ###################################################################    
 class LendPage(webapp.RequestHandler):
   def get(self, what):
-    members = [user.display_name() + " (" + user.email() + ")" for user in AppUser.others()]
-    members.sort()
+    members = [[str(user.key()), user.display_name() + " (" + user.email() + ")"] for user in AppUser.others()]
+    members.sort(lambda x, y: cmp(x[1].lower(), y[1].lower()))
     template_values = {
       'book': Book.get(db.Key(what)),
       'members': members,

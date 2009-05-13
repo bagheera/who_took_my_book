@@ -17,19 +17,11 @@ td, th {
 input:focus{
    background-color:#FFEC8B;
 }
-
-#quick{
-    float: left;
-}
-
-#manual{
-    float: right;
-}
 #page{
     margin: 1% 10% 3% 10%;
 }
 #dataentry{
-    padding: 0px  0px 50px 0px;
+    padding: 0px  0px 20px 0px;
 }
 
 #bookshelf, #userlist, #about_wtmb{

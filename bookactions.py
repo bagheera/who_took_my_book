@@ -250,5 +250,9 @@ class Suggest(webapp.RequestHandler):
 ###################################################################
 class Nickname(webapp.RequestHandler):
     def post(self):
+        new_nick = self.request.get('new_nick')
+        if not new_nick or new_nick.strip() == "":
+            self.response.set_status(400, "Empty Nickname")
+            return
         me = AppUser.me()
-        me.change_nickname(cgi.escape(self.request.get('new_nick')))
+        me.change_nickname(cgi.escape(new_nick))

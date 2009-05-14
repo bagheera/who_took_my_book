@@ -8,6 +8,7 @@ from google.appengine.ext.webapp import template
 from google.appengine.ext import webapp
 from google.appengine.api import urlfetch
 from google.appengine.api import mail
+from django.utils import simplejson
 from xml.dom import minidom
 from wtmb import *
 
@@ -105,7 +106,7 @@ class Amz:
                author = self.__author_of(node)
                if not author:
                    author = 'unknown'
-               list.append('{ id:"' + asin + '",value:"' + cgi.escape(title) + '",info:"' + cgi.escape(author) + '"}')
+               list.append(simplejson.dumps({ "id" : asin , "value" : title , "info" : author}))
         return list
 ###################################################################
 class ImportASINs(webapp.RequestHandler):
@@ -198,13 +199,18 @@ class ReturnBook(webapp.RequestHandler):
   def get(self, bookid):
     rtnd_book = Book.get(bookid)
     try:
-        rtnd_book.return_to_owner()
-        mail.send_mail(
-                     sender = WTMB_SENDER,
-                     to = [users.get_current_user().email(), rtnd_book.owner.email()],
-                     cc = WTMB_SENDER,
-                     subject = '[whotookmybook] ' + rtnd_book.title,
-                     body = users.get_current_user().nickname() + " has returned this book to " + rtnd_book.owner.display_name())
+        old_borrower = rtnd_book.borrower
+        if old_borrower:
+            rtnd_book.return_to_owner()
+            mail.send_mail(
+                         sender = WTMB_SENDER,
+                         to = [old_borrower.email(), rtnd_book.owner.email()],
+                         cc = WTMB_SENDER,
+                         subject = '[whotookmybook] ' + rtnd_book.title,
+                         body = (AppUser.me().display_name() + " has returned this book to " + rtnd_book.owner.display_name() if (AppUser.me() != rtnd_book.owner) else AppUser.me().display_name() + " has asserted possession of this book"))
+
+        else:
+            logging.warning(users.get_current_user().email() + " attempted to return book that wasn't borrowed " + rtnd_book.summary())
         self.redirect('/mybooks')
     except IllegalStateTransition:
         self.error(403)

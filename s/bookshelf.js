@@ -1,6 +1,6 @@
 var book_data = null;
 var show = "all";
-var amz_url = "http://amazon.com/dp/";
+var amz_url = "http://www.amazon.com/dp/asin?tag=whotookmybook-20";
 
 var BookShelf = Class.extend({
     init: function(){
@@ -37,7 +37,7 @@ var BookShelf = Class.extend({
 	book_link: function(book){
 		text = book.title;
 		if(book.author != "unknown") text = text + " by " +   book.author; 
-		if (book.asin && book.asin.length == 10) return  '<a target="_blank" href="'+amz_url+book.asin+'">'+text+'</a>';
+		if (book.asin && book.asin.length == 10) return  text + ' <a target="_blank" title="find this book in amazon" href="'+amz_url.replace("asin", book.asin)+'">'+'explore'+'</a>';
 		return text;
 	}
 });

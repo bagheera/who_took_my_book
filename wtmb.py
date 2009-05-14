@@ -31,6 +31,7 @@ class BookWithoutTitle(Exception):
 class AppUser(db.Model):
     googleUser = db.UserProperty()
     wtmb_nickname = db.StringProperty()
+    created_date = db.DateTimeProperty(auto_now_add = "true")
 
     def is_outsider(self):
         return not self.googleUser
@@ -90,9 +91,9 @@ class Book(db.Model):
     owner = db.ReferenceProperty(AppUser, collection_name = "books_owned")
     title = db.StringProperty()
     borrower = db.ReferenceProperty(AppUser, collection_name = "books_borrowed", required = False)
-    uniq = db.StringProperty()
     asin = db.StringProperty()
     is_technical = db.BooleanProperty()
+    created_date = db.DateTimeProperty(auto_now_add = "true")
 
     def __init__(self, parent = None, key_name = None, **kw):
         super(Book, self).__init__(parent, key_name, **kw)
@@ -100,9 +101,6 @@ class Book(db.Model):
             raise BookWithoutTitle("Title required")
         if self.author.strip() == "":
             self.author = "unknown"
-        if not self.uniq:
-            uniq_separator = "_#.,^_"
-            self.uniq = self.title + uniq_separator + self.author
 
     def to_json(self):
         return simplejson.dumps({

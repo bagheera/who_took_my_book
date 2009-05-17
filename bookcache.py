@@ -71,6 +71,33 @@ class CachedBook:
         logging.info("Reset CachedBook " + Book.get(book_id).title)
         memcache.delete(cls.key(book_id))
 #########################################################
+feed_key = "feed/whats_new"
+from datetime import datetime
+import os
+from google.appengine.ext.webapp import template
+class CachedFeed:
+    @staticmethod
+    def get():
+        feed = memcache.get(feed_key)
+        if not feed:
+            new_book_keys = [str(key_obj) for key_obj in Book.new_books()]
+            new_books = [simplejson.loads(CachedBook.get(book_id)) for book_id in new_book_keys]
+            template_values = {
+              'root': "http://whotookmybook.appspot.com/",
+              'books': new_books,
+              'updated_feed': datetime.now().isoformat() + 'Z'
+            }
+            path = os.path.join(os.path.dirname(__file__), 'whats_new.template')
+            feed = template.render(path, template_values)
+            memcache.set(feed_key, feed)
+        return feed
+
+    @staticmethod
+    def reset():
+        logging.info("Reset feed ")
+        memcache.delete(feed_key)
+#########################################################
+
 def before_change(book):
     if book.is_lent():
         CacheBookIdsBorrowed.reset(str(book.borrower.key()))
@@ -79,6 +106,7 @@ def after_change(book):
     owners_books = CacheBookIdsOwned.get(str(book.owner.key()))
     if not str(book.key()) in owners_books: #was it just created?
         CacheBookIdsOwned.reset(str(book.owner.key()))
+        CachedFeed.reset()
     else: #just changed hands?
         CachedBook.reset(str(book.key()))
         if book.is_lent():

@@ -1,7 +1,6 @@
 import cgi
 import wsgiref.handlers
 import os
-
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from wtmb import *
@@ -43,6 +42,11 @@ class LendPage(webapp.RequestHandler):
     path = os.path.join(os.path.dirname(__file__), 'lend.html')
     self.response.out.write(template.render(path, template_values))
 
+###################################################################    
+class WhatsNewFeed(webapp.RequestHandler):
+  def get(self):
+    self.response.headers['content-type'] = "application/atom+xml"
+    self.response.out.write(CachedFeed.get())
 
 def real_main():
   application = webapp.WSGIApplication(
@@ -57,6 +61,7 @@ def real_main():
                                         ('/mybooksj', FullListing),
                                         ('/asin-import', ImportASINs),
                                         ('/nickname', Nickname),
+                                        ('/feed/whats_new', WhatsNewFeed),
                                         (r'(/?)(.*)', BookListPage)],
                                        debug = True)
   wsgiref.handlers.CGIHandler().run(application)

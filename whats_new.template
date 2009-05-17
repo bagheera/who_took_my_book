@@ -1,0 +1,25 @@
+{% comment %}
+from: http://groups.google.com/group/google-appengine/msg/88bd2c4a169a405a
+{% endcomment %}
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <title type="text">Who took my Book - recent book additions</title>
+    <link href="http://whotookmybook.appspot.com/feed/whats_new" rel="self" type="application/atom+xml" />
+    <link href="http://whotookmybook.appspot.com/" rel="alternate" type="text/html" />
+    <id>{{root}}</id>
+    <updated>{{ updated_feed }}</updated>
+    <author><name>Who Took My Book</name></author>
+    {% for book in books %}
+    <entry>
+        <title type="text"><![CDATA[{{book.owner}} added: {{ book.title }} by {{book.author}}]]></title>
+        <id>{{ root }}{{ book.key }}</id>
+        <updated>{{ book.added_on }}</updated>
+        <content type="xhtml">
+            <div xmlns="http://www.w3.org/1999/xhtml">
+				<p>{{book.owner}} has added:</p>
+				<p>{{book.title}} by {{book.author}}</p>
+				<p><a href="http://whotookmybook.appspot.com">Go to app</a> to borrow it (needs login)</p>
+            </div>
+        </content>
+    </entry>
+    {% endfor %}
+</feed> 

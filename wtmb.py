@@ -110,7 +110,8 @@ class Book(db.Model):
                                         "borrowed_by": cgi.escape(self.borrower_name()),
                                         "owner": cgi.escape(self.owner.display_name()),
                                         "key": str(self.key()),
-                                        "asin":self.asin
+                                        "asin":self.asin,
+                                        "added_on": self.created_date.isoformat() + 'Z'
                                         })
 
     def summary(self):
@@ -189,4 +190,10 @@ class Book(db.Model):
     @staticmethod
     def borrowed_by(appuser_key):
         return db.GqlQuery("SELECT __key__ from Book WHERE borrower = :1 LIMIT 1000", appuser_key).fetch(1000)
+
+    @staticmethod
+    def new_books():
+      from datetime import date, timedelta
+      last_week = date.today() - timedelta(days = 7)
+      return db.GqlQuery("SELECT __key__ from Book WHERE created_date > :1", last_week).fetch(1000)
 ###################################################################

@@ -25,6 +25,9 @@ handlers:
 - url: /test.*
   script: gaeunit.py
 
+- url: /feed/whats_new
+  script: mybooks.py
+
 - url: /.*
   script: mybooks.py
   login: required

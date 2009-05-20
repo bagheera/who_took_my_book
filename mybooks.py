@@ -14,11 +14,10 @@ class BookListPage(webapp.RequestHandler):
        self.redirect('/mybooks')
     user = users.get_current_user()
     if user:
-      logging.info('creating logout url for ' + user.nickname())
       url = users.create_logout_url("/mybooks")
-      logging.debug(url)
       url_linktext = 'Logout'
       me = AppUser.getAppUserFor(user) #registers new user
+      me.update_last_login()
       template_values = {
         'url': url,
         'url_linktext': url_linktext,

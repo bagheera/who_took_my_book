@@ -1,25 +1,17 @@
+from django.utils import simplejson
 from google.appengine.ext import webapp
 from wtmb import Book
 from bookcache import *
 
 class FullListing(webapp.RequestHandler):
+
     def get(self):
         self.response.headers['content-type'] = "application/json"
-        self.response.out.write('{ ')
-        books = self.books_owned_by(AppUser.me())
-        exist = False
-        if not len(books) == 0:
-            self.response.out.write('mybooks: [')
-            self.response.out.write(",".join(books))
-            self.response.out.write(']')
-            exist = True
-        books = self.books_borrowed_by(AppUser.me())
-        if not len(books) == 0:
-            self.response.out.write(', borrowedBooks: [') if exist else self.response.out.write('borrowedBooks: [')
-            exist = True
-            self.response.out.write(",".join(books))
-            self.response.out.write(']')
-        self.response.out.write(', others: [') if exist else self.response.out.write('others: [')
+        data = {}
+        me = AppUser.me()
+        data['user'] = me.to_hash()
+        data['mybooks'] = self.books_owned_by(me)
+        data['borrowedBooks'] = self.books_borrowed_by(AppUser.me())
 #        'Keys only queries do not support IN or != filters.'
 #        others_books = map(CachedBook.get, Book.others_books())
         others_books = []
@@ -27,14 +19,19 @@ class FullListing(webapp.RequestHandler):
             books = self.books_owned_by(user)
             if not len(books) == 0:
                 others_books.extend(books)
-        self.response.out.write(",".join(others_books))
-        self.response.out.write(']}')
+        data['others'] = others_books
+        self.response.out.write(simplejson.dumps(data))
 
     def books_owned_by(self, appUser):
-        books_owned = CacheBookIdsOwned.get(appUser.key())
-        return map(CachedBook.get, books_owned) if books_owned else []
+        books_owned_ids = CacheBookIdsOwned.get(appUser.key())
+        return self.books_by_title(books_owned_ids) if books_owned_ids else []
 
     def books_borrowed_by(self, appUser):
-        books = CacheBookIdsBorrowed.get(appUser.key())
-        logging.info("bb_by " + str(books))
-        return map(CachedBook.get, books) if books else []
+        books_owned_ids = CacheBookIdsBorrowed.get(appUser.key())
+        return self.books_by_title(books_owned_ids) if books_owned_ids else []
+
+    def books_by_title(self, books_owned):
+        book_hashes = map(CachedBook.get, books_owned)
+        book_hashes.sort(lambda x, y: cmp(y['title'], x['title']))
+        return book_hashes
+

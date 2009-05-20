@@ -31,7 +31,7 @@ class Amz:
         return item.getElementsByTagNameNS(self.amz_ns, 'ASIN')[0].firstChild.data
 
 
-    def __is_tech_dewey(self, dewey):
+    def is_tech_dewey(self, dewey):
         return bool(dewey) and (dewey.startswith("004") or dewey.startswith("005"))
 
 
@@ -70,9 +70,9 @@ class Amz:
                     bk_author = self.__author_of(item)
                     bk_asin = self.__asin_of(item)
                     is_tech = False
-                    dewey = self.__dewey_decimal_of(item)
-                    is_tech = self.__is_tech_dewey(dewey)
-                    book = Book(title = bk_title, author = bk_author, is_technical = is_tech, asin = bk_asin)
+                    dewey_decimal = self.__dewey_decimal_of(item)
+                    is_tech = self.is_tech_dewey(dewey_decimal)
+                    book = Book(title = bk_title, author = bk_author, is_technical = is_tech, asin = bk_asin, dewey = dewey_decimal)
                     books.append(book)
                 except:
                   pass
@@ -80,20 +80,17 @@ class Amz:
             report("Did you enter comma separated ASINs?\namz lookup failed with code " + str(result.status_code))
         return books
 
-    def lookup_if_technical(self, asin):
+    def get_dewey(self, asin):
+        if asin == '0':
+            return None
         try:
             result = self.get_attribs_for_items(asin)
             if result.status_code == 200:
                 item = self.get_items_from_result(result)[0]
-                dewey = self.__dewey_decimal_of(item)
-                logging.info("dewey is " + str(dewey))
-                return self.__is_tech_dewey(dewey)
-            else:
-                logging.error("exception in dewey lookup: code: " + result.status_code)
-                return False;
+                return self.__dewey_decimal_of(item)
         except:
             logging.error("exception in dewey lookup")
-            return False;
+            return None
 
     def search_by(self, searchString):
         result = urlfetch.fetch(self.amz_url + 'Operation=ItemSearch&Keywords=' + searchString + '&SearchIndex=Books&ResponseGroup=Small')
@@ -152,15 +149,17 @@ class AddToBookshelf(webapp.RequestHandler):
             appuser = AppUser.getAppUserFor(users.get_current_user())
             book_asin = self.request.get('book_asin')
             try:
+                dewey_num = Amz().get_dewey(book_asin)
                 book = Book(
                             title = self.request.get('book_title'),
                             author = self.request.get('book_author'),
                             owner = appuser,
                             asin = book_asin,
-                            is_technical = Amz().lookup_if_technical(book_asin))
+                            dewey = dewey_num,
+                            is_technical = Amz().is_tech_dewey(dewey_num))
                 book.create()
                 self.response.headers['content-type'] = "application/json"
-                self.response.out.write(book.to_json())
+                self.response.out.write(simplejson.dumps(book.to_hash()))
 #                how to say as dupbook?
             except DuplicateBook:
                 self.response.set_status(412, "You already have this book. Cannot add again.")

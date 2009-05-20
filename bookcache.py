@@ -26,7 +26,7 @@ class CacheBookIdsBorrowed:
     def get(cls, user_key):
       books = memcache.get(cls.key(user_key))
       if not books:
-        books = [str(book_key) for book_key in Book.borrowed_by(user_key)]
+        books = set(str(book_key) for book_key in Book.borrowed_by(user_key))
         memcache.set(cls.key(user_key), books)
       return books
 
@@ -34,6 +34,21 @@ class CacheBookIdsBorrowed:
     def reset(cls, str_user_key):
         logging.info("Reset CacheBookIdsBorrowed for " + AppUser.get(str_user_key).display_name())
         memcache.delete(cls.key(str_user_key))
+
+    @classmethod
+    def add_book(cls, user_key_str, book_key_str):
+        cls.get(user_key_str); #just to make sure we have an entry
+        user_key_mc = cls.key(user_key_str)
+        book_set = memcache.get(user_key_mc)
+        book_set.add(book_key_str)
+        memcache.set(user_key_mc, book_set)
+
+    @classmethod
+    def remove_book(cls, user_key_str, book_key_str):
+        book_set = cls.get(user_key_str)
+        if book_set and book_key_str in book_set:
+            book_set.remove(book_key_str)
+            memcache.set(cls.key(user_key_str), book_set)
 #########################################################
 class CacheBookIdsOwned:
     @classmethod
@@ -44,7 +59,7 @@ class CacheBookIdsOwned:
     def get(cls, owner_key):
       books_owned = memcache.get(cls.key(owner_key))
       if not books_owned:
-        books_owned = [str(book_key) for book_key in Book.owned_by(owner_key)]
+        books_owned = set(str(book_key) for book_key in Book.owned_by(owner_key))
         memcache.set(cls.key(owner_key), books_owned)
       return books_owned
 
@@ -52,6 +67,21 @@ class CacheBookIdsOwned:
     def reset(cls, str_owner_key):
         logging.info("Reset CacheBookIdsOwned for " + AppUser.get(str_owner_key).display_name())
         memcache.delete(cls.key(str_owner_key))
+
+    @classmethod
+    def add_book(cls, owner_key_str, book_key_str):
+        cls.get(owner_key_str); #just to make sure we have an entry
+        owner_key_mc = cls.key(owner_key_str)
+        book_set = memcache.get(owner_key_mc)
+        book_set.add(book_key_str)
+        memcache.set(owner_key_mc, book_set)
+
+    @classmethod
+    def remove_book(cls, owner_key_str, book_key_str):
+        book_set = cls.get(owner_key_str)
+        if book_set and book_key_str in book_set:
+            book_set.remove(book_key_str)
+            memcache.set(cls.key(owner_key_str), book_set)
 #########################################################
 class CachedBook:
     @classmethod
@@ -62,7 +92,7 @@ class CachedBook:
     def get(cls, book_id):
         book = memcache.get(cls.key(book_id))
         if not book:
-          book = Book.get(book_id).to_json()
+          book = Book.get(book_id).to_hash()
           memcache.set(cls.key(book_id), book)
         return book
 
@@ -81,7 +111,7 @@ class CachedFeed:
         feed = memcache.get(feed_key)
         if not feed:
             new_book_keys = [str(key_obj) for key_obj in Book.new_books()]
-            new_books = [simplejson.loads(CachedBook.get(book_id)) for book_id in new_book_keys]
+            new_books = [CachedBook.get(book_id) for book_id in new_book_keys]
             template_values = {
               'root': "http://whotookmybook.appspot.com/",
               'books': new_books,
@@ -97,26 +127,27 @@ class CachedFeed:
         logging.info("Reset feed ")
         memcache.delete(feed_key)
 #########################################################
-
 def before_change(book):
     if book.is_lent():
-        CacheBookIdsBorrowed.reset(str(book.borrower.key()))
+        CacheBookIdsBorrowed.remove_book(str(book.borrower.key()), str(book.key()))
 
 def after_change(book):
     owners_books = CacheBookIdsOwned.get(str(book.owner.key()))
-    if not str(book.key()) in owners_books: #was it just created?
-        CacheBookIdsOwned.reset(str(book.owner.key()))
+    book_key_str = str(book.key())
+    if not book_key_str in owners_books: #was it just created?
+        CacheBookIdsOwned.add_book(str(book.owner.key()), book_key_str)
         CachedFeed.reset()
     else: #just changed hands?
-        CachedBook.reset(str(book.key()))
+        CachedBook.reset(book_key_str)
         if book.is_lent():
-          CacheBookIdsBorrowed.reset(str(book.borrower.key()))
+          CacheBookIdsBorrowed.add_book(str(book.borrower.key()), str(book.key()))
 
 def before_delete(book):
     if book.is_lent():
-       CacheBookIdsBorrowed.reset(str(book.borrower.key()))
-    CacheBookIdsOwned.reset(str(book.owner.key()))
-    CachedBook.reset(str(book.key()))
+       CacheBookIdsBorrowed.remove_book(str(book.borrower.key()), str(book.key()))
+    book_key_str = str(book.key())
+    CacheBookIdsOwned.remove_book(str(book.owner.key()), book_key_str)
+    CachedBook.reset(book_key_str)
 
 Book.borrow = pre_process(Book.borrow, before_change)
 Book.borrow = post_process(Book.borrow, after_change)

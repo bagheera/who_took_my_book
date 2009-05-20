@@ -2,7 +2,6 @@ from google.appengine.ext import db
 from google.appengine.api import users
 from google.appengine.api import mail
 
-from django.utils import simplejson
 import cgi
 import logging
 ###################################################################
@@ -32,6 +31,7 @@ class AppUser(db.Model):
     googleUser = db.UserProperty()
     wtmb_nickname = db.StringProperty()
     created_date = db.DateTimeProperty(auto_now_add = "true")
+    last_login_date = db.DateTimeProperty(auto_now = "true")
 
     def is_outsider(self):
         return not self.googleUser
@@ -72,11 +72,15 @@ class AppUser(db.Model):
         self.wtmb_nickname = new_nick
         self.put()
 
-    def to_json(self):
-        return simplejson.dumps({
+    def update_last_login(self):
+        self.put()
+
+    def to_hash(self):
+        return {
                                  "nickname": self.display_name(),
-                                 "email": self.email()
-                                        })
+                                 "email": self.email(),
+                                 "last_login": self.last_login_date.toordinal() #isoformat() + 'Z'
+                                        }
 
     @staticmethod
     def me():
@@ -93,6 +97,7 @@ class Book(db.Model):
     borrower = db.ReferenceProperty(AppUser, collection_name = "books_borrowed", required = False)
     asin = db.StringProperty()
     is_technical = db.BooleanProperty()
+    dewey = db.StringProperty()
     created_date = db.DateTimeProperty(auto_now_add = "true")
 
     def __init__(self, parent = None, key_name = None, **kw):
@@ -102,17 +107,18 @@ class Book(db.Model):
         if self.author.strip() == "":
             self.author = "unknown"
 
-    def to_json(self):
-        return simplejson.dumps({
+    def to_hash(self):
+        return {
                                         "title": cgi.escape(self.title),
                                         "author":cgi.escape(self.author),
                                         "is_tech": self.is_technical,
+                                        "dewey": self.dewey,
                                         "borrowed_by": cgi.escape(self.borrower_name()),
                                         "owner": cgi.escape(self.owner.display_name()),
                                         "key": str(self.key()),
                                         "asin":self.asin,
-                                        "added_on": self.created_date.isoformat() + 'Z'
-                                        })
+                                        "added_on": self.created_date.toordinal()
+                                        }
 
     def summary(self):
         return self.title + ' by ' + self.author

@@ -1,6 +1,7 @@
 var book_data = null;
 var show = "all";
 var amz_url = "http://www.amazon.com/dp/asin?tag=whotookmybook-20";
+var last_login_date = null;
 
 var BookShelf = Class.extend({
     init: function(){
@@ -58,7 +59,7 @@ var MyBooks = BookShelf.extend({
     
     render: function(books){
         myBooks.empty();
-        if (books) {
+        if (books.length > 0) {
             myBooks.render_header();
             $.each(books, this.mybookrow);
         }
@@ -132,7 +133,7 @@ var BorrowedBooks = BookShelf.extend({
     
     render: function(books){
         $("#borrowed_table").empty();
-        if (books) {
+        if (books.length > 0) {
             $("#borrowed_table").append('<tr><th class="colone">From</th><th class="coltwo">Book</th><th class="colthree"></th><th class="colfour"></th></tr>');
             $.each(books, this.borrowedBookrow);
         }
@@ -182,11 +183,16 @@ var OtherBooks = BookShelf.extend({
     borrow_link: function(book){
         return available(book) ? '<a href="/borrow/' + book.key + '">borrow</a>' : "";
     },
+	
+	new_indicator: function(book){
+		if(book.added_on - last_login_date > 0) return "class='nslv'"; //new since last visit - nslv
+		return "";
+	},
     
     othersbookrow: function(i){
         if (otherBooks.not_to_be_shown(this)) 
             return;
-        $("#others_table").append("<tr><td>" + this.owner + "</td><td>" + otherBooks.book_link(this) +
+        $("#others_table").append("<tr"+ otherBooks.new_indicator(this) +"><td>" + this.owner + "</td><td>" + otherBooks.book_link(this) +
         "</td><td>" +
         otherBooks.borrower(this) +
         "</td><td class='action'>" +
@@ -246,6 +252,7 @@ function available(book){
 
 function renderBooks(data){
     book_data = data;
+	last_login_date = data.user.last_login
     updateBookCount(data);
     myBooks.render(data.mybooks);
     borrowedBooks.render(data.borrowedBooks);
@@ -278,6 +285,7 @@ function fetch_books(){
 
 function on_add(book){
     myBooks.newRow(book);
+	$("#my_table_body tr:first").css('background-color', '#D9FFCC');
     if (!book_data['mybooks']) {
         book_data['mybooks'] = [];
     }
@@ -346,15 +354,18 @@ function setup_handlers(){
                     alert(xhr.statusText);
                 }
             });
+			return false;
         }
+		return true;
     });
-    
+/**    
     $("#bookshelf_inner").keypress(function(e){//not working??
         c = e.which ? e.which : e.keyCode;
         if (c == 97) {
             $("#suggestbox").focus();
         }
     });
+**/    
 }
 
 var myBooks = new MyBooks();

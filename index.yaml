@@ -15,10 +15,3 @@ indexes:
   properties:
   - name: asin
   - name: owner
-  - name: asin
-
-# Unused in query history -- copied from input.
-- kind: Greeting
-  properties:
-  - name: date
-    direction: desc

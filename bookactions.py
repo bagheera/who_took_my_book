@@ -179,7 +179,7 @@ class Borrow(webapp.RequestHandler):
                      to = [users.get_current_user().email(), bookToLoan.owner.email()],
                      cc = WTMB_SENDER,
                      subject = '[whotookmybook] ' + bookToLoan.title,
-                     body = users.get_current_user().nickname() + " has borrowed this book from " + bookToLoan.owner.display_name())
+                     body = users.get_current_user().nickname() + " has requested or borrowed this book from " + bookToLoan.owner.display_name())
             self.redirect('/mybooks')
         except IllegalStateTransition:
             self.error(403)
@@ -206,7 +206,9 @@ class ReturnBook(webapp.RequestHandler):
                          to = [old_borrower.email(), rtnd_book.owner.email()],
                          cc = WTMB_SENDER,
                          subject = '[whotookmybook] ' + rtnd_book.title,
-                         body = (AppUser.me().display_name() + " has returned this book to " + rtnd_book.owner.display_name() if (AppUser.me() != rtnd_book.owner) else AppUser.me().display_name() + " has asserted possession of this book"))
+                         body = (AppUser.me().display_name() + \
+                                 (" has returned this book to " + rtnd_book.owner.display_name()) if (AppUser.me() != rtnd_book.owner) else \
+                                 AppUser.me().display_name() + " has asserted possession of this book"))
 
         else:
             logging.warning(users.get_current_user().email() + " attempted to return book that wasn't borrowed " + rtnd_book.summary())

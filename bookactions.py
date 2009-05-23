@@ -7,14 +7,11 @@ import urllib
 from google.appengine.ext.webapp import template
 from google.appengine.ext import webapp
 from google.appengine.api import urlfetch
-from google.appengine.api import mail
+
 from django.utils import simplejson
 from xml.dom import minidom
 from wtmb import *
-
 ###################################################################
-WTMB_SENDER = "whotookmybook@gmail.com"
-WTMB_LINK = '\nGo to <a href="http://whotookmybook.appspot.com/mybooks">who took my book</a>'
 messages = []
 
 def report(msg):
@@ -174,12 +171,6 @@ class Borrow(webapp.RequestHandler):
         bookToLoan = Book.get(bookid)
         try:
             bookToLoan.borrow()
-            mail.send_mail(
-                     sender = WTMB_SENDER,
-                     to = [users.get_current_user().email(), bookToLoan.owner.email()],
-                     cc = WTMB_SENDER,
-                     subject = '[whotookmybook] ' + bookToLoan.title,
-                     body = users.get_current_user().nickname() + " has requested or borrowed this book from " + bookToLoan.owner.display_name())
             self.redirect('/mybooks')
         except IllegalStateTransition:
             self.error(403)
@@ -198,18 +189,8 @@ class ReturnBook(webapp.RequestHandler):
   def get(self, bookid):
     rtnd_book = Book.get(bookid)
     try:
-        old_borrower = rtnd_book.borrower
-        if old_borrower:
+        if rtnd_book.borrower: #move this check to book
             rtnd_book.return_to_owner()
-            mail.send_mail(
-                         sender = WTMB_SENDER,
-                         to = [old_borrower.email(), rtnd_book.owner.email()],
-                         cc = WTMB_SENDER,
-                         subject = '[whotookmybook] ' + rtnd_book.title,
-                         body = (AppUser.me().display_name() + \
-                                 (" has returned this book to " + rtnd_book.owner.display_name()) if (AppUser.me() != rtnd_book.owner) else \
-                                 AppUser.me().display_name() + " has asserted possession of this book"))
-
         else:
             logging.warning(users.get_current_user().email() + " attempted to return book that wasn't borrowed " + rtnd_book.summary())
         self.redirect('/mybooks')
@@ -233,12 +214,6 @@ class LendTo(webapp.RequestHandler):
         else:
             borrower = AppUser.create_outsider(new_user_name)
         bookToLoan.lend_to(borrower)
-        mail.send_mail(
-                     sender = WTMB_SENDER,
-                     to = [users.get_current_user().email(), bookToLoan.borrower.email()],
-                     cc = WTMB_SENDER,
-                     subject = '[whotookmybook] ' + bookToLoan.title,
-                     body = users.get_current_user().nickname() + " has lent this book to " + bookToLoan.borrower.display_name())
     except IllegalStateTransition:
         self.response.set_status(403, 'Illegal State Transition')
     except ValueError, v:

@@ -4,8 +4,11 @@ from google.appengine.api import mail
 
 import cgi
 import logging
+
+from eventregistry import *
 ###################################################################
 WTMB_SENDER = "whotookmybook@gmail.com"
+
 class IllegalStateTransition(Exception):
     def __init__(self, value):
         self.value = value
@@ -46,6 +49,15 @@ class AppUser(db.Model):
         new_user.put()
         return new_user
 
+    @classmethod
+    def on_new_user_registration(cls, new_user):
+        mail.send_mail(
+                     sender = WTMB_SENDER,
+                     to = [new_user.email()],
+                     cc = WTMB_SENDER,
+                     subject = '[whotookmybook] Welcome',
+                     body = "Thanks for choosing to use http://whotookmybook.appspot.com")
+
     @staticmethod
     def getAppUserFor(aGoogleUser):
         appuser = AppUser.gql('WHERE googleUser = :1', aGoogleUser).get()
@@ -53,13 +65,7 @@ class AppUser(db.Model):
             current_user = users.get_current_user()
             appuser = AppUser(googleUser = current_user, wtmb_nickname = current_user.nickname())
             appuser.put()
-            #bad place for mail
-            mail.send_mail(
-                         sender = WTMB_SENDER,
-                         to = [current_user.email()],
-                         cc = WTMB_SENDER,
-                         subject = '[whotookmybook] Welcome',
-                         body = "Thanks for choosing to use http://whotookmybook.appspot.com")
+            NewUserRegistered(appuser).fire()
         return appuser
 
     def display_name(self):
@@ -89,6 +95,8 @@ class AppUser(db.Model):
     @staticmethod
     def others():
         return AppUser.gql('WHERE googleUser != :1', users.get_current_user())
+
+NewUserRegistered().subscribe(AppUser.on_new_user_registration)
 ###################################################################        
 class Book(db.Model):
     author = db.StringProperty()
@@ -156,12 +164,14 @@ class Book(db.Model):
         if self.__duplicate():
             raise DuplicateBook("Add failed: You (" + AppUser.me().display_name() + ") already have added '" + self.title + "'");
         self.put()
+        NewBookAdded(self).fire()
         return self
 
     def return_to_owner(self):
         if self.borrowed_by_me() or self.belongs_to_me():
             self.__change_borrower(None)
             self.put()
+            BookReturned({'book':self, 'returner': AppUser.me()}).fire()
         else:
             logging.error(AppUser.me().display_name() + "made an illegal attempt to return" + self.title + " owned by " + self.owner.display_name())
             raise IllegalStateTransition("illegal attempt to return")
@@ -169,6 +179,7 @@ class Book(db.Model):
     def obliterate(self):
         if self.belongs_to_me():
             self.delete()
+            BookDeleted(self).fire()
         else:
             logging.error(AppUser.me().display_name() + "made an illegal attempt to delete " + self.title + " owned by " + self.owner.display_name())
             raise IllegalStateTransition("illegal attempt to delete")
@@ -177,14 +188,18 @@ class Book(db.Model):
         if self.belongs_to_someone_else() and self.is_available():
             self.__change_borrower(AppUser.me())
             self.put()
+            BookBorrowed(self).fire()
         else:
             logging.error(AppUser.me().display_name() + "made an illegal attempt to borrow " + self.title + " owned by " + self.owner.display_name())
             raise IllegalStateTransition("illegal attempt to borrow")
 
     def lend_to(self, appuser):
         if self.belongs_to_me():
+            if not self.is_available():
+                self.return_to_owner()
             self.__change_borrower(appuser)
             self.put()
+            BookLent(self).fire()
         else:
             logging.error(AppUser.me().display_name() + "made an illegal attempt to lend " + self.title + " owned by " + self.owner.display_name() + " to " + appuser.display_name())
             raise IllegalStateTransition("illegal attempt to lend")
@@ -202,4 +217,48 @@ class Book(db.Model):
       from datetime import date, timedelta
       last_week = date.today() - timedelta(days = 7)
       return db.GqlQuery("SELECT __key__ from Book WHERE created_date > :1", last_week).fetch(1000)
+
+    @staticmethod
+    def on_return(info):
+            returner = info['returner']
+            book = info['book']
+            mail.send_mail(
+                         sender = WTMB_SENDER,
+                         to = [returner.email(), book.owner.email()],
+                         cc = WTMB_SENDER,
+                         subject = '[whotookmybook] ' + book.title,
+                         body = (returner.display_name() + \
+                                 (" has returned this book to " + book.owner.display_name()) if (returner != book.owner) else \
+                                 returner.display_name() + " has asserted possession of this book"))
+    @staticmethod
+    def on_borrow(book):
+            mail.send_mail(
+                     sender = WTMB_SENDER,
+                     to = [book.owner.email(), book.borrower.email()],
+                     cc = WTMB_SENDER,
+                     subject = '[whotookmybook] ' + book.title,
+                     body = book.borrower.display_name() + " has requested or borrowed this book from " + book.owner.display_name())
+
+    @staticmethod
+    def on_lent(book):
+        mail.send_mail(
+                     sender = WTMB_SENDER,
+                     to = [book.owner.email(), book.borrower.email()],
+                     cc = WTMB_SENDER,
+                     subject = '[whotookmybook] ' + book.title,
+                     body = book.owner.display_name() + " has lent this book to " + book.borrower.display_name())
+
+    @staticmethod
+    def on_add(book):
+        pass
+
+    @staticmethod
+    def on_delete(book):
+        pass
+
+BookReturned().subscribe(Book.on_return)
+BookLent().subscribe(Book.on_lent)
+NewBookAdded().subscribe(Book.on_add)
+BookDeleted().subscribe(Book.on_delete)
+BookBorrowed().subscribe(Book.on_borrow)
 ###################################################################

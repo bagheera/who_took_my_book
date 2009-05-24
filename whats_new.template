@@ -18,6 +18,7 @@ from: http://groups.google.com/group/google-appengine/msg/88bd2c4a169a405a
 				<p>{{book.owner}} has added:</p>
 				<p>{{book.title}} by {{book.author}}</p>
 				<p><a href="http://whotookmybook.appspot.com">Go to app</a> to borrow it (needs login)</p>
+				<p><a href="http://www.amazon.com/dp/{{book.asin}}?tag=whotookmybook-20">Explore</a> this book at amazon.</p>
             </div>
         </content>
     </entry>

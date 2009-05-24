@@ -75,3 +75,7 @@ br {
 .nslv{
   background-color: #F2FFCC;
 }
+
+img{
+  border-style: none;
+}

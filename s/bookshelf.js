@@ -54,6 +54,22 @@ var MyBooks = BookShelf.extend({
     },
     
     render_header: function(){
+		$('#my_div').prepend('<a id="my_table_switch_on" href="#" title="collapse">v</a><a id="my_table_switch_off" href="#" title="expand">&gt;</a>');
+		$('#my_table_switch_off').hide();
+		$('#my_table_switch_on').click(
+			function(){
+				$(this).hide();
+				$("#my_table").hide();
+				$("#my_table_switch_off").show();
+			}
+		);
+		$('#my_table_switch_off').click(
+			function(){
+				$(this).hide();
+				$("#my_table").show();
+				$("#my_table_switch_on").show();
+			}
+		);
         $("#my_table").append('<thead><tr><th class="colone"></th><th class="coltwo">Book</th><th class="colthree">Lent to</th><th class="colfour"></th></tr></thead><tbody id="my_table_body"><tr/></tbody>');
     },
     
@@ -90,6 +106,7 @@ var MyBooks = BookShelf.extend({
 		result = this._super(book);
 		if(result != ""){
 			result += "  " + this.return_link(book, "x", "No. I have it");
+			result = "<a title='send gentle reminder' href='#' class='reminder' name='"+book.key+"'>&#174;</a> " + result;
 		}
 		return result;
     },
@@ -255,6 +272,21 @@ function renderBooks(data){
 	last_login_date = data.user.last_login
     updateBookCount(data);
     myBooks.render(data.mybooks);
+		$("a.reminder").click(
+			function(){
+			    $.ajax({
+			        url: "/remind",
+			        type: "POST",
+			        data: {
+			            "book_id": $(this).attr('name'),
+			        },
+			        success: function(){alert ('Reminder sent')},
+			        error: function(xhr){alert(xhr.statusText);}
+			    });				
+			}
+		); 
+
+	
     borrowedBooks.render(data.borrowedBooks);
     otherBooks.render(data.others);
     $('#overlay').hide();
@@ -275,7 +307,7 @@ function show_all(){
     renderBooks(book_data);
 }
 
-function fetch_books(){
+function fetch_and_render_books(){
     showgif();
     $.getJSON("/mybooksj", renderBooks);
     $("#tech_only").click(show_tech_only);
@@ -366,6 +398,7 @@ function setup_handlers(){
         }
     });
 **/    
+
 }
 
 var myBooks = new MyBooks();
@@ -382,6 +415,6 @@ $(document).ready(function(){
         $("#manual").show();
         $("#book_title").focus();
     });
-    fetch_books();
+    fetch_and_render_books();
     setup_handlers();
 });

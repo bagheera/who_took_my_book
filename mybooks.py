@@ -61,6 +61,7 @@ def real_main():
                                         ('/asin-import', ImportASINs),
                                         ('/nickname', Nickname),
                                         ('/feed/whats_new', WhatsNewFeed),
+                                        ('/remind', Remind),
                                         (r'(/?)(.*)', BookListPage)],
                                        debug = True)
   wsgiref.handlers.CGIHandler().run(application)

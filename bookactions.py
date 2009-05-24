@@ -238,3 +238,11 @@ class Nickname(webapp.RequestHandler):
             return
         me = AppUser.me()
         me.change_nickname(cgi.escape(new_nick))
+###################################################################
+class Remind(webapp.RequestHandler):
+    def post(self):
+        try:
+            book_id = self.request.get('book_id')
+            Book.get(book_id).remind()
+        except Exception, e:
+            self.response.set_status(400, str(e))

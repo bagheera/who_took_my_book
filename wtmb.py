@@ -29,6 +29,13 @@ class BookWithoutTitle(Exception):
 
     def __str__(self):
         return repr(self.value)
+
+class WtmbException(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
 ###################################################################
 class AppUser(db.Model):
     googleUser = db.UserProperty()
@@ -203,6 +210,19 @@ class Book(db.Model):
         else:
             logging.error(AppUser.me().display_name() + "made an illegal attempt to lend " + self.title + " owned by " + self.owner.display_name() + " to " + appuser.display_name())
             raise IllegalStateTransition("illegal attempt to lend")
+
+    def remind(self):
+        if self.belongs_to_me() and self.is_lent():
+            mail.send_mail(
+                     sender = WTMB_SENDER,
+                     to = [self.owner.email(), self.borrower.email()],
+                     cc = WTMB_SENDER,
+                     subject = '[whotookmybook] ' + self.title,
+                     body = "Hi " + self.borrower.display_name() + "\n" \
+                        + self.owner.display_name() + " would like to gently remind you to return '" + self.title + "' if you have finished with it. ")
+        else:
+            logging.error(AppUser.me().display_name() + "made an illegal attempt to remind about " + self.title + " owned by " + self.owner.display_name())
+            raise WtmbException("illegal attempt to remind")
 
     @staticmethod
     def owned_by(appuser_key):

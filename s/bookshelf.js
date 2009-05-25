@@ -38,7 +38,7 @@ var BookShelf = Class.extend({
 	book_link: function(book){
 		text = book.title;
 		if(book.author != "unknown") text = text + " by " +   book.author; 
-		if (book.asin && book.asin.length == 10) return  text + ' <a target="_blank" title="find this book in amazon" href="'+amz_url.replace("asin", book.asin)+'">'+'explore'+'</a>';
+		if (book.asin && book.asin.length == 10) return  text + ' <a target="_blank" title="explore this book @ amazon" href="'+amz_url.replace("asin", book.asin)+'">'+'&#187;'+'</a>';
 		return text;
 	}
 });
@@ -105,8 +105,8 @@ var MyBooks = BookShelf.extend({
     borrower: function(book){
 		result = this._super(book);
 		if(result != ""){
-			result += "  " + this.return_link(book, "x", "No. I have it");
-			result = "<a title='send gentle reminder' href='#' class='reminder' name='"+book.key+"'>&#174;</a> " + result;
+			result += "  " + this.return_link(book, "&#215;", "Not lent. I have this book with me.");
+			result = "<a title='send gentle reminder email' href='#' class='reminder' name='"+book.key+"'>&#174;</a> " + result;
 		}
 		return result;
     },
@@ -281,7 +281,7 @@ function renderBooks(data){
 			            "book_id": $(this).attr('name'),
 			        },
 			        success: function(){alert ('Reminder sent')},
-			        error: function(xhr){alert(xhr.statusText);}
+			        error: on_ajax_fail
 			    });				
 			}
 		); 
@@ -309,7 +309,13 @@ function show_all(){
 
 function fetch_and_render_books(){
     showgif();
-    $.getJSON("/mybooksj", renderBooks);
+    $.ajax({
+	    url: "/mybooksj",
+	    type: "GET",
+		success: renderBooks,
+		errror: on_ajax_fail,
+		dataType: "json"
+	}); 
     $("#tech_only").click(show_tech_only);
     $("#non_tech_only").click(show_non_tech_only);
     $("#show_all").click(show_all);
@@ -328,7 +334,7 @@ function on_add(book){
     $("#suggestbox").focus();
 }
 
-function on_add_error(xhr, desc, exceptionobj){
+function on_ajax_fail(xhr, desc, exceptionobj){
     alert(xhr.statusText);
 }
 
@@ -343,7 +349,7 @@ function post_new_book(title, author, asin){
             "book_asin": asin
         },
         success: on_add,
-        error: on_add_error,
+        error: on_ajax_fail,
         dataType: "json"
     });
 }
@@ -382,9 +388,7 @@ function setup_handlers(){
                     $("#nick_text").hide();
                     $("#hi_msg").text("Hi " + nickname);
                 },
-                error: function(xhr){
-                    alert(xhr.statusText);
-                }
+                error: on_ajax_fail
             });
 			return false;
         }

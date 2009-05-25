@@ -60,7 +60,7 @@ class AppUser(db.Model):
     def on_new_user_registration(cls, new_user):
         mail.send_mail(
                      sender = WTMB_SENDER,
-                     to = [new_user.email()],
+                     to = new_user.email(),
                      cc = WTMB_SENDER,
                      subject = '[whotookmybook] Welcome',
                      body = "Thanks for choosing to use http://whotookmybook.appspot.com")
@@ -176,17 +176,21 @@ class Book(db.Model):
 
     def return_to_owner(self):
         if self.borrowed_by_me() or self.belongs_to_me():
+            old_borrower = self.borrower
             self.__change_borrower(None)
             self.put()
-            BookReturned({'book':self, 'returner': AppUser.me()}).fire()
+            BookReturned({'book':self, 'returner': AppUser.me(), 'old_borrower': old_borrower}).fire()
         else:
             logging.error(AppUser.me().display_name() + "made an illegal attempt to return" + self.title + " owned by " + self.owner.display_name())
             raise IllegalStateTransition("illegal attempt to return")
 
     def obliterate(self):
         if self.belongs_to_me():
+            info = {'book_key': str(self.key()), 'owner': str(self.owner.key())}
+            if self.borrower:
+                info['old_borrower'] = str(self.borrower.key())
             self.delete()
-            BookDeleted(self).fire()
+            BookDeleted(info).fire()
         else:
             logging.error(AppUser.me().display_name() + "made an illegal attempt to delete " + self.title + " owned by " + self.owner.display_name())
             raise IllegalStateTransition("illegal attempt to delete")
@@ -214,8 +218,8 @@ class Book(db.Model):
     def remind(self):
         if self.belongs_to_me() and self.is_lent():
             mail.send_mail(
-                     sender = WTMB_SENDER,
-                     to = [self.owner.email(), self.borrower.email()],
+                     sender = AppUser.me().email(),
+                     to = self.borrower.email(),
                      cc = WTMB_SENDER,
                      subject = '[whotookmybook] ' + self.title,
                      body = "Hi " + self.borrower.display_name() + "\n" \
@@ -238,43 +242,67 @@ class Book(db.Model):
       last_week = date.today() - timedelta(days = 7)
       return db.GqlQuery("SELECT __key__ from Book WHERE created_date > :1", last_week).fetch(1000)
 
+
     @staticmethod
     def on_return(info):
-            returner = info['returner']
-            book = info['book']
-            mail.send_mail(
-                         sender = WTMB_SENDER,
-                         to = [returner.email(), book.owner.email()],
-                         cc = WTMB_SENDER,
-                         subject = '[whotookmybook] ' + book.title,
-                         body = (returner.display_name() + \
-                                 (" has returned this book to " + book.owner.display_name()) if (returner != book.owner) else \
-                                 returner.display_name() + " has asserted possession of this book"))
-    @staticmethod
-    def on_borrow(book):
-            mail.send_mail(
-                     sender = WTMB_SENDER,
-                     to = [book.owner.email(), book.borrower.email()],
+        returner = info['returner']
+        book = info['book']
+        old_borrower = info['old_borrower']
+        mail.send_mail(
+                     sender = AppUser.me().email(),
+                     to = book.owner.email(),
                      cc = WTMB_SENDER,
                      subject = '[whotookmybook] ' + book.title,
-                     body = book.borrower.display_name() + " has requested or borrowed this book from " + book.owner.display_name())
+                     body = (returner.display_name() + \
+                             (" has returned this book to " + book.owner.display_name()) if (returner != book.owner) else \
+                             returner.display_name() + " has asserted possession of this book"))
+        from bookcache import *
+        book_key_str = str(book.key())
+        CacheBookIdsBorrowed.remove_book(str(old_borrower.key()), book_key_str)
+        CachedBook.reset(book_key_str)
+
+    @staticmethod
+    def on_borrow(book):
+        mail.send_mail(
+                 sender = AppUser.me().email(),
+                 to = book.owner.email(),
+                 cc = WTMB_SENDER,
+                 subject = '[whotookmybook] ' + book.title,
+                 body = book.borrower.display_name() + " has requested or borrowed this book from " + book.owner.display_name())
+        from bookcache import *
+        book_key_str = str(book.key())
+        CacheBookIdsBorrowed.add_book(str(book.borrower.key()), book_key_str)
+        CachedBook.reset(book_key_str)
 
     @staticmethod
     def on_lent(book):
         mail.send_mail(
-                     sender = WTMB_SENDER,
-                     to = [book.owner.email(), book.borrower.email()],
+                     sender = AppUser.me().email(),
+                     to = book.borrower.email(),
                      cc = WTMB_SENDER,
                      subject = '[whotookmybook] ' + book.title,
                      body = book.owner.display_name() + " has lent this book to " + book.borrower.display_name())
+        from bookcache import *
+        book_key_str = str(book.key())
+        CacheBookIdsBorrowed.add_book(str(book.borrower.key()), book_key_str)
+        CachedBook.reset(book_key_str)
 
     @staticmethod
     def on_add(book):
-        pass
+        from bookcache import *
+        book_key_str = str(book.key())
+        CacheBookIdsOwned.add_book(str(book.owner.key()), book_key_str)
 
     @staticmethod
-    def on_delete(book):
-        pass
+    def on_delete(info):
+        book_key_str = info['book_key']
+        old_borrower = info.get('old_borrower', None)
+        owner = info['owner']
+        from bookcache import *
+        CacheBookIdsOwned.remove_book(owner, book_key_str)
+        CachedBook.reset(book_key_str)
+        if old_borrower:
+            CacheBookIdsBorrowed.remove_book(old_borrower, book_key_str)
 
 BookReturned().subscribe(Book.on_return)
 BookLent().subscribe(Book.on_lent)

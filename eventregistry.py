@@ -23,6 +23,7 @@ class NewUserRegistered(BaseEvent):
 class NewBookAdded(BaseEvent):
     pass
 
+'''{'book':self, 'old_borrower': old_borrower}'''
 class BookDeleted(BaseEvent):
     pass
 

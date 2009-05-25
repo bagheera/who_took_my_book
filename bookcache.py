@@ -1,23 +1,10 @@
 from google.appengine.api import memcache
-from wtmb import *
 import logging
 import urllib
-###################################################################  
-# global stuff
-def post_process(f, after):
-    def g(self, *args):
-        f(self, *args)
-        after(self)
-    return g
-
-def pre_process(f, before):
-    def g(self, *args):
-        before(self)
-        f(self, *args)
-    return g
-
+from wtmb import Book
 ###################################################################
 class CacheBookIdsBorrowed:
+
     @classmethod
     def key(cls, user_key):
         return "book_ids_borrowed_by_" + str(user_key)
@@ -98,7 +85,6 @@ class CachedBook:
 
     @classmethod
     def reset(cls, book_id):
-        logging.info("Reset CachedBook " + Book.get(book_id).title)
         memcache.delete(cls.key(book_id))
 #########################################################
 feed_key = "feed/whats_new"
@@ -127,36 +113,3 @@ class CachedFeed:
         logging.info("Reset feed ")
         memcache.delete(feed_key)
 #########################################################
-def before_change(book):
-    if book.is_lent():
-        CacheBookIdsBorrowed.remove_book(str(book.borrower.key()), str(book.key()))
-
-def after_change(book):
-    owners_books = CacheBookIdsOwned.get(str(book.owner.key()))
-    book_key_str = str(book.key())
-    if not book_key_str in owners_books: #was it just created?
-        CacheBookIdsOwned.add_book(str(book.owner.key()), book_key_str)
-        CachedFeed.reset()
-    else: #just changed hands?
-        CachedBook.reset(book_key_str)
-        if book.is_lent():
-          CacheBookIdsBorrowed.add_book(str(book.borrower.key()), str(book.key()))
-
-def before_delete(book):
-    if book.is_lent():
-       CacheBookIdsBorrowed.remove_book(str(book.borrower.key()), str(book.key()))
-    book_key_str = str(book.key())
-    CacheBookIdsOwned.remove_book(str(book.owner.key()), book_key_str)
-    CachedBook.reset(book_key_str)
-
-Book.borrow = pre_process(Book.borrow, before_change)
-Book.borrow = post_process(Book.borrow, after_change)
-
-Book.lend_to = pre_process(Book.lend_to, before_change)
-Book.lend_to = post_process(Book.lend_to, after_change)
-
-Book.return_to_owner = pre_process(Book.return_to_owner, before_change)
-Book.return_to_owner = post_process(Book.return_to_owner, after_change)
-
-Book.obliterate = pre_process(Book.obliterate, before_delete)
-Book.create = post_process(Book.create, after_change)

@@ -256,7 +256,7 @@ class Book(db.Model):
                      body = (returner.display_name() + \
                              (" has returned this book to " + book.owner.display_name()) if (returner != book.owner) else \
                              returner.display_name() + " has asserted possession of this book"))
-        from bookcache import *
+        from bookcache import CachedBook, CacheBookIdsBorrowed
         book_key_str = str(book.key())
         CacheBookIdsBorrowed.remove_book(str(old_borrower.key()), book_key_str)
         CachedBook.reset(book_key_str)
@@ -269,7 +269,7 @@ class Book(db.Model):
                  cc = WTMB_SENDER,
                  subject = '[whotookmybook] ' + book.title,
                  body = book.borrower.display_name() + " has requested or borrowed this book from " + book.owner.display_name())
-        from bookcache import *
+        from bookcache import CachedBook, CacheBookIdsBorrowed
         book_key_str = str(book.key())
         CacheBookIdsBorrowed.add_book(str(book.borrower.key()), book_key_str)
         CachedBook.reset(book_key_str)
@@ -282,23 +282,24 @@ class Book(db.Model):
                      cc = WTMB_SENDER,
                      subject = '[whotookmybook] ' + book.title,
                      body = book.owner.display_name() + " has lent this book to " + book.borrower.display_name())
-        from bookcache import *
+        from bookcache import CachedBook, CacheBookIdsBorrowed
         book_key_str = str(book.key())
         CacheBookIdsBorrowed.add_book(str(book.borrower.key()), book_key_str)
         CachedBook.reset(book_key_str)
 
     @staticmethod
     def on_add(book):
-        from bookcache import *
+        from bookcache import CacheBookIdsOwned, CachedFeed
         book_key_str = str(book.key())
         CacheBookIdsOwned.add_book(str(book.owner.key()), book_key_str)
+        CachedFeed.reset()
 
     @staticmethod
     def on_delete(info):
         book_key_str = info['book_key']
         old_borrower = info.get('old_borrower', None)
         owner = info['owner']
-        from bookcache import *
+        from bookcache import CacheBookIdsOwned, CacheBookIdsBorrowed, CachedBook
         CacheBookIdsOwned.remove_book(owner, book_key_str)
         CachedBook.reset(book_key_str)
         if old_borrower:

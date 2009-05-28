@@ -45,6 +45,7 @@ class LendPage(webapp.RequestHandler):
 class WhatsNewFeed(webapp.RequestHandler):
   def get(self):
     self.response.headers['content-type'] = "application/atom+xml"
+    self.response.headers['Cache-Control'] = "max-age=3600"
     self.response.out.write(CachedFeed.get())
 
 def real_main():

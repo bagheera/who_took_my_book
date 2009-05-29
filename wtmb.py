@@ -66,17 +66,20 @@ class AppUser(db.Model):
 
     @classmethod
     def on_new_user_registration(cls, new_user):
-        import os
-        from google.appengine.ext.webapp import template
-        path = os.path.join(os.path.dirname(__file__), 'welcome.template')
-        welcome_msg = template.render(path, {})
-        logging.debug(welcome_msg)
-        mail.send_mail(
-                     sender = WTMB_SENDER,
-                     to = new_user.email(),
-                     cc = WTMB_SENDER,
-                     subject = '[whotookmybook] Welcome',
-                     body = welcome_msg)
+        try:
+            import os
+            from google.appengine.ext.webapp import template
+            path = os.path.join(os.path.dirname(__file__), 'welcome.template')
+            welcome_msg = template.render(path, {})
+            logging.debug(welcome_msg)
+            mail.send_mail(
+                         sender = WTMB_SENDER,
+                         to = new_user.email(),
+                         cc = WTMB_SENDER,
+                         subject = '[whotookmybook] Welcome',
+                         body = welcome_msg)
+        except Exception, e:
+            logging.error(str(e))
 
     @staticmethod
     def getAppUserFor(aGoogleUser, outsider_key = None, outsider_email = None):
@@ -150,7 +153,7 @@ class AppUser(db.Model):
                              subject = 'Invitation to who_took_my_book',
                              body = msg_text)
             except Exception, e:
-                logging.error(e)
+                logging.error(str(e))
 
 NewUserRegistered().subscribe(AppUser.on_new_user_registration)
 NewOutsider().subscribe(AppUser.on_new_outsider)

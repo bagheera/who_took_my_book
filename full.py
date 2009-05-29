@@ -3,10 +3,17 @@ from google.appengine.ext import webapp
 from wtmb import *
 from bookcache import *
 from google.appengine.api.datastore_errors import Timeout
+from google.appengine.api import users
 
 class FullListing(webapp.RequestHandler):
 
     def get(self):
+        #workaround for cron: X-AppEngine-Cron: true
+#        if not users.get_current_user() and not self.request.headers.get('X-AppEngine-Cron', None):
+#            logging.warning('attempted access by other than X-AppEngine-Cron');
+#            self.response.set_status(401)
+#            return
+        # won't do because AppUser.me has to work later
         try:
             self.response.headers['content-type'] = "application/json"
             data = {}

@@ -13,11 +13,12 @@
 				window.location.replace("/mybooks");
 			}
             
-			function create_lease(book_id, borrower_id, new_user_name){
+			function create_lease(book_id, borrower_id, new_user_name, new_user_email){
 				payload = {};
 				payload['book_id'] = book_id;
 				if(borrower_id) payload['lend_to'] = borrower_id;
 				if(new_user_name) payload['new_user'] = new_user_name;
+				if(new_user_email) payload['new_user_email'] = new_user_email;
 			    $.ajax({
 			        url: "/lendTo",
 			        type: "POST",
@@ -43,12 +44,9 @@
 							create_lease($("#book_id").val(), choice, null);
 						});
 					
-					$('#new_user_text').keypress(
-						function(e){
-	        				c = e.which ? e.which : e.keyCode;
-	        				if (c == 13) {
-								create_lease($("#book_id").val(), null, $("#new_user_text").val());
-							}
+					$('#new_user_submit').click(
+						function(){
+								create_lease($("#book_id").val(), null, $("#new_user_text").val(), $("#new_user_email").val());
 	            		});
                });
         </script>
@@ -66,11 +64,18 @@
                 <select id="choose_borrower">
                     <option value="dummy">choose a user...</option>
                     {% for user in members %}<option value="{{ user.0 }}">{{ user.1 }}</option>
-                    {% endfor %}<option value="outsider"><em>someone else?...</em></option>
+                    {% endfor %}<option value="outsider" class="stand_out">someone else?...</option>
                 </select>
+				<br><small>Select option 'someone else' at the end if the borrower is not registerd with the app</small>
                 <div id="new_user_dialog_text">
-                    Enter name for new unregistered user: <input type="text" id="new_user_text" size="10">
-                    </input>
+                	<br>
+                    <label for="new_user_text">Borrower name (required):</label> 
+					<input type="text" id="new_user_text" size="10"></input>
+					<br>
+                    <label for="new_user_email">Borrower email (optional):</label>
+					<input type="text" id="new_user_email" size="20"></input>
+					<small>To inform about this book and to invite to use <q>who took my book</q></small> 
+					<br><button id="new_user_submit">submit</button>
                 </div>
             </div>
         </div>

@@ -9,6 +9,7 @@ from bookcache import *
 from full import *
 
 class BookListPage(webapp.RequestHandler):
+  #args is necessary, but why?
   def get(self, *args):
     if self.request.path_info != '/mybooks':
        self.redirect('/mybooks')
@@ -16,7 +17,7 @@ class BookListPage(webapp.RequestHandler):
     if user:
       url = users.create_logout_url("/mybooks")
       url_linktext = 'Logout'
-      me = AppUser.getAppUserFor(user) #registers new user
+      me = AppUser.getAppUserFor(user, self.request.get('u'), self.request.get('e')) #registers new user
       me.update_last_login()
       template_values = {
         'url': url,
@@ -63,6 +64,7 @@ def real_main():
                                         ('/nickname', Nickname),
                                         ('/feed/whats_new', WhatsNewFeed),
                                         ('/remind', Remind),
+                                        ('/cron/keepalive', FullListing),
                                         (r'(/?)(.*)', BookListPage)],
                                        debug = True)
   wsgiref.handlers.CGIHandler().run(application)

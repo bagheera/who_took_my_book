@@ -4,10 +4,16 @@ from google.appengine.api import mail
 
 import cgi
 import logging
-
 from eventregistry import *
 ###################################################################
 WTMB_SENDER = "whotookmybook@gmail.com"
+
+#from http://code.activestate.com/recipes/52282/#c2
+def ternary(condition, trueVal, falseVal):
+    if condition:
+        return trueVal
+    else:
+        return falseVal
 
 class IllegalStateTransition(Exception):
     def __init__(self, value):
@@ -40,6 +46,7 @@ class WtmbException(Exception):
 class AppUser(db.Model):
     googleUser = db.UserProperty()
     wtmb_nickname = db.StringProperty()
+    unregistered_email = db.StringProperty()
     created_date = db.DateTimeProperty(auto_now_add = "true")
     last_login_date = db.DateTimeProperty(auto_now = "true")
 
@@ -47,39 +54,59 @@ class AppUser(db.Model):
         return not self.googleUser
 
     @staticmethod
-    def create_outsider(name):
+    def create_outsider(name, for_book, email = None):
         if not name or name.strip() == "":
             raise ValueError("Name cannot be empty")
         if AppUser.gql('WHERE googleUser = :1 and wtmb_nickname= :2', None, name).get():
-            raise ValueError("This name is already taken")
-        new_user = AppUser(wtmb_nickname = name)
+            raise ValueError("This name is taken")
+        new_user = AppUser(wtmb_nickname = name, unregistered_email = email)
         new_user.put()
+        NewOutsider({'outsider':new_user, 'for_book':for_book}).fire()
         return new_user
 
     @classmethod
     def on_new_user_registration(cls, new_user):
+        import os
+        from google.appengine.ext.webapp import template
+        path = os.path.join(os.path.dirname(__file__), 'welcome.template')
+        welcome_msg = template.render(path, {})
+        logging.debug(welcome_msg)
         mail.send_mail(
                      sender = WTMB_SENDER,
                      to = new_user.email(),
                      cc = WTMB_SENDER,
                      subject = '[whotookmybook] Welcome',
-                     body = "Thanks for choosing to use http://whotookmybook.appspot.com")
+                     body = welcome_msg)
 
     @staticmethod
-    def getAppUserFor(aGoogleUser):
+    def getAppUserFor(aGoogleUser, outsider_key = None, outsider_email = None):
         appuser = AppUser.gql('WHERE googleUser = :1', aGoogleUser).get()
         if appuser is None:
-            current_user = users.get_current_user()
-            appuser = AppUser(googleUser = current_user, wtmb_nickname = current_user.nickname())
-            appuser.put()
-            NewUserRegistered(appuser).fire()
+            if outsider_key and outsider_email and AppUser.get(outsider_key) and AppUser.get(outsider_key).unregistered_email == outsider_email:
+                appuser = AppUser.get(outsider_key).regularize()
+            else:
+                current_user = users.get_current_user()
+                appuser = AppUser(googleUser = current_user, wtmb_nickname = current_user.nickname())
+                appuser.put()
+                NewUserRegistered(appuser).fire()
         return appuser
+
+    def regularize(self):
+        self.googleUser = users.get_current_user()
+        self.put()
+        NewUserRegistered(self).fire()
+        return self
 
     def display_name(self):
         return self.wtmb_nickname if self.wtmb_nickname else self.googleUser.nickname()
 
     def email(self):
-        return self.googleUser.email() if self.googleUser else "whotookmybook+unregistered_user_" + self.wtmb_nickname + "@gmail.com"
+        if self.googleUser:
+            return self.googleUser.email()
+        if self.unregistered_email:
+            return self.unregistered_email
+        else:
+            return "whotookmybook+unregistered_user_" + self.wtmb_nickname + "@gmail.com"
 
     def change_nickname(self, new_nick):
         self.wtmb_nickname = new_nick
@@ -103,7 +130,30 @@ class AppUser(db.Model):
     def others():
         return AppUser.gql('WHERE googleUser != :1', users.get_current_user())
 
+    @staticmethod
+    def on_new_outsider(info):
+        outsider = info['outsider']
+        if outsider.unregistered_email:
+            book = info['for_book']
+            #current thread coupling - bad
+            import urllib
+            msg_text = "Hi " + outsider.display_name() + "\n"\
+                                      "I just made use of a free app called who_took_my_book to track that I have lent the book '" + book.summary() + "' to you.\n \
+                                       If you'd like to register for this app to keep track of your books, just click http://whotookmybook.appspot.com/mybooks?u=" + \
+                                       str(outsider.key()) + '&e=' + urllib.quote(outsider.unregistered_email)
+            logging.debug(msg_text)
+            try:
+                mail.send_mail(
+                             sender = AppUser.me().email(),
+                             to = outsider.unregistered_email,
+                             cc = WTMB_SENDER,
+                             subject = 'Invitation to who_took_my_book',
+                             body = msg_text)
+            except Exception, e:
+                logging.error(e)
+
 NewUserRegistered().subscribe(AppUser.on_new_user_registration)
+NewOutsider().subscribe(AppUser.on_new_outsider)
 ###################################################################        
 class Book(db.Model):
     author = db.StringProperty()

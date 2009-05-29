@@ -35,3 +35,6 @@ class BookBorrowed(BaseEvent):
 
 class BookLent(BaseEvent):
     pass
+
+class NewOutsider(BaseEvent):
+    pass

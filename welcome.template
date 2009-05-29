@@ -1,0 +1,42 @@
+Hi there
+
+'who took my book' is an application meant to encourage sharing of 
+books without worrying about losing them. Simply borrow books from
+others and let your books be borrowed. 
+
+Feature summary
+
+- Supports Google accounts - no additional registration required
+- Add your books with
+    - Amazon based auto-suggest
+    - Manual author/title entry
+    - Import a bunch of ASINs
+- Single-click borrow/return of others' book (results in email notification)
+- Lend books to unregistered users (and invite them to use the app)
+- Single click 'send gentle reminder' for long lent books.
+- Public feed of recently added books:
+    http://whotookmybook.appspot.com/feed/whats_new
+- Missing a feature you'd like? Request it here: 
+    http://github.com/bagheera/who_took_my_book/issues
+
+How it works...
+
+To borrow a book you are interested in, simply click borrow. The app 
+sends an email to both book owner and borrower. The owner is then 
+expected to lend the book. 'Borrow' can also be used 'after-the-fact' 
+to record that you have borrowed a book from someone (although I'd 
+expect the owner to hit 'lend' in this case). Note that lenders and 
+borrowers need to know each other by their nicknames registered 
+with the app.
+ 
+Stats:
+
+About 200 books and 50 users so far.
+
+Thanks for visiting http://whotookmybook.appspot.com
+
+cheers
+Sriram
+Creator of who_took_my_book
+
+p.s. That's it. No more unsolicited emails from the app.

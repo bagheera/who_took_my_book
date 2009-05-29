@@ -79,3 +79,8 @@ br {
 img{
   border-style: none;
 }
+
+.stand_out{
+  font-weight: bold;
+  padding: 1px;
+}

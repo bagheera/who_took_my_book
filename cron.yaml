@@ -1,0 +1,4 @@
+cron:
+- description: keep the app loaded
+  url: /cron/keepalive
+  schedule: every 45 minutes

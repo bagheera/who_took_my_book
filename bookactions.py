@@ -3,12 +3,14 @@ import wsgiref.handlers
 import os
 import logging
 import urllib
+import re
 
 from google.appengine.ext.webapp import template
 from google.appengine.ext import webapp
 from google.appengine.api import urlfetch
 
 from django.utils import simplejson
+from django.core import validators
 from xml.dom import minidom
 from wtmb import *
 ###################################################################
@@ -203,8 +205,9 @@ class LendTo(webapp.RequestHandler):
     bookid = self.request.get('book_id')
     lendTo = self.request.get('lend_to')
     new_user_name = self.request.get('new_user')
-    if (lendTo and new_user_name) or (not lendTo and not new_user_name):
-        self.response.set_status(400, 'Please send exactly one of lendTo and new_user')
+    new_user_email = self.request.get('new_user_email')
+    if not (lendTo or new_user_name):
+        self.response.set_status(400)
         return
     try:
         bookToLoan = Book.get(bookid)
@@ -212,7 +215,14 @@ class LendTo(webapp.RequestHandler):
         if lendTo:
             borrower = AppUser.get(db.Key(lendTo))
         else:
-            borrower = AppUser.create_outsider(new_user_name)
+            if new_user_name.strip() == '':
+                self.response.set_status(400, "Name is empty")
+                return
+            from google.appengine.api import mail
+            if new_user_email and not validators.email_re.search(new_user_email):
+                self.response.set_status(400, "Invalid email")
+                return
+            borrower = AppUser.create_outsider(new_user_name, bookToLoan, new_user_email)
         bookToLoan.lend_to(borrower)
     except IllegalStateTransition:
         self.response.set_status(403, 'Illegal State Transition')
@@ -237,7 +247,7 @@ class Nickname(webapp.RequestHandler):
             self.response.set_status(400, "Empty Nickname")
             return
         me = AppUser.me()
-        me.change_nickname(cgi.escape(new_nick))
+        me.change_nickname(new_nick)
 ###################################################################
 class Remind(webapp.RequestHandler):
     def post(self):

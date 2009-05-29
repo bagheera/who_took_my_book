@@ -412,7 +412,6 @@ var otherBooks = new OtherBooks();
 $(document).ready(function(){
     $("#nick_text").hide();
     $("#manual").hide();
-    $("#suggestbox").focus();
     
     $("#show_manual").click(function(){
         $("#show_manual_span").hide();

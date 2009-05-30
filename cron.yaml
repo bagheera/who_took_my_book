@@ -1,4 +1,4 @@
 cron:
 - description: keep the app loaded
   url: /cron/keepalive
-  schedule: every 45 minutes
+  schedule: every 15 minutes

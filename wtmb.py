@@ -140,16 +140,16 @@ class AppUser(db.Model):
             book = info['for_book']
             #current thread coupling - bad
             import urllib
-            msg_text = "Hi " + outsider.display_name() + "\n"\
-                                      "I just made use of a free app called who_took_my_book to track that I have lent the book '" + book.summary() + "' to you.\n \
-                                       If you'd like to register for this app to keep track of your books, just click http://whotookmybook.appspot.com/mybooks?u=" + \
-                                       str(outsider.key()) + '&e=' + urllib.quote(outsider.unregistered_email)
+            msg_text = "Hi " + outsider.display_name() + \
+                                "\nI just made use of a free app called who_took_my_book to track that I have lent the book '" + book.summary() + \
+                                "' to you.\nIf you'd like to register for this app to keep track of your books, just click http://whotookmybook.appspot.com/mybooks?u=" + \
+                                str(outsider.key()) + '&e=' + urllib.quote(outsider.unregistered_email)
             logging.debug(msg_text)
             try:
                 mail.send_mail(
                              sender = AppUser.me().email(),
                              to = outsider.unregistered_email,
-                             cc = WTMB_SENDER,
+                             cc = (WTMB_SENDER, AppUser.me().email()),
                              subject = 'Invitation to who_took_my_book',
                              body = msg_text)
             except Exception, e:
@@ -273,10 +273,10 @@ class Book(db.Model):
             mail.send_mail(
                      sender = AppUser.me().email(),
                      to = self.borrower.email(),
-                     cc = WTMB_SENDER,
+                     cc = (WTMB_SENDER, AppUser.me().email()),
                      subject = '[whotookmybook] ' + self.title,
                      body = "Hi " + self.borrower.display_name() + "\n" \
-                        + self.owner.display_name() + " would like to gently remind you to return '" + self.title + "' if you have finished with it. ")
+                        + self.owner.display_name() + " would like to gently remind you to return '" + self.title + "' if you have finished with it. \n email sent by http://whotookmybook.appspot.com")
         else:
             logging.error(AppUser.me().display_name() + "made an illegal attempt to remind about " + self.title + " owned by " + self.owner.display_name())
             raise WtmbException("illegal attempt to remind")
@@ -304,7 +304,7 @@ class Book(db.Model):
         mail.send_mail(
                      sender = AppUser.me().email(),
                      to = book.owner.email(),
-                     cc = WTMB_SENDER,
+                     cc = (WTMB_SENDER, AppUser.me().email()),
                      subject = '[whotookmybook] ' + book.title,
                      body = (returner.display_name() + \
                              (" has returned this book to " + book.owner.display_name()) if (returner != book.owner) else \
@@ -319,9 +319,10 @@ class Book(db.Model):
         mail.send_mail(
                  sender = AppUser.me().email(),
                  to = book.owner.email(),
-                 cc = WTMB_SENDER,
+                 cc = (WTMB_SENDER, AppUser.me().email()),
                  subject = '[whotookmybook] ' + book.title,
-                 body = book.borrower.display_name() + " has requested or borrowed this book from " + book.owner.display_name())
+                 body = "Hi " + book.owner.display_name() + "\n" + book.borrower.display_name()
+                 + " has requested or borrowed this book from you. \n email sent by http://whotookmybook.appspot.com")
         from bookcache import CachedBook, CacheBookIdsBorrowed
         book_key_str = str(book.key())
         CacheBookIdsBorrowed.add_book(str(book.borrower.key()), book_key_str)
@@ -332,7 +333,7 @@ class Book(db.Model):
         mail.send_mail(
                      sender = AppUser.me().email(),
                      to = book.borrower.email(),
-                     cc = WTMB_SENDER,
+                     cc = (WTMB_SENDER, AppUser.me().email()),
                      subject = '[whotookmybook] ' + book.title,
                      body = book.owner.display_name() + " has lent this book to " + book.borrower.display_name())
         from bookcache import CachedBook, CacheBookIdsBorrowed

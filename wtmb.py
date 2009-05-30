@@ -130,8 +130,17 @@ class AppUser(db.Model):
         return AppUser.gql('WHERE googleUser = :1', users.get_current_user()).get()
 
     @staticmethod
+    def others_keys():
+        all = db.GqlQuery("SELECT __key__ FROM AppUser").fetch(1000)
+        all.remove(AppUser.me().key())
+        return all
+
+    @staticmethod
     def others():
-        return AppUser.gql('WHERE googleUser != :1', users.get_current_user())
+        my_key = AppUser.me().key()
+        for user in AppUser.all():
+            if user.key() != my_key:
+                yield user
 
     @staticmethod
     def on_new_outsider(info):

@@ -23,8 +23,8 @@ class FullListing(webapp.RequestHandler):
     #        'Keys only queries do not support IN or != filters.'
     #        others_books = map(CachedBook.get, Book.others_books())
             others_books = []
-            for user in AppUser.others():
-                books = self.books_owned_by(user)
+            for user_key in AppUser.others_keys():
+                books = self.books_owned_by(user_key)
                 if not len(books) == 0:
                     others_books.extend(books)
             data['others'] = others_books
@@ -32,8 +32,8 @@ class FullListing(webapp.RequestHandler):
         except Timeout:
             self.response.set_status(500, "Operation timed out. Appengine might be going through higher than usual latencies. Please retry later.")
 
-    def books_owned_by(self, appUser):
-        books_owned_ids = CacheBookIdsOwned.get(appUser.key())
+    def books_owned_by(self, appUser_key):
+        books_owned_ids = CacheBookIdsOwned.get(appUser_key)
         return self.books_by_title(books_owned_ids) if books_owned_ids else []
 
     def books_borrowed_by(self, appUser):

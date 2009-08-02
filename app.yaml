@@ -1,5 +1,5 @@
 application: whotookmybook
-version: 1
+version: signamz
 runtime: python
 api_version: 1
 default_expiration: "1d"

@@ -291,7 +291,7 @@ class Book(db.Model):
             raise WtmbException("illegal attempt to remind")
     
     @staticmethod
-    def others_books():
+    def all_books():
         return db.GqlQuery('SELECT __key__ from Book  ORDER BY created_date DESC LIMIT 1000'  ).fetch(1000)
         
     @staticmethod

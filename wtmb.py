@@ -289,7 +289,11 @@ class Book(db.Model):
         else:
             logging.error(AppUser.me().display_name() + "made an illegal attempt to remind about " + self.title + " owned by " + self.owner.display_name())
             raise WtmbException("illegal attempt to remind")
-
+    
+    @staticmethod
+    def others_books():
+        return db.GqlQuery('SELECT __key__ from Book  ORDER BY created_date DESC LIMIT 1000'  ).fetch(1000)
+        
     @staticmethod
     def owned_by(appuser_key):
         return db.GqlQuery("SELECT __key__ from Book WHERE owner = :1 LIMIT 1000", appuser_key).fetch(1000)

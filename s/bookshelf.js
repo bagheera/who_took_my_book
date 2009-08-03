@@ -278,7 +278,7 @@ function renderBooks(data){
 			        url: "/remind",
 			        type: "POST",
 			        data: {
-			            "book_id": $(this).attr('name'),
+			            "book_id": $(this).attr('name')
 			        },
 			        success: function(){alert ('Reminder sent')},
 			        error: on_ajax_fail

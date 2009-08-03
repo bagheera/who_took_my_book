@@ -335,7 +335,7 @@ function on_add(book){
 }
 
 function on_ajax_fail(xhr, desc, exceptionobj){
-    alert(xhr.statusText);
+    alert(xhr.responseText);
 }
 
 function post_new_book(title, author, asin){

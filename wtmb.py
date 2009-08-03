@@ -47,19 +47,19 @@ class AppUser(db.Model):
     googleUser = db.UserProperty()
     wtmb_nickname = db.StringProperty()
     unregistered_email = db.StringProperty()
-    created_date = db.DateTimeProperty(auto_now_add = "true")
-    last_login_date = db.DateTimeProperty(auto_now = "true")
+    created_date = db.DateTimeProperty(auto_now_add="true")
+    last_login_date = db.DateTimeProperty(auto_now="true")
 
     def is_outsider(self):
         return not self.googleUser
 
     @staticmethod
-    def create_outsider(name, for_book, email = None):
+    def create_outsider(name, for_book, email=None):
         if not name or name.strip() == "":
             raise ValueError("Name cannot be empty")
         if AppUser.gql('WHERE googleUser = :1 and wtmb_nickname= :2', None, name).get():
             raise ValueError("This name is taken")
-        new_user = AppUser(wtmb_nickname = name, unregistered_email = email)
+        new_user = AppUser(wtmb_nickname=name, unregistered_email=email)
         new_user.put()
         NewOutsider({'outsider':new_user, 'for_book':for_book}).fire()
         return new_user
@@ -73,23 +73,23 @@ class AppUser(db.Model):
             welcome_msg = template.render(path, {})
             logging.debug(welcome_msg)
             mail.send_mail(
-                         sender = WTMB_SENDER,
-                         to = new_user.email(),
-                         cc = WTMB_SENDER,
-                         subject = '[whotookmybook] Welcome',
-                         body = welcome_msg)
+                         sender=WTMB_SENDER,
+                         to=new_user.email(),
+                         cc=WTMB_SENDER,
+                         subject='[whotookmybook] Welcome',
+                         body=welcome_msg)
         except Exception, e:
             logging.error(str(e))
 
     @staticmethod
-    def getAppUserFor(aGoogleUser, outsider_key = None, outsider_email = None):
+    def getAppUserFor(aGoogleUser, outsider_key=None, outsider_email=None):
         appuser = AppUser.gql('WHERE googleUser = :1', aGoogleUser).get()
         if appuser is None:
             if outsider_key and outsider_email and AppUser.get(outsider_key) and AppUser.get(outsider_key).unregistered_email == outsider_email:
                 appuser = AppUser.get(outsider_key).regularize()
             else:
                 current_user = users.get_current_user()
-                appuser = AppUser(googleUser = current_user, wtmb_nickname = current_user.nickname())
+                appuser = AppUser(googleUser=current_user, wtmb_nickname=current_user.nickname())
                 appuser.put()
                 NewUserRegistered(appuser).fire()
         return appuser
@@ -156,11 +156,11 @@ class AppUser(db.Model):
             logging.debug(msg_text)
             try:
                 mail.send_mail(
-                             sender = AppUser.me().email(),
-                             to = outsider.unregistered_email,
-                             cc = (WTMB_SENDER, AppUser.me().email()),
-                             subject = 'Invitation to who_took_my_book',
-                             body = msg_text)
+                             sender=AppUser.me().email(),
+                             to=outsider.unregistered_email,
+                             cc=(WTMB_SENDER, AppUser.me().email()),
+                             subject='Invitation to who_took_my_book',
+                             body=msg_text)
             except Exception, e:
                 logging.error(str(e))
 
@@ -169,15 +169,15 @@ NewOutsider().subscribe(AppUser.on_new_outsider)
 ###################################################################        
 class Book(db.Model):
     author = db.StringProperty()
-    owner = db.ReferenceProperty(AppUser, collection_name = "books_owned")
+    owner = db.ReferenceProperty(AppUser, collection_name="books_owned")
     title = db.StringProperty()
-    borrower = db.ReferenceProperty(AppUser, collection_name = "books_borrowed", required = False)
+    borrower = db.ReferenceProperty(AppUser, collection_name="books_borrowed", required=False)
     asin = db.StringProperty()
     is_technical = db.BooleanProperty()
     dewey = db.StringProperty()
-    created_date = db.DateTimeProperty(auto_now_add = "true")
+    created_date = db.DateTimeProperty(auto_now_add="true")
 
-    def __init__(self, parent = None, key_name = None, **kw):
+    def __init__(self, parent=None, key_name=None, **kw):
         super(Book, self).__init__(parent, key_name, **kw)
         if self.title.strip() == "":
             raise BookWithoutTitle("Title required")
@@ -280,11 +280,11 @@ class Book(db.Model):
     def remind(self):
         if self.belongs_to_me() and self.is_lent():
             mail.send_mail(
-                     sender = AppUser.me().email(),
-                     to = self.borrower.email(),
-                     cc = (WTMB_SENDER, AppUser.me().email()),
-                     subject = '[whotookmybook] ' + self.title,
-                     body = "Hi " + self.borrower.display_name() + "\n" \
+                     sender=AppUser.me().email(),
+                     to=self.borrower.email(),
+                     cc=(WTMB_SENDER, AppUser.me().email()),
+                     subject='[whotookmybook] ' + self.title,
+                     body="Hi " + self.borrower.display_name() + "\n" \
                         + self.owner.display_name() + " would like to gently remind you to return '" + self.title + "' if you have finished with it. \n email sent by http://whotookmybook.appspot.com")
         else:
             logging.error(AppUser.me().display_name() + "made an illegal attempt to remind about " + self.title + " owned by " + self.owner.display_name())
@@ -301,7 +301,7 @@ class Book(db.Model):
     @staticmethod
     def new_books():
       from datetime import date, timedelta
-      last_week = date.today() - timedelta(days = 7)
+      last_week = date.today() - timedelta(days=7)
       return db.GqlQuery("SELECT __key__ from Book WHERE created_date > :1", last_week).fetch(1000)
 
 
@@ -311,11 +311,11 @@ class Book(db.Model):
         book = info['book']
         old_borrower = info['old_borrower']
         mail.send_mail(
-                     sender = AppUser.me().email(),
-                     to = book.owner.email(),
-                     cc = (WTMB_SENDER, AppUser.me().email()),
-                     subject = '[whotookmybook] ' + book.title,
-                     body = (returner.display_name() + \
+                     sender=AppUser.me().email(),
+                     to=book.owner.email(),
+                     cc=(WTMB_SENDER, AppUser.me().email()),
+                     subject='[whotookmybook] ' + book.title,
+                     body=(returner.display_name() + \
                              (" has returned this book to " + book.owner.display_name()) if (returner != book.owner) else \
                              returner.display_name() + " has asserted possession of this book"))
         from bookcache import CachedBook, CacheBookIdsBorrowed
@@ -326,11 +326,11 @@ class Book(db.Model):
     @staticmethod
     def on_borrow(book):
         mail.send_mail(
-                 sender = AppUser.me().email(),
-                 to = book.owner.email(),
-                 cc = (WTMB_SENDER, AppUser.me().email()),
-                 subject = '[whotookmybook] ' + book.title,
-                 body = "Hi " + book.owner.display_name() + "\n" + book.borrower.display_name()
+                 sender=AppUser.me().email(),
+                 to=book.owner.email(),
+                 cc=(WTMB_SENDER, AppUser.me().email()),
+                 subject='[whotookmybook] ' + book.title,
+                 body="Hi " + book.owner.display_name() + "\n" + book.borrower.display_name()
                  + " has requested or borrowed this book from you. \n email sent by http://whotookmybook.appspot.com")
         from bookcache import CachedBook, CacheBookIdsBorrowed
         book_key_str = str(book.key())
@@ -340,11 +340,11 @@ class Book(db.Model):
     @staticmethod
     def on_lent(book):
         mail.send_mail(
-                     sender = AppUser.me().email(),
-                     to = book.borrower.email(),
-                     cc = (WTMB_SENDER, AppUser.me().email()),
-                     subject = '[whotookmybook] ' + book.title,
-                     body = book.owner.display_name() + " has lent this book to " + book.borrower.display_name())
+                     sender=AppUser.me().email(),
+                     to=book.borrower.email(),
+                     cc=(WTMB_SENDER, AppUser.me().email()),
+                     subject='[whotookmybook] ' + book.title,
+                     body=book.owner.display_name() + " has lent this book to " + book.borrower.display_name())
         from bookcache import CachedBook, CacheBookIdsBorrowed
         book_key_str = str(book.key())
         CacheBookIdsBorrowed.add_book(str(book.borrower.key()), book_key_str)

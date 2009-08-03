@@ -30,7 +30,9 @@ class FullListing(webapp.RequestHandler):
             data['others'] = others_books
             self.response.out.write(simplejson.dumps(data))
         except Timeout:
-            self.response.set_status(500, "Operation timed out. Appengine might be going through higher than usual latencies. Please retry later.")
+            self.response.clear()
+            self.response.set_status(500, "Operation timed out. Appengine might be going through higher than usual latencies. Please retry.")
+            self.response.out.write("Operation timed out. Appengine might be going through higher than usual latencies. Please retry.")
 
     def books_owned_by(self, appUser_key):
         books_owned_ids = CacheBookIdsOwned.get(appUser_key)

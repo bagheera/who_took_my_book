@@ -1,18 +1,18 @@
-import cgi
-import wsgiref.handlers
-import os
-import logging
-import urllib
-import re
-
-from google.appengine.ext.webapp import template
-from google.appengine.ext import webapp
-from google.appengine.api import urlfetch
-
-from django.utils import simplejson
 from django.core import validators
-from xml.dom import minidom
+from django.utils import simplejson
+from google.appengine.api import urlfetch
+from google.appengine.ext import webapp
+from google.appengine.ext.webapp import template
 from wtmb import *
+from xml.dom import minidom
+import cgi
+import logging
+import os
+import re
+import urllib
+import wsgiref.handlers
+
+
 ###################################################################
 messages = []
 
@@ -91,7 +91,7 @@ class Amz:
             return None
 
     def search_by(self, searchString):
-        result = self.amz_call({'Operation' : 'ItemSearch' , 'Keywords' : searchString , 'SearchIndex' : 'Books' , 'ResponseGroup' : 'Small' })
+        result = self.amz_call({'Operation' : 'ItemSearch' , 'Keywords' : urllib.unquote(searchString) , 'SearchIndex' : 'Books' , 'ResponseGroup' : 'Small' })
         list = []
         if result.status == 200:
             responseBodyText = result.read(result.fp.len)
@@ -133,7 +133,6 @@ class Amz:
         path = '/onca/xml'
         qs, signature = aws_conn.get_signature(params, verb, path)
         qs = path + '?' + qs + '&Signature=' + urllib.quote(signature)
-        print "verb:", verb, "qs:", qs
         return aws_conn._mexe(verb, qs, None, headers={})
 ###################################################################
 class ImportASINs(webapp.RequestHandler):
@@ -192,9 +191,13 @@ class AddToBookshelf(webapp.RequestHandler):
                 self.response.out.write(simplejson.dumps(book.to_hash()))
 #                how to say as dupbook?
             except DuplicateBook:
-                self.response.set_status(412, "You already have this book. Cannot add again.")
+                self.response.clear()
+                self.response.set_status(412)
+                self.response.out.write("This book is already present in your list")
             except BookWithoutTitle:
-                self.response.set_status(412, "Title required")
+                self.response.clear()
+                self.response.set_status(412)
+                self.response.out.write("Title Required")
         else:
             self.error(401) #need to include www-auth??
 
@@ -232,13 +235,21 @@ class ReturnBook(webapp.RequestHandler):
 
 ###################################################################    
 class LendTo(webapp.RequestHandler):
+
+  def error_response(self, status_code, message):
+      self.response.clear()
+      self.response.set_status(status_code, message)
+      self.response.out.write(message)
+
   def post(self):
     bookid = self.request.get('book_id')
     lendTo = self.request.get('lend_to')
     new_user_name = self.request.get('new_user')
     new_user_email = self.request.get('new_user_email')
     if not (lendTo or new_user_name):
+        self.response.clear()
         self.response.set_status(400)
+        self.response.out.write("oops. something wen't wrong. Please try again.")
         return
     try:
         bookToLoan = Book.get(bookid)
@@ -247,18 +258,18 @@ class LendTo(webapp.RequestHandler):
             borrower = AppUser.get(db.Key(lendTo))
         else:
             if new_user_name.strip() == '':
-                self.response.set_status(400, "Name is empty")
+                self.error_response(400, "Name is empty")
                 return
             from google.appengine.api import mail
             if new_user_email and not validators.email_re.search(new_user_email):
-                self.response.set_status(400, "Invalid email")
+                self.error_response(400, "Invalid email")
                 return
             borrower = AppUser.create_outsider(new_user_name, bookToLoan, new_user_email)
         bookToLoan.lend_to(borrower)
     except IllegalStateTransition:
-        self.response.set_status(403, 'Illegal State Transition')
+        self.error_response(403, 'Illegal State Transition')
     except ValueError, v:
-        self.response.set_status(400, str(v))
+        self.error_response(400, str(v))
 
 ###################################################################    
 class Suggest(webapp.RequestHandler):
@@ -275,7 +286,9 @@ class Nickname(webapp.RequestHandler):
     def post(self):
         new_nick = self.request.get('new_nick')
         if not new_nick or new_nick.strip() == "":
+            self.response.clear()
             self.response.set_status(400, "Empty Nickname")
+            self.response.out.write("Empty Nickname")
             return
         me = AppUser.me()
         me.change_nickname(new_nick)
@@ -286,4 +299,6 @@ class Remind(webapp.RequestHandler):
             book_id = self.request.get('book_id')
             Book.get(book_id).remind()
         except Exception, e:
+            self.response.clear()
             self.response.set_status(400, str(e))
+            self.response.out.write("oops. something wen't wrong. Please try again.")

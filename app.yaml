@@ -1,36 +1,34 @@
 application: whotookmybook
-version: signamz
+version: cachefix
 runtime: python
 api_version: 1
 default_expiration: "1d"
 
 handlers:
-- url: /stylesheets
-  static_dir: stylesheets
-
+- url: /thanks
+  static_files: thanks.html
+  upload: thanks.html
+  expiration: "30d"
+   
 - url: /s
   static_dir: s
   login: required
-  
-- url: /jslib
-  static_dir: jslib
+  expiration: "30d"
 
 - url: /suggest
   static_dir: suggest
+  expiration: "120d"
 
 - url: /cc
   script: cc.py
   login: admin
-  
-- url: /test.*
-  script: gaeunit.py
 
 - url: /feed/whats_new
   script: mybooks.py
 
 - url: /cron/keepalive
   script: mybooks.py
-  
+
 - url: /.*
   script: mybooks.py
   login: required

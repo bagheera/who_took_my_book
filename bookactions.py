@@ -11,6 +11,7 @@ import os
 import re
 import urllib
 import wsgiref.handlers
+from datetime import datetime, timedelta
 
 
 ###################################################################
@@ -20,6 +21,14 @@ def report(msg):
     logging.info(msg)
     messages.append(msg)
 ###################################################################
+def cache_for(response, ndays, nhours=0):
+      response.headers['Cache-Control']='public, max-age=' + str(86400 * ndays + (3600 * nhours))
+      lastmod = datetime.utcnow()
+      response.headers['Last-Modified'] = lastmod.strftime('%a, %d %b %Y %H:%M:%S GMT')
+      expires=lastmod+timedelta(days=ndays, hours=nhours)
+      response.headers['Expires'] = expires.strftime('%a, %d %b %Y %H:%M:%S GMT')
+###################################################################
+
 class Amz:
 
     def __init__(self):
@@ -280,6 +289,7 @@ class Suggest(webapp.RequestHandler):
     r += ','.join(list)
     r += ']}'
     self.response.headers['Content-Type'] = "application/json"
+    cache_for(self.response, 1)
     self.response.out.write(r)
 ###################################################################
 class Nickname(webapp.RequestHandler):

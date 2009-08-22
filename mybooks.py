@@ -15,8 +15,8 @@ class BookListPage(webapp.RequestHandler):
        self.redirect('/mybooks')
     user = users.get_current_user()
     if user:
-      url = users.create_logout_url("/mybooks")
-      url_linktext = 'Logout'
+      url = users.create_logout_url('/thanks')
+      url_linktext = 'Logout from Google'
       me = AppUser.getAppUserFor(user, self.request.get('u'), self.request.get('e')) #registers new user
       me.update_last_login()
       template_values = {
@@ -25,6 +25,8 @@ class BookListPage(webapp.RequestHandler):
         "username": me.display_name()
       }
       path = os.path.join(os.path.dirname(__file__), 'books.html')
+#      causing logout problems?
+#      cache_for(self.response, 30)
       self.response.out.write(template.render(path, template_values)) # render o/p can be cached
     else:
       url = users.create_login_url(self.request.uri)
@@ -40,6 +42,7 @@ class LendPage(webapp.RequestHandler):
       'members': members,
     }
     path = os.path.join(os.path.dirname(__file__), 'lend.html')
+    cache_for(self.response, 0, 6)
     self.response.out.write(template.render(path, template_values))
 
 ###################################################################    

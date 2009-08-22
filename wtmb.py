@@ -2,6 +2,7 @@ from google.appengine.ext import db
 from google.appengine.api import users
 from google.appengine.api import mail
 
+from datetime import date, timedelta
 import cgi
 import logging
 from eventregistry import *
@@ -304,7 +305,6 @@ class Book(db.Model):
 
     @staticmethod
     def new_books():
-      from datetime import date, timedelta
       last_week = date.today() - timedelta(days=7)
       return db.GqlQuery("SELECT __key__ from Book WHERE created_date > :1", last_week).fetch(1000)
 

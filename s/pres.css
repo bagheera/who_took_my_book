@@ -1,14 +1,95 @@
+/*
+color scheme from http://www.colorschemer.com/online.html
+seed with #CCD9FF
+*/
+body {
+  font-family: Verdana, Helvetica, sans-serif;
+  background-color: #CCD9FF;
+  position: relative;
+}
+table {
+    border-style: dotted;
+    border-width: 1px;  
+    border-collapse: collapse;
+    empty-cells: show;
+}
+
+td, th {
+    border-bottom: 1px #000000 dotted;
+    padding: 5px;
+    text-align: left;
+}
+input:focus{
+   background-color:#FFE38F;
+}
+#page{
+    margin: 1% 10% 3% 10%;
+}
+#dataentry{
+    padding: 0px  0px 20px 0px;
+}
+
+#bookshelf, #userlist, #about_wtmb{
+    background-color: white;
+    border-style: solid;
+    border-width: 2px;
+    padding: 10px;
+}
+br {
+	clear: left;
+}
+
+#about,#import,#lo{
+  float: right;
+  padding: 10px;
+}
+
+.colone {
+  width: 15%;
+}
+.coltwo {
+  width: 60%;
+}
+.colthree {
+   width: 15%;
+}
+.colfour {
+   width: 10%;
+}
+.action{
+   text-align: right;
+}
+
+#show_options {
+  float: right;
+}
+
+.bignum{
+  background-color: #F2FFCC;
+  border-style: solid;
+  border-width: 4px;
+  border-color: #8FABFF;
+  padding: 5px 9px 5px 9px;
+  font-weight: bold;
+}
+
+.nslv{
+  background-color: #F2FFCC;
+}
+
+img{
+  border-style: none;
+}
+
+.stand_out{
+  font-weight: bold;
+  padding: 1px;
+}
 /* 
 ================================================
 autosuggest, inquisitor style
 ================================================
 */
-
-body
-{
-	position: relative;
-}
-
 
 div.autosuggest
 {

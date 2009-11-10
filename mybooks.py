@@ -35,11 +35,8 @@ class BookListPage(webapp.RequestHandler):
 ###################################################################    
 class LendPage(webapp.RequestHandler):
   def get(self, what):
-    members = [[str(user.key()), user.display_name() + " (" + user.email() + ")"] for user in AppUser.others()]
-    members.sort(lambda x, y: cmp(x[1].lower(), y[1].lower()))
     template_values = {
       'book': Book.get(db.Key(what)),
-      'members': members,
     }
     path = os.path.join(os.path.dirname(__file__), 'lend.html')
     cache_for(self.response, 0, 6)
@@ -67,6 +64,7 @@ def real_main():
                                         ('/nickname', Nickname),
                                         ('/feed/whats_new', WhatsNewFeed),
                                         ('/remind', Remind),
+                                        ('/alluzers', AllUzers),
                                         ('/cron/keepalive', FullListing),
                                         (r'(/?)(.*)', BookListPage)],
                                        debug = True)

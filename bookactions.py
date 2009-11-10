@@ -224,7 +224,11 @@ class Borrow(webapp.RequestHandler):
 class DeleteBook(webapp.RequestHandler):
   def get(self, bookid):
     try:
-        Book.get(bookid).obliterate()
+        doomedBook = Book.get(bookid)
+        if doomedBook:
+            doomedBook.obliterate()
+        else:
+            logging.warning("Cant find book to be deleted id " + bookid)
         self.redirect('/mybooks')
     except IllegalStateTransition:
         self.error(403)
@@ -312,3 +316,15 @@ class Remind(webapp.RequestHandler):
             self.response.clear()
             self.response.set_status(400, str(e))
             self.response.out.write("oops. something wen't wrong. Please try again.")
+###################################################################
+class AllUzers(webapp.RequestHandler):
+    def get(self, *args):
+        fragment = self.request.get('fragment')
+        matches = []
+        for user in AppUser.others():
+            if user.matches(fragment):
+                matches.append(user)
+                if len(matches) > 6:
+                    break
+        suggestions = map(lambda user : {"id" : str(user.key()), "value" : user.display_name(), "info" : user.email()}, matches)
+        self.response.out.write(simplejson.dumps({"results" : suggestions}))

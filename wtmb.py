@@ -125,7 +125,10 @@ class AppUser(db.Model):
                                  "email": self.email(),
                                  "last_login": self.last_login_date.toordinal() #isoformat() + 'Z'
                                         }
-
+    def matches(self, fragment):
+        fragment = fragment.upper()
+        return self.email().upper().find(fragment) != -1 or self.display_name().upper().find(fragment) != -1
+    
     @staticmethod
     def me():
         return AppUser.gql('WHERE googleUser = :1', users.get_current_user()).get()

@@ -1,76 +1,9 @@
-// Inspired by base2 and Prototype
-(function(){
-  var initializing = false, fnTest = /xyz/.test(function(){xyz;}) ? /\b_super\b/ : /.*/;
-
-  // The base Class implementation (does nothing)
-  this.Class = function(){};
- 
-  // Create a new Class that inherits from this class
-  Class.extend = function(prop) {
-    var _super = this.prototype;
-   
-    // Instantiate a base class (but only create the instance,
-    // don't run the init constructor)
-    initializing = true;
-    var prototype = new this();
-    initializing = false;
-   
-    // Copy the properties over onto the new prototype
-    for (var name in prop) {
-      // Check if we're overwriting an existing function
-      prototype[name] = typeof prop[name] == "function" &&
-        typeof _super[name] == "function" && fnTest.test(prop[name]) ?
-        (function(name, fn){
-          return function() {
-            var tmp = this._super;
-           
-            // Add a new ._super() method that is the same method
-            // but on the super-class
-            this._super = _super[name];
-           
-            // The method only need to be bound temporarily, so we
-            // remove it when we're done executing
-            var ret = fn.apply(this, arguments);       
-            this._super = tmp;
-           
-            return ret;
-          };
-        })(name, prop[name]) :
-        prop[name];
-    }
-   
-    // The dummy class constructor
-    function Class() {
-      // All construction is actually done in the init method
-      if ( !initializing && this.init )
-        this.init.apply(this, arguments);
-    }
-   
-    // Populate our constructed prototype object
-    Class.prototype = prototype;
-   
-    // Enforce the constructor to be what we expect
-    Class.constructor = Class;
-
-    // And make this class extendable
-    Class.extend = arguments.callee;
-   
-    return Class;
-  };
-})();
-/*******************************************************************************************/
-/*******************************************************************************************/
 var book_data = null;
 var show = "all";
 var amz_url = "http://www.amazon.com/dp/asin?tag=whotookmybook-20";
 var last_login_date = null;
 
-var BookShelf = Class.extend({
-    init: function(){
-        //		return this._super();
-    },
-    
-    not_to_be_shown: function(book){
+    function not_to_be_shown(book){
         if (show == "all") 
             return false;
         if (show == "tech" && book.is_tech) 
@@ -78,39 +11,26 @@ var BookShelf = Class.extend({
         if (show == "non-tech" && (!book.is_tech)) 
             return false;
         return true;
-    },
+    }
     
-    borrower: function(book){
+    function borrower(book){
         return (available(book) ? "" : book.borrowed_by);
-    },
+    }
 	
-    render: function(){
-    },
-    
-    return_link: function(book, link_text, tooltip){
+    function return_link(book, link_text, tooltip){
         return '<a title="'+tooltip+'" href="/return/' + book.key + '">'+ link_text +'</a>';
-    },
+    }
     
-    addBook: function(){
-    },
-    
-    removeBook: function(){
-    },
-	
-	book_link: function(book){
+	function book_link(book){
 		text = book.title;
 		if(book.author != "unknown") text = text + " by " +   book.author; 
 		if (book.asin && book.asin.length == 10) return  text + ' <a target="_blank" title="explore this book @ amazon" href="'+amz_url.replace("asin", book.asin)+'">'+'&#187;'+'</a>';
 		return text;
 	}
-});
-/**********************************************************************************/
-var MyBooks = BookShelf.extend({
 
-    init: function(){
-        return this._super();
-    },
-    
+/**********************************************************************************/
+var myBooks = {
+
     empty: function(){
         $("#my_table").empty();
     },
@@ -146,12 +66,6 @@ var MyBooks = BookShelf.extend({
         }
     },
     
-    addBook: function(){
-    },
-    
-    removeBook: function(){
-    },
-    
     del_link: function(book){
         return '<a href="/delete/' + book.key + '">delete</a>';
     },
@@ -165,22 +79,22 @@ var MyBooks = BookShelf.extend({
     },
     
     borrower: function(book){
-		result = this._super(book);
+		result = borrower(book);
 		if(result != ""){
-			result += "  " + this.return_link(book, "&#215;", "Not lent. I have this book with me.");
+			result += "  " + return_link(book, "&#215;", "Not lent. I have this book with me.");
 			result = "<a title='send gentle reminder email' href='#' class='reminder' name='"+book.key+"'>&#174;</a> " + result;
 		}
 		return result;
     },
     
     newRow: function(book){
-        if (myBooks.not_to_be_shown(this)) //crappy hack for *this*
+        if (not_to_be_shown(this))
             return;
         if ($("#my_table tr.nothing").length > 0) {
             myBooks.empty();
             myBooks.render_header();
         }
-        $("#my_table_body tr:first").before("<tr><td>" + myBooks.del_link(book) + "</td><td>" + myBooks.book_link(book) +
+        $("#my_table_body tr:first").before("<tr><td>" + myBooks.del_link(book) + "</td><td>" + book_link(book) +
         "</td><td>" +
         myBooks.borrower(book) +
         "</td><td class='action'>" +
@@ -203,13 +117,9 @@ var MyBooks = BookShelf.extend({
             myBooks.newRow(book);
         }
     }
-});
+};
 /**********************************************************************************/
-var BorrowedBooks = BookShelf.extend({
-    init: function(){
-        return this._super();
-    },
-    
+var borrowedBooks = {
     render: function(books){
         $("#borrowed_table").empty();
         if (books.length > 0) {
@@ -220,28 +130,18 @@ var BorrowedBooks = BookShelf.extend({
             $("#borrowed_table").append('<tr class="nothing"><td>Nothing yet. Don&apos;t you want to read any of the books below?</td></tr>');
         }
     },
-    
-    addBook: function(){
-    },
-    
-    removeBook: function(){
-    },
-    
+
     borrowedBookrow: function(i){
-        if (borrowedBooks.not_to_be_shown(this)) 
+        if (not_to_be_shown(this)) 
             return;
-        $("#borrowed_table").append("<tr><td>" + this.owner + "</td><td>" + borrowedBooks.book_link(this) +
+        $("#borrowed_table").append("<tr><td>" + this.owner + "</td><td>" + book_link(this) +
         "</td><td></td><td class='action'>" +
-        borrowedBooks.return_link(this, "return", "return book to owner") +
+        return_link(this, "return", "return book to owner") +
         "</td></tr>");
     }
-});
+};
 /**********************************************************************************/
-var OtherBooks = BookShelf.extend({
-    init: function(){
-        return this._super();
-    },
-    
+var otherBooks = {
     render: function(books){
         $("#others_table").empty();
         if (books.length > 0) {
@@ -251,12 +151,6 @@ var OtherBooks = BookShelf.extend({
         else {
             $("#others_table").append('<tr class="nothing"><td>Nothing here? That can&apos;t be true!</td></tr>');
         }
-    },
-    
-    addBook: function(){
-    },
-    
-    removeBook: function(){
     },
     
     borrow_link: function(book){
@@ -269,18 +163,18 @@ var OtherBooks = BookShelf.extend({
 	},
     
     othersbookrow: function(i){
-        if (otherBooks.not_to_be_shown(this)) 
+        if (not_to_be_shown(this)) 
             return;
-        $("#others_table").append("<tr"+ otherBooks.new_indicator(this) +"><td>" + this.owner + "</td><td>" + otherBooks.book_link(this) +
+        $("#others_table").append("<tr"+ otherBooks.new_indicator(this) +"><td>" + this.owner + "</td><td>" + book_link(this) +
         "</td><td>" +
-        otherBooks.borrower(this) +
+        borrower(this) +
         "</td><td class='action'>" +
         otherBooks.borrow_link(this) +
         "</td></tr>");
     }
-});
+};
 /**********************************************************************************/
-var Mediator = Class.extend({
+var Mediator = {
     registry: {},
     
     init: function(){
@@ -297,7 +191,7 @@ var Mediator = Class.extend({
         }
         list.push(callback);
     }
-});
+};
 /**********************************************************************************/
 function showgif(){
 
@@ -397,7 +291,7 @@ function on_add(book){
 }
 
 function on_ajax_fail(xhr, desc, exceptionobj){
-    alert(xhr.responseText);
+    alert("oops. Action failed. Please retry");
 }
 
 function post_new_book(title, author, asin){
@@ -466,10 +360,6 @@ function setup_handlers(){
 **/    
 
 }
-
-var myBooks = new MyBooks();
-var borrowedBooks = new BorrowedBooks();
-var otherBooks = new OtherBooks();
 
 $(document).ready(function(){
     $("#nick_text").hide();

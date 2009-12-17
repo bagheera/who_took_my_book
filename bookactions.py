@@ -328,3 +328,10 @@ class AllUzers(webapp.RequestHandler):
                     break
         suggestions = map(lambda user : {"id" : str(user.key()), "value" : user.display_name(), "info" : user.email()}, matches)
         self.response.out.write(simplejson.dumps({"results" : suggestions}))
+###################################################################        
+class IndexBook(webapp.RequestHandler):
+    def post(self):
+        batch=self.request.get('keycsv').split(',')
+        logging.debug("IndexBook batch is:" + str(batch))
+        for book in Book.get(batch):
+            book.index()

@@ -30,7 +30,7 @@ class FullListing(webapp.RequestHandler):
                     all_book_keys.remove(my_book_key)
                 except ValueError:
                     logging.error("not found "+ str(my_book_key))
-            others_books = map(CachedBook.get, map(str, all_book_keys))
+            others_books = map(CachedBook.get, map(str, all_book_keys[:25]))
             data['others'] = others_books
             self.response.out.write(simplejson.dumps(data))
         except Timeout:
@@ -51,3 +51,13 @@ class FullListing(webapp.RequestHandler):
         book_hashes.sort(lambda x, y: cmp(y['title'], x['title']))
         return book_hashes
 
+class Search(webapp.RequestHandler):
+    def post(self):
+        term = self.request.get('term')
+        self.response.headers['content-type'] = "application/json"
+        result = []
+        books = Book.search(term, 25)
+        for bk in books:
+            if bk is not None:
+                result.append(bk.to_hash())
+        self.response.out.write( simplejson.dumps(result))

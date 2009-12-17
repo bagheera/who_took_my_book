@@ -1,5 +1,5 @@
 application: whotookmybook
-version: lendlookup
+version: searchbooks
 runtime: python
 api_version: 1
 default_expiration: "1d"
@@ -19,14 +19,17 @@ handlers:
   static_dir: suggest
   expiration: "120d"
 
-- url: /cc
-  script: cc.py
+- url: /hush/(.*)
+  script: /hush/\1.py
   login: admin
 
 - url: /feed/whats_new
   script: mybooks.py
 
 - url: /cron/keepalive
+  script: mybooks.py
+
+- url: /indexbook
   script: mybooks.py
 
 - url: /.*

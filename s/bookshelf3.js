@@ -94,7 +94,7 @@ var myBooks = {
             myBooks.empty();
             myBooks.render_header();
         }
-        $("#my_table_body tr:first").before("<tr><td>" + myBooks.del_link(book) + "</td><td>" + book_link(book) +
+        $("#my_table_body tr:first").before("<tr id=" + book.key + "><td>" + myBooks.del_link(book) + "</td><td>" + book_link(book) +
         "</td><td>" +
         myBooks.borrower(book) +
         "</td><td class='action'>" +
@@ -131,48 +131,47 @@ var borrowedBooks = {
         }
     },
 
-    borrowedBookrow: function(i){
+    borrowedBookrow: function(){
         if (not_to_be_shown(this)) 
             return;
-        $("#borrowed_table").append("<tr><td>" + this.owner + "</td><td>" + book_link(this) +
+        $("#borrowed_table").append("<tr id=" + this.key + "><td>" + this.owner + "</td><td>" + book_link(this) +
         "</td><td></td><td class='action'>" +
         return_link(this, "return", "return book to owner") +
         "</td></tr>");
     }
 };
 /**********************************************************************************/
-var otherBooks = {
-    render: function(books){
+    function renderOtherBooks(books){
         $("#others_table").empty();
         if (books.length > 0) {
             $("#others_table").append('<tr><th class="colone">Owner</th><th class="coltwo">Book</th><th class="colthree">Lent to</th><th class="colfour"></th></tr>');
-            $.each(books, this.othersbookrow);
+            $.each(books, othersbookrow);
         }
         else {
-            $("#others_table").append('<tr class="nothing"><td>Nothing here? That can&apos;t be true!</td></tr>');
+            $("#others_table").append('<tr class="nothing"><td>No books found.</td></tr>');
         }
-    },
+    }
     
-    borrow_link: function(book){
+    function borrow_link(book){
         return available(book) ? '<a href="/borrow/' + book.key + '">borrow</a>' : "";
-    },
+    }
 	
-	new_indicator: function(book){
-		if(book.added_on - last_login_date > 0) return "class='nslv'"; //new since last visit - nslv
+	function new_indicator(book){
+		if(book.added_on - last_login_date > 0) return "class=\"nslv\""; //new since last visit - nslv
 		return "";
-	},
+	}
     
-    othersbookrow: function(i){
+    function othersbookrow(){
         if (not_to_be_shown(this)) 
             return;
-        $("#others_table").append("<tr"+ otherBooks.new_indicator(this) +"><td>" + this.owner + "</td><td>" + book_link(this) +
+        $("#others_table").append("<tr id=" + this.key  + new_indicator(this) +"><td>" + this.owner + "</td><td>" + book_link(this) +
         "</td><td>" +
         borrower(this) +
         "</td><td class='action'>" +
-        otherBooks.borrow_link(this) +
+        borrow_link(this) +
         "</td></tr>");
     }
-};
+
 /**********************************************************************************/
 var Mediator = {
     registry: {},
@@ -212,11 +211,11 @@ function updateBookCount(data){
     $("#book_count").empty();
     own_count = data.mybooks ? data.mybooks.length : 0
     borrow_count = data.borrowedBooks ? data.borrowedBooks.length : 0
-    $("#book_count").append("Overall summary of your books: <big class='bignum'> " + own_count + "</big> owned, <big class='bignum'>" +
+    $("#book_count").append("<h4>Your book stats</h4> <big class='bignum'> " + own_count + "</big> owned<br><br> <big class='bignum'>" +
     myBooks.lent_count(data.mybooks) +
-    "</big> lent, <big class='bignum'>" +
+    "</big> lent<br><br> <big class='bignum'>" +
     borrow_count +
-    "</big> borrowed.");
+    "</big> borrowed");
 }
 
 function available(book){
@@ -244,7 +243,7 @@ function renderBooks(data){
 
 	
     borrowedBooks.render(data.borrowedBooks);
-    otherBooks.render(data.others);
+    renderOtherBooks(data.others);
     $('#overlay').hide();
 }
 
@@ -350,6 +349,22 @@ function setup_handlers(){
         }
 		return true;
     });
+    
+    $("#btn_search").click(function(e){
+            searchTerm = jQuery($("#search")).val();
+            $.ajax({
+                url: "/search",
+                type: "POST",
+                data: {
+                    "term": searchTerm
+                },
+                success: function(books){
+                	renderOtherBooks(books)},
+                error: on_ajax_fail,
+                dataType: "json"
+            });
+    });
+    
 /**    
     $("#bookshelf_inner").keypress(function(e){//not working??
         c = e.which ? e.which : e.keyCode;
@@ -360,6 +375,7 @@ function setup_handlers(){
 **/    
 
 }
+
 
 $(document).ready(function(){
     $("#nick_text").hide();

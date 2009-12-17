@@ -15,8 +15,9 @@
 <pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python 2.5</pydev_property>
 <pydev_property name="org.python.pydev.PYTHON_PROJECT_INTERPRETER">python25</pydev_property>
 
+
 <pydev_variables_property name="org.python.pydev.PROJECT_VARIABLE_SUBSTITUTION">
 <key>GOOGLE_APP_ENGINE</key>
-<value>C:\Program Files\Google\google_appengine</value>
+<value>C:\pgms\dev_tools\google_app_engine</value>
 </pydev_variables_property>
 </pydev_project>

@@ -65,7 +65,9 @@ def real_main():
                                         ('/feed/whats_new', WhatsNewFeed),
                                         ('/remind', Remind),
                                         ('/alluzers', AllUzers),
+                                        ('/search', Search),
                                         ('/cron/keepalive', FullListing),
+                                        ('/indexbook', IndexBook),
                                         (r'(/?)(.*)', BookListPage)],
                                        debug = True)
   wsgiref.handlers.CGIHandler().run(application)

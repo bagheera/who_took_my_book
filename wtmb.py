@@ -6,9 +6,9 @@ from datetime import date, timedelta
 import cgi
 import logging
 from eventregistry import *
+from wtmbsearch import Searchable
 ###################################################################
 WTMB_SENDER = "whotookmybook@gmail.com"
-
 #from http://code.activestate.com/recipes/52282/#c2
 def ternary(condition, trueVal, falseVal):
     if condition:
@@ -171,7 +171,7 @@ class AppUser(db.Model):
 NewUserRegistered().subscribe(AppUser.on_new_user_registration)
 NewOutsider().subscribe(AppUser.on_new_outsider)
 ###################################################################        
-class Book(db.Model):
+class Book(db.Model, Searchable):
     author = db.StringProperty()
     owner = db.ReferenceProperty(AppUser, collection_name="books_owned")
     title = db.StringProperty()
@@ -180,6 +180,7 @@ class Book(db.Model):
     is_technical = db.BooleanProperty()
     dewey = db.StringProperty()
     created_date = db.DateTimeProperty(auto_now_add="true")
+    INDEX_ONLY = ['author', 'title']
 
     def __init__(self, parent=None, key_name=None, **kw):
         super(Book, self).__init__(parent, key_name, **kw)
@@ -237,6 +238,7 @@ class Book(db.Model):
         if self.__duplicate():
             raise DuplicateBook("Add failed: You (" + AppUser.me().display_name() + ") already have added '" + self.title + "'");
         self.put()
+        self.index()
         NewBookAdded(self).fire()
         return self
 

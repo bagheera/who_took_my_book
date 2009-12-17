@@ -7,6 +7,14 @@ body {
   background-color: #CCD9FF;
   position: relative;
 }
+
+h3 {
+   background-color: #CCD9FF;
+   padding: 10px;
+   -moz-border-radius: 5px;
+   -webkit-border-radius: 5px;
+}
+
 table {
     border-style: dotted;
     border-width: 1px;  
@@ -29,11 +37,36 @@ input:focus{
     padding: 0px  0px 20px 0px;
 }
 
+#quick, #manual{
+   background-color: #F2FFCC;
+   -moz-border-radius: 5px;
+   -webkit-border-radius: 5px;
+   padding: 10px;
+}
+
+#suggestbox, #search{
+	font-size: large;
+	font-weight: bold;
+}
+
+#searchBar{
+   background-color: #F2FFCC;
+   text-align: right;
+   padding-right: 50px;
+   padding-top: 10px;
+   padding-bottom: 10px;
+}
+
+#max25{
+	background-color: #CCD9FF;
+}
 #bookshelf, #userlist, #about_wtmb{
     background-color: white;
     border-style: solid;
     border-width: 2px;
     padding: 10px;
+   -moz-border-radius: 5px;
+   -webkit-border-radius: 5px;
 }
 br {
 	clear: left;
@@ -62,6 +95,17 @@ br {
 
 #show_options {
   float: right;
+}
+
+#book_count {
+   float: right;
+   background-color: white;
+   border-style: solid;
+   border-width: 2px;
+   -moz-border-radius: 5px;
+   -webkit-border-radius: 5px;
+   padding: 15px;
+	  
 }
 
 .bignum{

@@ -18,20 +18,26 @@ class FullListing(webapp.RequestHandler):
             data = {}
             me = AppUser.me()
             data['user'] = me.to_hash()
-            data['mybooks'] = self.books_owned_by(me)
-            data['borrowedBooks'] = self.books_borrowed_by(AppUser.me())
+            data['mybooks'] = self.books_owned_by(me.key())
+            data['borrowedBooks'] = self.books_borrowed_by(me.key())
 #          Having to do manual filtering coz 'Keys only queries do not support IN or != filters.'
             others_books = []
             all_book_keys = Book.all_books()
             logging.info("all books count " + str(len(all_book_keys)))
-            my_book_keys = Book.owned_by(AppUser.me().key())
+            my_book_keys = Book.owned_by(me.key())
             for my_book_key in my_book_keys:
                 try:
                     all_book_keys.remove(my_book_key)
                 except ValueError:
                     logging.error("not found "+ str(my_book_key))
-            others_books = map(CachedBook.get, map(str, all_book_keys[:25]))
-            data['others'] = others_books
+            all_others_books = map(CachedBook.get, map(str, all_book_keys))
+            friends_books = []
+            for book in all_others_books:
+                if self.belongs_to_friend(book["owner_groups"]):
+                    friends_books.append(book)
+                    if len(friends_books) == 25:
+                        break
+            data['others'] = friends_books
             self.response.out.write(simplejson.dumps(data))
         except Timeout:
             self.response.clear()
@@ -42,8 +48,8 @@ class FullListing(webapp.RequestHandler):
         books_owned_ids = CacheBookIdsOwned.get(appUser_key)
         return self.books_by_title(books_owned_ids) if books_owned_ids else []
 
-    def books_borrowed_by(self, appUser):
-        books_owned_ids = CacheBookIdsBorrowed.get(appUser.key())
+    def books_borrowed_by(self, appUser_key):
+        books_owned_ids = CacheBookIdsBorrowed.get(appUser_key)
         return self.books_by_title(books_owned_ids) if books_owned_ids else []
 
     def books_by_title(self, books_owned):
@@ -51,6 +57,15 @@ class FullListing(webapp.RequestHandler):
         book_hashes.sort(lambda x, y: cmp(y['title'], x['title']))
         return book_hashes
 
+    def belongs_to_friend(self, groups):
+        me = AppUser.me()
+        if len(me.member_of) + len(groups) == 0:
+            return True
+        for group in me.member_of:
+            if group in groups:
+                return True
+        return False
+    
 class Search(webapp.RequestHandler):
     def post(self):
         term = self.request.get('term')

@@ -50,6 +50,7 @@ class AppUser(db.Model):
     unregistered_email = db.StringProperty()
     created_date = db.DateTimeProperty(auto_now_add="true")
     last_login_date = db.DateTimeProperty(auto_now="true")
+    member_of = db.StringListProperty(default=['rest_of_the_world']) # not visible in db if empty
 
     def is_outsider(self):
         return not self.googleUser
@@ -72,7 +73,6 @@ class AppUser(db.Model):
             from google.appengine.ext.webapp import template
             path = os.path.join(os.path.dirname(__file__), 'welcome.template')
             welcome_msg = template.render(path, {})
-            logging.debug(welcome_msg)
             mail.send_mail(
                          sender=WTMB_SENDER,
                          to=new_user.email(),
@@ -129,21 +129,35 @@ class AppUser(db.Model):
         fragment = fragment.upper()
         return self.email().upper().find(fragment) != -1 or self.display_name().upper().find(fragment) != -1
     
+    def friend_of(self, other):
+        if len(self.member_of) + len(other.member_of) == 0:
+            return True
+        for group in self.member_of:
+            if group in other.member_of:
+                return True
+        return False
+    
+    def setMembership(self, groups):
+        self.member_of = groups
+        self.put()
+        MembershipChanged({"new_groups": groups, "owner_key":str(AppUser.me().key())}).fire()
+        
     @staticmethod
     def me():
         return AppUser.gql('WHERE googleUser = :1', users.get_current_user()).get()
 
     @staticmethod
     def others_keys():
-        all = db.GqlQuery("SELECT __key__ FROM AppUser").fetch(1000)
+        all = db.GqlQuery("SELECT __key__ FROM AppUser").fetch(1000)  if len(self.member_of) ==0 else db.GqlQuery("SELECT __key__ FROM AppUser where member_of IN :myGroups", self.member_of).fetch(1000) 
         all.remove(AppUser.me().key())
         return all
 
     @staticmethod
     def others():
-        my_key = AppUser.me().key()
+        me = AppUser.me()
+        my_key = me.key()
         for user in AppUser.all():
-            if user.key() != my_key:
+            if user.key() != my_key and me.friend_of(user):
                 yield user
 
     @staticmethod
@@ -197,6 +211,7 @@ class Book(db.Model, Searchable):
                                         "dewey": self.dewey,
                                         "borrowed_by": cgi.escape(self.borrower_name()),
                                         "owner": cgi.escape(self.owner.display_name()),
+                                        "owner_groups": ','.join(self.owner.member_of),
                                         "key": str(self.key()),
                                         "asin":self.asin,
                                         "added_on": self.created_date.toordinal()
@@ -383,3 +398,7 @@ NewBookAdded().subscribe(Book.on_add)
 BookDeleted().subscribe(Book.on_delete)
 BookBorrowed().subscribe(Book.on_borrow)
 ###################################################################
+class Group(db.Model):
+    name = db.StringProperty()
+    createdBy = db.StringProperty()
+    description = db.StringProperty()

@@ -2,7 +2,9 @@ from google.appengine.api import memcache
 import logging
 import urllib
 from wtmb import Book
+from eventregistry import MembershipChanged
 ###################################################################
+
 class CacheBookIdsBorrowed:
 
     @classmethod
@@ -86,6 +88,12 @@ class CachedBook:
     @classmethod
     def reset(cls, book_id):
         memcache.delete(cls.key(book_id))
+        
+    @classmethod
+    def on_group_change(cls, info):
+        affected_book_keys = CacheBookIdsOwned.get(info['owner_key'])
+        for key in affected_book_keys:
+            cls.get(key)['owner_groups'] = ','.join(info['new_groups'])
 #########################################################
 feed_key = "feed/whats_new"
 from datetime import datetime
@@ -113,3 +121,4 @@ class CachedFeed:
         logging.info("Reset feed ")
         memcache.delete(feed_key)
 #########################################################
+MembershipChanged().subscribe(CachedBook.on_group_change)

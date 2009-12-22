@@ -465,7 +465,7 @@ _b.AutoSuggest = function (id, param)
         varname: "input",
         className: "autosuggest",
         timeout: 4000,
-        delay: 400,
+        delay: 200,
         offsety: -5,
         shownoresults: true,
         noresults: "No results!",

@@ -22,7 +22,8 @@ class BookListPage(webapp.RequestHandler):
       template_values = {
         'url': url,
         'url_linktext': url_linktext,
-        "username": me.display_name()
+        "username": me.display_name(),
+        "groups": me.member_of
       }
       path = os.path.join(os.path.dirname(__file__), 'books.html')
 #      causing logout problems?
@@ -42,6 +43,21 @@ class LendPage(webapp.RequestHandler):
     cache_for(self.response, 0, 6)
     self.response.out.write(template.render(path, template_values))
 
+###################################################################    
+class SettingsPage(webapp.RequestHandler):
+  def get(self):
+    template_values = {
+        'groups': Group.all()
+    }
+    path = os.path.join(os.path.dirname(__file__), 'settings.html')
+    cache_for(self.response, 0, 6)
+    self.response.out.write(template.render(path, template_values))
+
+#  have to purge cached books of this guy on group change
+  def post(self):
+        groups = self.request.get("membership")
+        logging.info("groups: " + groups)
+        AppUser.me().setMembership(groups.split(','))
 ###################################################################    
 class WhatsNewFeed(webapp.RequestHandler):
   def get(self):
@@ -68,6 +84,7 @@ def real_main():
                                         ('/search', Search),
                                         ('/cron/keepalive', FullListing),
                                         ('/indexbook', IndexBook),
+                                        ('/settings', SettingsPage),
                                         (r'(/?)(.*)', BookListPage)],
                                        debug = True)
   wsgiref.handlers.CGIHandler().run(application)

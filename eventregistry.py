@@ -38,3 +38,6 @@ class BookLent(BaseEvent):
 
 class NewOutsider(BaseEvent):
     pass
+
+class MembershipChanged(BaseEvent):
+    pass

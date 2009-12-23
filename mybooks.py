@@ -23,7 +23,7 @@ class BookListPage(webapp.RequestHandler):
         'url': url,
         'url_linktext': url_linktext,
         "username": me.display_name(),
-        "groups": me.member_of
+        "groups": ','.join(me.member_of)
       }
       path = os.path.join(os.path.dirname(__file__), 'books.html')
 #      causing logout problems?

@@ -351,6 +351,7 @@ function setup_handlers(){
     });
     
     $("#btn_search").click(function(e){
+    		$("#search_progress").show();
             searchTerm = jQuery($("#search")).val();
             $.ajax({
                 url: "/search",
@@ -359,6 +360,7 @@ function setup_handlers(){
                     "term": searchTerm
                 },
                 success: function(books){
+                    $("#search_progress").hide();
                 	renderOtherBooks(books)},
                 error: on_ajax_fail,
                 dataType: "json"
@@ -380,6 +382,9 @@ function setup_handlers(){
 $(document).ready(function(){
     $("#nick_text").hide();
     $("#manual").hide();
+    $("#lookup_progress").hide();
+    $("#search_progress").hide();
+    
     
     $("#show_manual").click(function(){
         $("#show_manual_span").hide();
@@ -652,6 +657,7 @@ _b.AutoSuggest.prototype.getSuggestions = function (val)
 	// do new request
 	//
 	{
+	    $("#lookup_progress").show();
 		var pointer = this;
 		var input = this.sInp;
 		clearTimeout(this.ajID);
@@ -892,7 +898,7 @@ _b.AutoSuggest.prototype.createList = function(arr)
 	this.iHigh = 0;
 	
 	
-	
+	$("#lookup_progress").hide();
 	
 	
 	

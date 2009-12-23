@@ -1,0 +1,42 @@
+<html>
+    <head>
+        <title>who took my book</title>
+		<link rel="icon" type="image/vnd.microsoft.icon" href="/s/wtmb.ico" />
+        <link type="text/css" rel="stylesheet" href="/s/pres2.css" />
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
+        <script type="text/javascript">
+            function save_success(){
+            	alert("success");
+            }
+            function save_error(){
+            	    alert("oops. Action failed. Please retry");
+            }
+            $(document).ready(function(){
+        	$("#save").click(
+        	function(){
+				var values = new Array();
+				$.each($("input[@name='user_group[]']:checked"), 
+					function() {
+  						values.push($(this).val());
+		            });
+		        $.ajax({
+			        url: "/settings",
+			        type: "POST",
+			        data: {"membership" : values.join(',')},
+					success: save_success,
+			        error: save_error
+			    });					
+		        
+			});
+			
+			});
+        </script>
+    <body>
+    	<div>
+	    	{% for group in groups%}
+		    	<label><input type="checkbox" name="user_group[]" value="{{group.name}}">{{group.name}}</label>
+	    	{% endfor%}
+        </div>
+        <button id="save">save</button>
+    </body>
+</html>        

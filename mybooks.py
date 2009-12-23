@@ -46,8 +46,12 @@ class LendPage(webapp.RequestHandler):
 ###################################################################    
 class SettingsPage(webapp.RequestHandler):
   def get(self):
+    me = AppUser.me()
+    rows = []
+    for group in Group.all():
+        rows.append([group, 'checked' if me.belongs_to(group.name) else ''])
     template_values = {
-        'groups': Group.all()
+        'rows': rows
     }
     path = os.path.join(os.path.dirname(__file__), 'settings.html')
     cache_for(self.response, 0, 6)
@@ -57,7 +61,11 @@ class SettingsPage(webapp.RequestHandler):
   def post(self):
         groups = self.request.get("membership")
         logging.info("groups: " + groups)
-        AppUser.me().setMembership(groups.split(','))
+        if groups.strip() == '':
+            groups = []
+        else:
+            groups = groups.split(',')
+        AppUser.me().setMembership(groups)
 ###################################################################    
 class WhatsNewFeed(webapp.RequestHandler):
   def get(self):

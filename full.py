@@ -4,6 +4,14 @@ from wtmb import *
 from bookcache import *
 from google.appengine.api.datastore_errors import Timeout
 from google.appengine.api import users
+#################################################    
+def belongs_to_friend(groups):
+    me = AppUser.me()
+    for group in me.member_of:
+        if group in groups:
+            return True
+    return False
+#################################################
 
 class FullListing(webapp.RequestHandler):
 
@@ -33,7 +41,7 @@ class FullListing(webapp.RequestHandler):
             all_others_books = map(CachedBook.get, map(str, all_book_keys))
             friends_books = []
             for book in all_others_books:
-                if self.belongs_to_friend(book["owner_groups"]):
+                if belongs_to_friend(book["owner_groups"]):
                     friends_books.append(book)
                     if len(friends_books) == 25:
                         break
@@ -52,27 +60,21 @@ class FullListing(webapp.RequestHandler):
         books_owned_ids = CacheBookIdsBorrowed.get(appUser_key)
         return self.books_by_title(books_owned_ids) if books_owned_ids else []
 
-    def books_by_title(self, books_owned):
-        book_hashes = map(CachedBook.get, books_owned)
+    def books_by_title(self, books_owned_ids):
+        book_hashes = map(CachedBook.get, books_owned_ids)
         book_hashes.sort(lambda x, y: cmp(y['title'], x['title']))
         return book_hashes
-
-    def belongs_to_friend(self, groups):
-        me = AppUser.me()
-        if len(me.member_of) + len(groups) == 0:
-            return True
-        for group in me.member_of:
-            if group in groups:
-                return True
-        return False
-    
+###############################################3
 class Search(webapp.RequestHandler):
     def post(self):
         term = self.request.get('term')
         self.response.headers['content-type'] = "application/json"
         result = []
-        books = Book.search(term, 25)
-        for bk in books:
-            if bk is not None:
-                result.append(bk.to_hash())
+        matches = Book.search(term, 1000, keys_only=True)
+        book_keys = map(lambda b : str(b[0]), matches)
+        books = map(CachedBook.get, book_keys)
+        me = AppUser.me()
+        for book in books:
+            if belongs_to_friend(book["owner_groups"]):
+                result.append(book)
         self.response.out.write( simplejson.dumps(result))

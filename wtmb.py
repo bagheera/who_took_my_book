@@ -130,17 +130,20 @@ class AppUser(db.Model):
         return self.email().upper().find(fragment) != -1 or self.display_name().upper().find(fragment) != -1
     
     def friend_of(self, other):
-        if len(self.member_of) + len(other.member_of) == 0:
-            return True
         for group in self.member_of:
             if group in other.member_of:
                 return True
         return False
     
     def setMembership(self, groups):
+        if len(groups) == 0:
+            groups = ['rest_of_the_world'] 
         self.member_of = groups
         self.put()
         MembershipChanged({"new_groups": groups, "owner_key":str(AppUser.me().key())}).fire()
+
+    def belongs_to(self, group):
+        return group in self.member_of
         
     @staticmethod
     def me():

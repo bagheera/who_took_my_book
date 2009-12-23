@@ -6,7 +6,7 @@
 		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
         <script type="text/javascript">
             function save_success(){
-            	alert("success");
+            	window.location = "http://"+window.location.hostname+":"+window.location.port+"/mybooks";
             }
             function save_error(){
             	    alert("oops. Action failed. Please retry");
@@ -31,12 +31,18 @@
 			
 			});
         </script>
-    <body>
-    	<div>
-	    	{% for group in groups%}
-		    	<label><input type="checkbox" name="user_group[]" value="{{group.name}}">{{group.name}}</label>
+    <body>        <div id="page">
+    <H4>Choose your group(s)</H4>
+    	<table id="group_table">
+    	<tr><th>Group</th><th>Created By</th><th>Description</th></tr>
+	    	{% for row in rows%}
+    	<tr class="{{row.1}}">
+		    	<td><label><input type="checkbox" name="user_group[]" value="{{row.0.name}}" {{row.1}}>{{row.0.name}}</label></td>
+		    	<td>{{row.0.createdBy}}</td>
+		    	<td>{{row.0.description}}</td>
+    	</tr>
 	    	{% endfor%}
-        </div>
-        <button id="save">save</button>
+        </table>
+        <button id="save">save and go back</button></div>
     </body>
 </html>        

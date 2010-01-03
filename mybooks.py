@@ -53,7 +53,7 @@ class SettingsPage(webapp.RequestHandler):
     template_values = {
         'rows': rows
     }
-    path = os.path.join(os.path.dirname(__file__), 'settings.html')
+    path = os.path.join(os.path.dirname(__file__), 'usersettings')
     self.response.out.write(template.render(path, template_values))
 
 #  have to purge cached books of this guy on group change

@@ -23,10 +23,6 @@ table {
     empty-cells: show;
     width: 80%;
 }
-
-tr{
-	width: 80%;
-}
 td, th {
     border-bottom: 1px #000000 dotted;
     padding: 5px;

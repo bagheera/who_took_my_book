@@ -9,6 +9,7 @@ body {
 }
 
 h3 {
+   width: 80%;
    background-color: #CCD9FF;
    padding: 10px;
    -moz-border-radius: 5px;
@@ -20,8 +21,12 @@ table {
     border-width: 2px;  
     border-collapse: collapse;
     empty-cells: show;
+    width: 80%;
 }
 
+tr{
+	width: 80%;
+}
 td, th {
     border-bottom: 1px #000000 dotted;
     padding: 5px;
@@ -50,11 +55,10 @@ input:focus{
 }
 
 #searchBar{
+   width: 80%;
    background-color: #F2FFCC;
    text-align: right;
-   padding-right: 50px;
-   padding-top: 10px;
-   padding-bottom: 10px;
+   padding: 10px;
 }
 
 #max25{
@@ -68,6 +72,11 @@ input:focus{
    -moz-border-radius: 5px;
    -webkit-border-radius: 5px;
 }
+
+#group_table.td {
+    padding: 10px;
+}
+
 br {
 	clear: left;
 }
@@ -99,13 +108,12 @@ br {
 
 #sidebar {
    float: right;
-   background-color: white;
+   background-color: FFD9CC;
    border-style: solid;
    border-width: 2px;
    -moz-border-radius: 5px;
    -webkit-border-radius: 5px;
    padding: 15px;
-	  
 }
 
 .bignum{

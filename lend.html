@@ -848,7 +848,7 @@ _b.Fader.prototype._tween = function(t,b,c,d)
 		            $("#lookup_progress").hide();
 				    
 	                $('#new_user_dialog_text').hide();
-					
+					$('#choose_borrower').focus();
 					$('#new_user_submit').click(
 						function(){
 								create_lease($("#book_id").val(), null, $("#new_user_text").val(), $("#new_user_email").val());

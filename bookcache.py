@@ -93,7 +93,9 @@ class CachedBook:
     def on_group_change(cls, info):
         affected_book_keys = CacheBookIdsOwned.get(info['owner_key'])
         for key in affected_book_keys:
-            cls.get(key)['owner_groups'] = ','.join(info['new_groups'])
+            cachedBook = cls.get(key)
+            cachedBook['owner_groups'] = ','.join(info['new_groups'])
+            memcache.replace(cls.key(key), cachedBook)
 #########################################################
 feed_key = "feed/whats_new"
 from datetime import datetime

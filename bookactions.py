@@ -335,3 +335,11 @@ class IndexBook(webapp.RequestHandler):
         logging.debug("IndexBook batch is:" + str(batch))
         for book in Book.get(batch):
             book.index()
+###################################################################        
+class PurgeInactiveUsers(webapp.RequestHandler):
+    def post(self):
+        batch=self.request.get('keycsv').split(',')
+        logging.info("PurgeInactiveUsers batch is:" + str(batch))
+        for user in AppUser.get(batch):
+            user.purge()
+            

@@ -32,6 +32,9 @@ handlers:
 - url: /indexbook
   script: mybooks.py
 
+- url: /purgeInactive
+  script: mybooks.py
+
 - url: /.*
   script: mybooks.py
   login: required

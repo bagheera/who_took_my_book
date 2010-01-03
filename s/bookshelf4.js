@@ -24,7 +24,7 @@ var last_login_date = null;
 	function book_link(book){
 		text = book.title;
 		if(book.author != "unknown") text = text + " by " +   book.author; 
-		if (book.asin && book.asin.length == 10) return  text + ' <a target="_blank" title="explore this book @ amazon" href="'+amz_url.replace("asin", book.asin)+'">'+'&#187;'+'</a>';
+		if (book.asin && book.asin.length == 10) return  text + ' <a target="_blank" title="explore this book @ amazon" href="'+amz_url.replace("asin", book.asin)+'">'+'&#187;&#187;'+'</a>';
 		return text;
 	}
 
@@ -290,7 +290,10 @@ function on_add(book){
 }
 
 function on_ajax_fail(xhr, desc, exceptionobj){
-    alert("oops. Action failed. Please retry");
+    if( xhr != null && (xhr.status === 400 || xhr.status === 412))
+      alert(xhr.responseText);
+    else
+    	alert("oops. Action failed. Please retry");
 }
 
 function post_new_book(title, author, asin){

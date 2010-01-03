@@ -144,6 +144,13 @@ class AppUser(db.Model):
 
     def belongs_to(self, group):
         return group in self.member_of
+    
+    def purge(self):
+        logging.warning("Purging user: "+ self.display_name())
+        self.delete()
+    
+    def hasnt_transacted(self):
+        return self.books_owned.get() is None and self.books_borrowed.get() is None
         
     @staticmethod
     def me():
@@ -184,6 +191,11 @@ class AppUser(db.Model):
                              body=msg_text)
             except Exception, e:
                 logging.error(str(e))
+
+    @staticmethod
+    def active_users():
+      threeMonthsAgo = date.today() - timedelta(days=90)
+      return db.GqlQuery("SELECT __key__ from AppUser WHERE last_login_date > :1", threeMonthsAgo).fetch(1000)
 
 NewUserRegistered().subscribe(AppUser.on_new_user_registration)
 NewOutsider().subscribe(AppUser.on_new_outsider)

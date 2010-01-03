@@ -54,7 +54,6 @@ class SettingsPage(webapp.RequestHandler):
         'rows': rows
     }
     path = os.path.join(os.path.dirname(__file__), 'settings.html')
-    cache_for(self.response, 0, 6)
     self.response.out.write(template.render(path, template_values))
 
 #  have to purge cached books of this guy on group change
@@ -92,6 +91,7 @@ def real_main():
                                         ('/search', Search),
                                         ('/cron/keepalive', FullListing),
                                         ('/indexbook', IndexBook),
+                                        ('/purgeInactive', PurgeInactiveUsers),
                                         ('/settings', SettingsPage),
                                         (r'(/?)(.*)', BookListPage)],
                                        debug = True)

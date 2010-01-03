@@ -12,6 +12,13 @@
             	    alert("oops. Action failed. Please retry");
             }
             $(document).ready(function(){
+            $("input:checkbox").change(
+            	function() {
+            		if (this.checked)
+						$(this).parent().parent().parent().css({"background" : "#FFE38F"});
+					else
+						$(this).parent().parent().parent().css({"background" : "#FFFFFF"});
+				});
         	$("#save").click(
         	function(){
 				var values = new Array();
@@ -33,6 +40,9 @@
         </script>
     <body>        <div id="page">
     <H4>Choose your group(s)</H4>
+    <p>Your books will only be shown to people in your group(s). You will also get to see/search only books from people in your group(s). 
+    Any books already lent/borrowed to/from outsiders will be unaffected. </p>
+    <p>If you don't choose any group, you will be assigned to a default group called <em>rest_of_the_world</em></p>
     	<table id="group_table">
     	<tr><th>Group</th><th>Created By</th><th>Description</th></tr>
 	    	{% for row in rows%}
@@ -42,7 +52,8 @@
 		    	<td>{{row.0.description}}</td>
     	</tr>
 	    	{% endfor%}
-        </table>
-        <button id="save">save and go back</button></div>
+        </table><br><br>
+        <button id="save">save and go back</button><br><br>
+        <p>To create a new group, please send an email <em>from your Google account id</em> to whotookmybook@gmail.com. Be sure to include a name and description for the group</p></div>
     </body>
 </html>        

@@ -5,8 +5,7 @@ from bookcache import *
 from google.appengine.api.datastore_errors import Timeout
 from google.appengine.api import users
 #################################################    
-def belongs_to_friend(groups):
-    me = AppUser.me()
+def belongs_to_friend(groups, me):
     for group in me.member_of:
         if group in groups:
             return True
@@ -29,22 +28,30 @@ class FullListing(webapp.RequestHandler):
             data['mybooks'] = self.books_owned_by(me.key())
             data['borrowedBooks'] = self.books_borrowed_by(me.key())
 #          Having to do manual filtering coz 'Keys only queries do not support IN or != filters.'
-            others_books = []
-            all_book_keys = Book.all_books()
-            logging.info("all books count " + str(len(all_book_keys)))
-            my_book_keys = Book.owned_by(me.key())
-            for my_book_key in my_book_keys:
-                try:
-                    all_book_keys.remove(my_book_key)
-                except ValueError:
-                    logging.error("not found "+ str(my_book_key))
-            all_others_books = map(CachedBook.get, map(str, all_book_keys))
+#            others_books = []
+#            all_book_keys = Book.all_books()
+#            logging.info("all books count " + str(len(all_book_keys)))
+#            my_book_keys = Book.owned_by(me.key())
+#            for my_book_key in my_book_keys:
+#                try:
+#                    all_book_keys.remove(my_book_key)
+#                except ValueError:
+#                    logging.error("not found "+ str(my_book_key))
+#            all_others_book_keys  = all_book_keys
+#            all_others_books = map(CachedBook.get, map(str, all_others_book_keys))
+#            friends_books = []
+#            for book in all_others_books:
+#                if belongs_to_friend(book["owner_groups"], me):
+#                    friends_books.append(book)
+#                    if len(friends_books) == 25:
+#                        break
             friends_books = []
-            for book in all_others_books:
-                if belongs_to_friend(book["owner_groups"]):
-                    friends_books.append(book)
-                    if len(friends_books) == 25:
-                        break
+            for friend in AppUser.others():
+                batch = self.books_owned_by(friend.key())
+                needed = 25 - len(friends_books)
+                friends_books.extend(batch[:needed])
+                if len(friends_books) >= 25:
+                    break
             data['others'] = friends_books
             self.response.out.write(simplejson.dumps(data))
         except Timeout:
@@ -70,11 +77,16 @@ class Search(webapp.RequestHandler):
         term = self.request.get('term')
         self.response.headers['content-type'] = "application/json"
         result = []
+        me = AppUser.me()
         matches = Book.search(term, 1000, keys_only=True)
         book_keys = map(lambda b : str(b[0]), matches)
+        for mybook_key in CacheBookIdsOwned.get(me.key()):
+            try:
+                book_keys.remove(mybook_key)
+            except ValueError:
+                pass
         books = map(CachedBook.get, book_keys)
-        me = AppUser.me()
         for book in books:
-            if belongs_to_friend(book["owner_groups"]):
+            if belongs_to_friend(book["owner_groups"], me):
                 result.append(book)
         self.response.out.write( simplejson.dumps(result))

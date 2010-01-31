@@ -3,8 +3,8 @@
         <title>who took my book</title>
 		<link rel="icon" type="image/vnd.microsoft.icon" href="/s/wtmb.ico" />
         <link type="text/css" rel="stylesheet" href="/s/pres2.css"/>
-		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
-        <script type="text/javascript" src="/s/bookshelf4.js">
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.1/jquery.min.js"></script>
+        <script type="text/javascript" src="/s/bookshelf5.js">
         </script>
 <link rel="alternate" type="application/atom+xml" title="Who took my Book - recent book additions - atom" href="http://feeds.feedburner.com/WhoTookMyBook-RecentBookAdditions" />
     </head>
@@ -67,28 +67,30 @@
                 <small><a href="/settings">change</a></small>
                 </p>
                 </div>
-                <div id='bookshelf_inner'>
-                    <h3>Books you own</h3>
-                    <div id="my_div">
-                        <table id="my_table">
-                        </table>
-                    </div>
-                    <h3><sup></sup>Books you have borrowed</h3>
-                    <div id="borrowed_div">
-                        <table id="borrowed_table">
-                        </table>
-                    </div>
-                    <h3></sup>Books you could borrow<sub>(Get new book <a href="http://feeds.feedburner.com/WhoTookMyBook-RecentBookAdditions">updates</a> in your feed reader)<a href="http://feeds.feedburner.com/WhoTookMyBook-RecentBookAdditions"><img src="/s/feed_icon.gif" alt="subscribe to feed of new books"></img></a></sub>
-					</h3>
-                    <h4 id="searchBar">
+                <h4 id="searchBar">
 	                    <label for="search">Search:</label><img id="search_progress" src="/s/lookup_progress.gif"></img>
 	                    <input type="text" name="search" id="search"/>
 	                    <button id="btn_search">go</button>
                     </h4>
-                    <small id="max25">listing a maximum of 25 books at a time (of total 700+)</small>
+                <div id='bookshelf_inner' class="panes">
+                <div id="tabber">
+                <span id="tabOwned" class="tab"><a href="#">Owned</a></span>
+                <span id="tabBorrowed" class="tab"><a href="#">Borrowed</a></span>
+                <span id="tabAvailable" class="tab"><a href="#">Available</a></span>
+                <a href="http://feeds.feedburner.com/WhoTookMyBook-RecentBookAdditions" title="subscribe to feed of new books"><img src="/s/feed_icon.gif" alt="subscribe to feed of new books"></img></a>
+                </div>
+                    <div id="my_div">
+                        <table id="my_table">
+                        </table>
+                    </div>
+                    <div id="borrowed_div">
+                        <table id="borrowed_table">
+                        </table>
+                    </div>
                     <div id="others_div">
                         <table id="others_table">
                         </table>
+                    <small id="max25">listing a maximum of 25 books at a time (of total 700+)</small>
                     </div>
                 </div>
             </div>

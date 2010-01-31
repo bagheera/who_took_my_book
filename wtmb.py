@@ -151,22 +151,16 @@ class AppUser(db.Model):
     
     def hasnt_transacted(self):
         return self.books_owned.get() is None and self.books_borrowed.get() is None
-        
+    
     @staticmethod
     def me():
         return AppUser.gql('WHERE googleUser = :1', users.get_current_user()).get()
 
     @staticmethod
-    def others_keys():
-        all = db.GqlQuery("SELECT __key__ FROM AppUser").fetch(1000)  if len(self.member_of) ==0 else db.GqlQuery("SELECT __key__ FROM AppUser where member_of IN :myGroups", self.member_of).fetch(1000) 
-        all.remove(AppUser.me().key())
-        return all
-
-    @staticmethod
     def others():
         me = AppUser.me()
         my_key = me.key()
-        for user in AppUser.all():
+        for user in AppUser.gql("ORDER BY last_login_date DESC"):
             if user.key() != my_key and me.friend_of(user):
                 yield user
 

@@ -36,22 +36,6 @@ var myBooks = {
     },
     
     render_header: function(){
-		$('#my_div').prepend('<a id="my_table_switch_on" href="#" title="collapse">v</a><a id="my_table_switch_off" href="#" title="expand">&gt;</a>');
-		$('#my_table_switch_off').hide();
-		$('#my_table_switch_on').click(
-			function(){
-				$(this).hide();
-				$("#my_table").hide();
-				$("#my_table_switch_off").show();
-			}
-		);
-		$('#my_table_switch_off').click(
-			function(){
-				$(this).hide();
-				$("#my_table").show();
-				$("#my_table_switch_on").show();
-			}
-		);
         $("#my_table").append('<thead><tr><th class="colone"></th><th class="coltwo">Book</th><th class="colthree">Lent to</th><th class="colfour"></th></tr></thead><tbody id="my_table_body"><tr/></tbody>');
     },
     
@@ -127,7 +111,7 @@ var borrowedBooks = {
             $.each(books, this.borrowedBookrow);
         }
         else {
-            $("#borrowed_table").append('<tr class="nothing"><td>Nothing yet. Don&apos;t you want to read any of the books below?</td></tr>');
+            $("#borrowed_table").append('<tr class="nothing"><td>Nothing yet. Don&apos;t you want to read any of the available books?</td></tr>');
         }
     },
 
@@ -222,6 +206,14 @@ function available(book){
     return (book.borrowed_by == "None");
 }
 
+function showAvailableTab(){
+    	    $("#tabAvailable").css('background-color', highlight);
+    	    $("#tabBorrowed").css('background-color', silver);
+    	    $("#tabOwned").css('background-color', silver);
+		    $("#my_div").hide();
+    		$("#borrowed_div").hide();
+    		$("#others_div").show();
+}
 function renderBooks(data){
     book_data = data;
 	last_login_date = data.user.last_login
@@ -244,6 +236,37 @@ function renderBooks(data){
 	
     borrowedBooks.render(data.borrowedBooks);
     renderOtherBooks(data.others);
+    $("#borrowed_div").hide();
+    $("#my_div").hide();
+    silver = 'silver'; highlight = '#D9FFCC';
+    $("#tabAvailable").css('background-color', highlight);
+    $("#tabBorrowed").css('background-color', silver);
+    $("#tabOwned").css('background-color', silver);
+    $("#tabOwned").click(
+    	function(){
+    	    $(this).css('background-color', highlight);
+    	    $("#tabAvailable").css('background-color', silver);
+    	    $("#tabBorrowed").css('background-color', silver);
+    		$("#borrowed_div").hide();
+    		$("#others_div").hide();
+		    $("#my_div").show();
+    	}
+    );
+    $("#tabBorrowed").click(
+    	function(){
+    	    $(this).css('background-color', highlight);
+    	    $("#tabAvailable").css('background-color', silver);
+    	    $("#tabOwned").css('background-color', silver);
+    		$("#others_div").hide();
+		    $("#my_div").hide();
+    		$("#borrowed_div").show();
+    	}
+    );
+    $("#tabAvailable").click(
+    	function(){
+    		showAvailableTab();
+    	}
+    );
     $('#overlay').hide();
 }
 
@@ -364,7 +387,7 @@ function setup_handlers(){
                 },
                 success: function(books){
                     $("#search_progress").hide();
-                	renderOtherBooks(books)},
+                	renderOtherBooks(books); showAvailableTab();},
                 error: on_ajax_fail,
                 dataType: "json"
             });
@@ -387,8 +410,6 @@ $(document).ready(function(){
     $("#manual").hide();
     $("#lookup_progress").hide();
     $("#search_progress").hide();
-    
-    
     $("#show_manual").click(function(){
         $("#show_manual_span").hide();
         $("#manual").show();

@@ -137,6 +137,21 @@ img{
 .checked{
 	background-color: #F2FFCC;
 }
+#tabber{
+	margin-top: 40px;
+}
+.tab{
+   margin-left: 40px;
+   margin-right: 40px;
+   padding-top: 10px;
+   padding-left: 10px;
+   padding-right: 10px;
+   border-left: 2px;
+   border-right: 2px;
+   border-top: 2px;
+   border-bottom: 0px;
+   border-style: solid;
+}
 /* 
 ================================================
 autosuggest, inquisitor style

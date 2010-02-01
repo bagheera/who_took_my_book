@@ -61,23 +61,25 @@
                 </input>
                 <div id="sidebar">
                 <p id="book_count">
-                <h5>Your Group(s)</h5>
-                <em>{{ groups }}
-                </em><br><br>
-                <small><a href="/settings">change</a></small>
                 </p>
+                <strong>Your Group(s):</strong>&nbsp;&nbsp;
+                <em>{{ groups }}
+                </em>
+                <small><a href="/settings">change</a></small>
                 </div>
-                <h4 id="searchBar">
-	                    <label for="search">Search:</label><img id="search_progress" src="/s/lookup_progress.gif"></img>
-	                    <input type="text" name="search" id="search"/>
-	                    <button id="btn_search">go</button>
-                    </h4>
                 <div id='bookshelf_inner' class="panes">
                 <div id="tabber">
-                <span id="tabOwned" class="tab"><a href="#">Owned</a></span>
-                <span id="tabBorrowed" class="tab"><a href="#">Borrowed</a></span>
-                <span id="tabAvailable" class="tab"><a href="#">Available</a></span>
-                <a href="http://feeds.feedburner.com/WhoTookMyBook-RecentBookAdditions" title="subscribe to feed of new books"><img src="/s/feed_icon.gif" alt="subscribe to feed of new books"></img></a>
+                <span id="tabOwned" class="tab" title="Books you own"><a href="#">Owned</a></span>
+                <span id="tabBorrowed" class="tab" title="Books you have borrowed"><a href="#">Borrowed</a></span>
+                <span id="tabAvailable" class="tab" title="lists a few books added by others recently">
+                	<a href="#">Available</a>&nbsp;&nbsp;
+                	<a href="http://feeds.feedburner.com/WhoTookMyBook-RecentBookAdditions" title="subscribe to feed of new books"><img src="/s/feed_icon.gif" alt="subscribe to feed of new books"></img></a>
+                </span>
+                <span id="searchBar">
+	                    <strong><label for="search">Search:</label></strong><img id="search_progress" src="/s/lookup_progress.gif"></img>
+	                    <input type="text" name="search" id="search"/>
+	                    <button id="btn_search">go</button>
+                </span>
                 </div>
                     <div id="my_div">
                         <table id="my_table">
@@ -90,7 +92,7 @@
                     <div id="others_div">
                         <table id="others_table">
                         </table>
-                    <small id="max25">listing a maximum of 25 books at a time (of total 700+)</small>
+                    <small id="max25">listing a maximum of 25 books at a time (of total 800+)</small>
                     </div>
                 </div>
             </div>

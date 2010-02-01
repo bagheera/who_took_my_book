@@ -47,9 +47,9 @@ class FullListing(webapp.RequestHandler):
 #                        break
             friends_books = []
             for friend in AppUser.others():
-                batch = self.books_owned_by(friend.key())
+                batch = CacheBookIdsOwned.get(friend.key())
                 needed = 25 - len(friends_books)
-                friends_books.extend(batch[:needed])
+                friends_books.extend(self.books_by_title(list(batch)[:needed]))
                 if len(friends_books) >= 25:
                     break
             data['others'] = friends_books

@@ -195,9 +195,9 @@ function updateBookCount(data){
     $("#book_count").empty();
     own_count = data.mybooks ? data.mybooks.length : 0
     borrow_count = data.borrowedBooks ? data.borrowedBooks.length : 0
-    $("#book_count").append("<h4>Your book stats</h4> <big class='bignum'> " + own_count + "</big> owned<br><br> <big class='bignum'>" +
+    $("#book_count").append("<strong>Your book stats:</strong>&nbsp;&nbsp;<big class='bignum'> " + own_count + "</big> owned &nbsp;&nbsp; <big class='bignum'>" +
     myBooks.lent_count(data.mybooks) +
-    "</big> lent<br><br> <big class='bignum'>" +
+    "</big> lent&nbsp;&nbsp; <big class='bignum'>" +
     borrow_count +
     "</big> borrowed");
 }
@@ -206,6 +206,14 @@ function available(book){
     return (book.borrowed_by == "None");
 }
 
+function showOwnedTab(){
+    	    $("#tabOwned").css('background-color', highlight);
+    	    $("#tabAvailable").css('background-color', silver);
+    	    $("#tabBorrowed").css('background-color', silver);
+    		$("#borrowed_div").hide();
+    		$("#others_div").hide();
+		    $("#my_div").show();
+}
 function showAvailableTab(){
     	    $("#tabAvailable").css('background-color', highlight);
     	    $("#tabBorrowed").css('background-color', silver);
@@ -244,12 +252,7 @@ function renderBooks(data){
     $("#tabOwned").css('background-color', silver);
     $("#tabOwned").click(
     	function(){
-    	    $(this).css('background-color', highlight);
-    	    $("#tabAvailable").css('background-color', silver);
-    	    $("#tabBorrowed").css('background-color', silver);
-    		$("#borrowed_div").hide();
-    		$("#others_div").hide();
-		    $("#my_div").show();
+    		showOwnedTab();
     	}
     );
     $("#tabBorrowed").click(
@@ -310,6 +313,7 @@ function on_add(book){
     $("#book_title").val("");
     $("#book_author").val("");
     $("#suggestbox").focus();
+    showOwnedTab();
 }
 
 function on_ajax_fail(xhr, desc, exceptionobj){

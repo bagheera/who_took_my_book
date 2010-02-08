@@ -1,5 +1,5 @@
 application: whotookmybook
-version: groups2
+version: limitown
 runtime: python
 api_version: 1
 default_expiration: "1d"

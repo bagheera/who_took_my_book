@@ -193,7 +193,7 @@ function showgif(){
 
 function updateBookCount(data){
     $("#book_count").empty();
-    own_count = data.mybooks ? data.mybooks.length : 0
+    own_count = data['own_count'] ? data['own_count'] : 0
     borrow_count = data.borrowedBooks ? data.borrowedBooks.length : 0
     $("#book_count").append("<strong>Your book stats:</strong>&nbsp;&nbsp;<big class='bignum'> " + own_count + "</big> owned &nbsp;&nbsp; <big class='bignum'>" +
     myBooks.lent_count(data.mybooks) +

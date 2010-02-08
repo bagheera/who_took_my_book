@@ -14,6 +14,20 @@ def belongs_to_friend(groups, me):
 
 class FullListing(webapp.RequestHandler):
 
+    def get_owned_listing(self, me):
+            my_unlent_book_keys = map(str, Book.unlent_by(me))
+            logging.info(str(len(my_unlent_book_keys)) + ' unlent')
+            all_my_book_keys =  CacheBookIdsOwned.get(me)
+            logging.info(str(len(all_my_book_keys)) + ' in all')
+            lent_keyset = set(all_my_book_keys) - set(my_unlent_book_keys)
+            needed = 25 - len(lent_keyset)
+            if needed < 0:
+                needed = 0
+            lent_keys = list(lent_keyset)
+            lent_keys.extend(my_unlent_book_keys[:needed])
+            logging.info(str(len(lent_keys)) + ' to display')
+            return self.books_by_title(lent_keys)
+
     def get(self):
         #workaround for cron: X-AppEngine-Cron: true
         if not users.get_current_user() and not self.request.headers.get('X-AppEngine-Cron', None):
@@ -25,26 +39,9 @@ class FullListing(webapp.RequestHandler):
             data = {}
             me = AppUser.me()
             data['user'] = me.to_hash()
-            data['mybooks'] = self.books_owned_by(me.key())
+            data['own_count'] = len(CacheBookIdsOwned.get(me))            
+            data['mybooks'] = self.get_owned_listing(me.key())
             data['borrowedBooks'] = self.books_borrowed_by(me.key())
-#          Having to do manual filtering coz 'Keys only queries do not support IN or != filters.'
-#            others_books = []
-#            all_book_keys = Book.all_books()
-#            logging.info("all books count " + str(len(all_book_keys)))
-#            my_book_keys = Book.owned_by(me.key())
-#            for my_book_key in my_book_keys:
-#                try:
-#                    all_book_keys.remove(my_book_key)
-#                except ValueError:
-#                    logging.error("not found "+ str(my_book_key))
-#            all_others_book_keys  = all_book_keys
-#            all_others_books = map(CachedBook.get, map(str, all_others_book_keys))
-#            friends_books = []
-#            for book in all_others_books:
-#                if belongs_to_friend(book["owner_groups"], me):
-#                    friends_books.append(book)
-#                    if len(friends_books) == 25:
-#                        break
             friends_books = []
             for friend in AppUser.others():
                 batch = CacheBookIdsOwned.get(friend.key())

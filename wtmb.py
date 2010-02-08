@@ -333,6 +333,10 @@ class Book(db.Model, Searchable):
         return db.GqlQuery("SELECT __key__ from Book WHERE borrower = :1 LIMIT 1000", appuser_key).fetch(1000)
 
     @staticmethod
+    def unlent_by(appuser_key):
+        return db.GqlQuery("SELECT __key__ from Book WHERE owner = :1 AND borrower = NULL  LIMIT 1000", appuser_key).fetch(1000)
+
+    @staticmethod
     def new_books():
       last_week = date.today() - timedelta(days=7)
       return db.GqlQuery("SELECT __key__ from Book WHERE created_date > :1", last_week).fetch(1000)

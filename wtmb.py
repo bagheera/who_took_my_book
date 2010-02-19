@@ -52,6 +52,12 @@ class AppUser(db.Model):
     last_login_date = db.DateTimeProperty(auto_now="true")
     member_of = db.StringListProperty(default=['rest_of_the_world']) # not visible in db if empty
 
+    def __eq__(self, other):
+        return self.googleUser == other.googleUser
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+    
     def is_outsider(self):
         return not self.googleUser
 
@@ -61,7 +67,7 @@ class AppUser(db.Model):
             raise ValueError("Name cannot be empty")
         if AppUser.gql('WHERE googleUser = :1 and wtmb_nickname= :2', None, name).get():
             raise ValueError("This name is taken")
-        new_user = AppUser(wtmb_nickname=name, unregistered_email=email)
+        new_user = AppUser(wtmb_nickname=name, unregistered_email=email, member_of = for_book.owner.member_of)
         new_user.put()
         NewOutsider({'outsider':new_user, 'for_book':for_book}).fire()
         return new_user
@@ -347,14 +353,18 @@ class Book(db.Model, Searchable):
         returner = info['returner']
         book = info['book']
         old_borrower = info['old_borrower']
+        message = None
+        if (returner != book.owner):
+            message = " has returned this book to " + book.owner.display_name()
+        else: 
+            message = returner.display_name() + " has reclaimed this book"
+
         mail.send_mail(
                      sender=AppUser.me().email(),
                      to=book.owner.email(),
                      cc=(WTMB_SENDER, AppUser.me().email()),
                      subject='[whotookmybook] ' + book.title,
-                     body=(returner.display_name() + \
-                             (" has returned this book to " + book.owner.display_name()) if (returner != book.owner) else \
-                             returner.display_name() + " has asserted possession of this book"))
+                     body=returner.display_name() + message)
         from bookcache import CachedBook, CacheBookIdsBorrowed
         book_key_str = str(book.key())
         CacheBookIdsBorrowed.remove_book(str(old_borrower.key()), book_key_str)

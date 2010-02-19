@@ -24,9 +24,10 @@ class FullListing(webapp.RequestHandler):
             if needed < 0:
                 needed = 0
             lent_keys = list(lent_keyset)
-            lent_keys.extend(my_unlent_book_keys[:needed])
-            logging.info(str(len(lent_keys)) + ' to display')
-            return self.books_by_title(lent_keys)
+            keys_for_display = my_unlent_book_keys[:needed]
+            keys_for_display.extend(lent_keys) #hack: putting lent_keys last bcoz javascript reverses it again
+            logging.info(str(len(keys_for_display)) + ' to display')
+            return self.books(keys_for_display)
 
     def get(self):
         #workaround for cron: X-AppEngine-Cron: true
@@ -46,7 +47,7 @@ class FullListing(webapp.RequestHandler):
             for friend in AppUser.others():
                 batch = CacheBookIdsOwned.get(friend.key())
                 needed = 25 - len(friends_books)
-                friends_books.extend(self.books_by_title(list(batch)[:needed]))
+                friends_books.extend(self.books(list(batch)[:needed]))
                 if len(friends_books) >= 25:
                     break
             data['others'] = friends_books
@@ -58,15 +59,14 @@ class FullListing(webapp.RequestHandler):
 
     def books_owned_by(self, appUser_key):
         books_owned_ids = CacheBookIdsOwned.get(appUser_key)
-        return self.books_by_title(books_owned_ids) if books_owned_ids else []
+        return self.books(books_owned_ids) if books_owned_ids else []
 
     def books_borrowed_by(self, appUser_key):
         books_owned_ids = CacheBookIdsBorrowed.get(appUser_key)
-        return self.books_by_title(books_owned_ids) if books_owned_ids else []
+        return self.books(books_owned_ids) if books_owned_ids else []
 
-    def books_by_title(self, books_owned_ids):
-        book_hashes = map(CachedBook.get, books_owned_ids)
-        book_hashes.sort(lambda x, y: cmp(y['title'], x['title']))
+    def books(self, books_ids):
+        book_hashes = map(CachedBook.get, books_ids)
         return book_hashes
 ###############################################3
 class Search(webapp.RequestHandler):

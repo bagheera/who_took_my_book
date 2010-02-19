@@ -2,32 +2,47 @@ Hi
 
 'who took my book' is an application meant to encourage sharing of 
 books without worrying about losing them. Simply borrow books from
-others and let your books be borrowed. 
+others and let your books be borrowed. Currently over 800 books are listed. 
 
-Feature summary
+What's your Group?
 
-- Supports Google accounts - no additional registration required
-- Add your books with
-    - Amazon based auto-suggest
-    - Manual author/title entry
-    - Import a bunch of ASINs
-- Single-click borrow/return of others' book (results in email notification)
-- Lend books to unregistered users (and invite them to use the app)
-- Single click 'send gentle reminder' for long lent books.
-- Public feed of recently added books:
-    http://whotookmybook.appspot.com/feed/whats_new
-- Missing a feature you'd like? Request it here: 
-    http://github.com/bagheera/who_took_my_book/issues
+This application is meant for the general public. This means you many want 
+to share your books only with a certain group of people. To do this simply join
+one of the existing groups or send a request for a new group to
+whotookmybook@gmail.com with subject 'new group'. By default, upon first login,
+you are assigned to a catch-all group called 'rest-of-the-world'.
 
 How it works...
 
 To borrow a book you are interested in, simply click borrow. The app 
 sends an email to both book owner and borrower. The owner is then 
-expected to lend the book. 'Borrow' can also be used 'after-the-fact' 
-to record that you have borrowed a book from someone (although I'd 
-expect the owner to hit 'lend' in this case). Note that lenders and 
+expected to lend the book to you. Note that lenders and 
 borrowers need to know each other by their nicknames registered 
 with the app.
+
+Feature summary
+
+- Search for books within your group
+
+- Add your books with
+    - Amazon based auto-suggest
+    - Manual author/title entry
+    - Import a bunch of ASINs
+
+- Single-click borrow/return of others' book (results in email notification)
+
+- Lend books. You can even lend to unregistered users (and invite them to use the app)
+
+- Single click 'send gentle reminder' for long lent books.
+
+- Public feed of recently added books. Add it to your Google reader (or other reader) to know who reads what. 
+    http://whotookmybook.appspot.com/feed/whats_new
+
+- Supports Google accounts - no additional registration required
+
+- Missing a feature you'd like? Request it here: 
+    http://github.com/bagheera/who_took_my_book/issues
+
 
 Thanks for visiting http://whotookmybook.appspot.com
 

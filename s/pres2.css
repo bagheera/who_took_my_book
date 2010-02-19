@@ -27,7 +27,7 @@ th {
     background-color: #D9FFCC;
 }
 td, th {
-    border-bottom: 1px #000000 dotted;
+    border-bottom: 1px #000000 solid;
     padding: 5px;
     text-align: left;
 }

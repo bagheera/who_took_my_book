@@ -210,6 +210,7 @@ function showOwnedTab(){
     	    $("#tabOwned").css('background-color', highlight);
     	    $("#tabAvailable").css('background-color', silver);
     	    $("#tabBorrowed").css('background-color', silver);
+    	    if (own_count > 25) $("#searchMineBar").show();
     		$("#borrowed_div").hide();
     		$("#others_div").hide();
 		    $("#my_div").show();
@@ -396,6 +397,24 @@ function setup_handlers(){
                 dataType: "json"
             });
     });
+
+    $("#btn_searchmine").click(function(e){
+    		$("#searchmine_progress").show();
+            searchTerm = jQuery($("#searchmine")).val();
+            $.ajax({
+                url: "/search",
+                type: "POST",
+                data: {
+                    "term": searchTerm,
+                    "whose": 'mine'
+                },
+                success: function(books){
+                    $("#searchmine_progress").hide();
+                	myBooks.render(books); showOwnedTab();},
+                error: on_ajax_fail,
+                dataType: "json"
+            });
+    });
     
 /**    
     $("#bookshelf_inner").keypress(function(e){//not working??
@@ -414,6 +433,8 @@ $(document).ready(function(){
     $("#manual").hide();
     $("#lookup_progress").hide();
     $("#search_progress").hide();
+    $("#searchmine_progress").hide();
+    $("#searchMineBar").hide();
     $("#show_manual").click(function(){
         $("#show_manual_span").hide();
         $("#manual").show();

@@ -58,6 +58,9 @@ class AppUser(db.Model):
     def __ne__(self, other):
         return not self.__eq__(other)
     
+    def book_count(self):
+        return Book.gql("WHERE owner=:1", self).count()
+        
     def is_outsider(self):
         return not self.googleUser
 

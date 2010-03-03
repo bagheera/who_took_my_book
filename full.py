@@ -40,7 +40,9 @@ class FullListing(webapp.RequestHandler):
             data = {}
             me = AppUser.me()
             data['user'] = me.to_hash()
-            data['own_count'] = len(CacheBookIdsOwned.get(me))            
+            data['own_count'] = me.book_count()
+            if(data['own_count'] != len(CacheBookIdsOwned.get(me.key()))):
+                logging.error("own count mismatch for %s %s in db %s in cache", me.display_name(), data['own_count'], len(CacheBookIdsOwned.get(me.key())))            
             data['mybooks'] = self.get_owned_listing(me.key())
             data['borrowedBooks'] = self.books_borrowed_by(me.key())
             friends_books = []
@@ -77,13 +79,15 @@ class Search(webapp.RequestHandler):
         me = AppUser.me()
         matches = Book.search(term, 1000, keys_only=True)
         book_keys = map(lambda b : str(b[0]), matches)
-        for mybook_key in CacheBookIdsOwned.get(me.key()):
-            try:
-                book_keys.remove(mybook_key)
-            except ValueError:
-                pass
-        books = map(CachedBook.get, book_keys)
-        for book in books:
-            if belongs_to_friend(book["owner_groups"], me):
-                result.append(book)
+        if self.request.get('whose'):
+            result_keys = list(set(CacheBookIdsOwned.get(me.key())).intersection(set(book_keys)))
+        else:
+            result_keys = list(set(book_keys) - set(CacheBookIdsOwned.get(me.key())))
+        books = map(CachedBook.get, result_keys)
+        if self.request.get('whose'):
+            result = books
+        else:
+            for book in books:
+                if belongs_to_friend(book["owner_groups"], me):
+                    result.append(book)
         self.response.out.write( simplejson.dumps(result))

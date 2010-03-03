@@ -154,6 +154,10 @@ img{
    border-style: solid;
    font-weight: bold;
 }
+
+#searchMineBar{
+	    background-color: #D9FFCC;
+}
 /* 
 ================================================
 autosuggest, inquisitor style

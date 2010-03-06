@@ -367,7 +367,7 @@ class Book(db.Model, Searchable):
                      to=book.owner.email(),
                      cc=(WTMB_SENDER, AppUser.me().email()),
                      subject='[whotookmybook] ' + book.title,
-                     body=returner.display_name() + message)
+                     body=message)
         from bookcache import CachedBook, CacheBookIdsBorrowed
         book_key_str = str(book.key())
         CacheBookIdsBorrowed.remove_book(str(old_borrower.key()), book_key_str)

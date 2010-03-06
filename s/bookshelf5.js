@@ -310,6 +310,7 @@ function on_add(book){
         book_data['mybooks'] = [];
     }
     book_data['mybooks'].push(book);
+    book_data['own_count'] += 1;
     updateBookCount(book_data);
     $("#book_title").val("");
     $("#book_author").val("");

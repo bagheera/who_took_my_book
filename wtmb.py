@@ -2,7 +2,7 @@ from google.appengine.ext import db
 from google.appengine.api import users
 from google.appengine.api import mail
 
-from datetime import date, timedelta
+from datetime import datetime, date, timedelta
 import cgi
 import logging
 from eventregistry import *
@@ -160,6 +160,9 @@ class AppUser(db.Model):
     
     def hasnt_transacted(self):
         return self.books_owned.get() is None and self.books_borrowed.get() is None
+    
+    def just_created(self):
+        return (datetime.utcnow() - self.created_date).seconds < 4
     
     @staticmethod
     def me():

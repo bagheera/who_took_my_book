@@ -5,7 +5,7 @@
         <link type="text/css" rel="stylesheet" href="/s/pres2.css" />
 		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
         <script type="text/javascript">
-            function save_success(){
+            function gotoBooks(){
             	window.location = "http://"+window.location.hostname+":"+window.location.port+"/mybooks";
             }
             function save_error(){
@@ -30,11 +30,16 @@
 			        url: "/settings",
 			        type: "POST",
 			        data: {"membership" : values.join(',')},
-					success: save_success,
+					success: gotoBooks,
 			        error: save_error
 			    });					
 		        
 			});
+
+        	$("#cancel").click(
+        	function(){
+        		gotoBooks();
+        	});
 			
 			});
         </script>
@@ -53,7 +58,8 @@
     	</tr>
 	    	{% endfor%}
         </table><br><br>
-        <button id="save">save and go back</button><br><br>
+        <button id="save">save and go back</button>&nbsp;&nbsp;&nbsp;
+        <button id="cancel">cancel</button><br><br>
         <p>To create a new group, please send an email <em>from your Google account id</em> to whotookmybook@gmail.com. Be sure to include a name and description for the group</p></div>
     </body>
 </html>        

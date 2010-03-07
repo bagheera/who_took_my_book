@@ -19,6 +19,10 @@ class BookListPage(webapp.RequestHandler):
       url_linktext = 'Logout from Google'
       me = AppUser.getAppUserFor(user, self.request.get('u'), self.request.get('e')) #registers new user
       me.update_last_login()
+      if me.just_created():
+          next = SettingsPage()
+          next.initialize(self.request, self.response)
+          return next.get()
       template_values = {
         'url': url,
         'url_linktext': url_linktext,

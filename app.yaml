@@ -1,5 +1,5 @@
 application: whotookmybook
-version: ownsearch
+version: forcegroups
 runtime: python
 api_version: 1
 default_expiration: "1d"

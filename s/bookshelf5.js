@@ -362,60 +362,73 @@ function setup_handlers(){
     });
     
     $("#nick_text").keypress(function(e){
+    	onEnterDo(e, changeNickname, jQuery(this).val());
+    });
+    
+    function onEnterDo(e, handler, arg){
         c = e.which ? e.which : e.keyCode;
         if (c == 13) {
-            nickname = jQuery(this).val();
+            handler(arg);
+			return false;
+        }
+		return true;
+    }
+	
+	function changeNickname(newNick){
             $.ajax({
                 url: "/nickname",
                 type: "POST",
                 data: {
-                    "new_nick": nickname
+                    "new_nick": newNick
                 },
                 success: function(msg){
                     $("#nick_text").hide();
-                    $("#hi_msg").text("Hi " + nickname);
+                    $("#hi_msg").text("Hi " + newNick);
                 },
                 error: on_ajax_fail
             });
-			return false;
-        }
-		return true;
+	}
+
+    $("#search").keypress(function(e){
+    	onEnterDo(e, searchAvailable, jQuery(this).val());
     });
     
-    $("#btn_search").click(function(e){
+    function searchAvailable(term){
     		$("#search_progress").show();
-            searchTerm = jQuery($("#search")).val();
             $.ajax({
                 url: "/search",
                 type: "POST",
-                data: {
-                    "term": searchTerm
-                },
+                data: {"term": term},
                 success: function(books){
-                    $("#search_progress").hide();
-                	renderOtherBooks(books); showAvailableTab();},
+			                    $("#search_progress").hide();
+			                	renderOtherBooks(books); showAvailableTab();
+			    },
                 error: on_ajax_fail,
                 dataType: "json"
             });
-    });
+    }
 
-    $("#btn_searchmine").click(function(e){
+    $("#searchmine").keypress(function(e){
+    	onEnterDo(e, searchMine, jQuery(this).val());
+    });
+    
+    function searchMine(term){
     		$("#searchmine_progress").show();
-            searchTerm = jQuery($("#searchmine")).val();
             $.ajax({
                 url: "/search",
                 type: "POST",
                 data: {
-                    "term": searchTerm,
+                    "term": term,
                     "whose": 'mine'
                 },
                 success: function(books){
-                    $("#searchmine_progress").hide();
-                	myBooks.render(books); showOwnedTab();},
+			                    $("#searchmine_progress").hide();
+			                	myBooks.render(books); showOwnedTab();
+			    },
                 error: on_ajax_fail,
                 dataType: "json"
             });
-    });
+    }
     
 /**    
     $("#bookshelf_inner").keypress(function(e){//not working??

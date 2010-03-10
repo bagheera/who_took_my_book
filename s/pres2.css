@@ -48,7 +48,7 @@ input:focus{
    padding: 10px;
 }
 
-#suggestbox, #search{
+#suggestbox, #search, #searchMine{
 	font-size: large;
 	font-weight: bold;
 	width: 200px;

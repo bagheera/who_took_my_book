@@ -162,7 +162,7 @@ class AppUser(db.Model):
         return self.books_owned.get() is None and self.books_borrowed.get() is None
     
     def just_created(self):
-        return (datetime.utcnow() - self.created_date).seconds < 4
+        return datetime.utcnow() - self.created_date < timedelta(0,4,0)
     
     @staticmethod
     def me():

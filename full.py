@@ -73,7 +73,9 @@ class FullListing(webapp.RequestHandler):
 ###############################################3
 class Search(webapp.RequestHandler):
     def post(self):
+      try:
         term = self.request.get('term')
+        logging.info("search term is "+ term)          
         self.response.headers['content-type'] = "application/json"
         result = []
         me = AppUser.me()
@@ -83,7 +85,12 @@ class Search(webapp.RequestHandler):
             result_keys = list(set(CacheBookIdsOwned.get(me.key())).intersection(set(book_keys)))
         else:
             result_keys = list(set(book_keys) - set(CacheBookIdsOwned.get(me.key())))
-        books = map(CachedBook.get, result_keys)
+        books = []
+        for bookey in result_keys:
+          try:
+            books.append(CachedBook.get(bookey))
+          except Exception, e:
+            logging.exception("book not found for " + bookey)
         if self.request.get('whose'):
             result = books
         else:
@@ -91,3 +98,8 @@ class Search(webapp.RequestHandler):
                 if belongs_to_friend(book["owner_groups"], me):
                     result.append(book)
         self.response.out.write( simplejson.dumps(result))
+      except Exception, e:
+            logging.exception("search failed")
+            self.response.clear()
+            self.response.set_status(400, str(e))
+            self.response.out.write("oops. something wen't wrong. Please try again.")

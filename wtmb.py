@@ -248,10 +248,10 @@ class Book(db.Model, Searchable):
             return str(None)
 
     def is_available(self):
-        return None == self.borrower
+        return self.borrower is None
 
     def is_lent(self):
-        return None != self.borrower
+        return self.borrower is not None
 
     def belongs_to_someone_else(self):
         return users.get_current_user() != self.owner.googleUser

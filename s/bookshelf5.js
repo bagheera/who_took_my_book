@@ -230,13 +230,14 @@ function renderBooks(data){
     myBooks.render(data.mybooks);
 		$("a.reminder").click(
 			function(){
+				cursor_wait();
 			    $.ajax({
 			        url: "/remind",
 			        type: "POST",
 			        data: {
 			            "book_id": $(this).attr('name')
 			        },
-			        success: function(){alert ('Reminder sent')},
+			        success: function(){cursor_ok(); alert ('Reminder sent')},
 			        error: on_ajax_fail
 			    });				
 			}
@@ -316,9 +317,11 @@ function on_add(book){
     $("#book_author").val("");
     $("#suggestbox").focus();
     showOwnedTab();
+    cursor_ok();
 }
 
 function on_ajax_fail(xhr, desc, exceptionobj){
+	cursor_ok();
     if( xhr != null && (xhr.status === 400 || xhr.status === 412))
       alert(xhr.responseText);
     else
@@ -326,6 +329,7 @@ function on_ajax_fail(xhr, desc, exceptionobj){
 }
 
 function post_new_book(title, author, asin){
+	cursor_wait();
     $("#suggestbox").val("");
     $.ajax({
         url: "/addBook",
@@ -394,6 +398,10 @@ function setup_handlers(){
     });
     
     function searchAvailable(term){
+        if(term.length < 4){
+          alert("search term should be at least 4 characters long!");
+          return;
+        }
     		$("#search_progress").show();
             $.ajax({
                 url: "/search",
@@ -441,6 +449,12 @@ function setup_handlers(){
 
 }
 
+function cursor_wait(){
+    document.body.style.cursor = 'wait';
+}
+function cursor_ok(){
+    document.body.style.cursor = 'default';
+}
 
 $(document).ready(function(){
     $("#nick_text").hide();
@@ -456,6 +470,7 @@ $(document).ready(function(){
     });
     fetch_and_render_books();
     setup_handlers();
+    cursor_ok();
 });
 /**************************************************************************************/
 /**************************************************************************************/
@@ -900,6 +915,7 @@ _b.AutoSuggest.prototype.createList = function(arr)
 		a.appendChild(span);
 		
 		a.name = i+1;
+		//a.id = "asa_" + (i+1);
 		a.onclick = function () { pointer.setHighlightedValue(); return false; };
 		a.onmouseover = function () { pointer.setHighlight(this.name); };
 		

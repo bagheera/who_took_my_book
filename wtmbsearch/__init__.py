@@ -418,7 +418,7 @@ class Searchable(object):
                         stemming=cls.INDEX_STEMMING, 
                         multi_word_literal=cls.INDEX_MULTI_WORD)
         if keys_only:
-            logging.debug("key_list: %s", key_list)
+#            logging.debug("key_list: %s", key_list)
             return key_list
         else:
             return [cls.get(key_and_title[0]) for key_and_title in key_list]

@@ -313,6 +313,7 @@ class Remind(webapp.RequestHandler):
             book_id = self.request.get('book_id')
             Book.get(book_id).remind()
         except Exception, e:
+            logging.exception("remind failed")
             self.response.clear()
             self.response.set_status(400, str(e))
             self.response.out.write("oops. something wen't wrong. Please try again.")

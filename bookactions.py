@@ -184,7 +184,7 @@ class ImportASINs(webapp.RequestHandler):
 class AddToBookshelf(webapp.RequestHandler):
   def post(self):
         if users.get_current_user():
-            appuser = AppUser.getAppUserFor(users.get_current_user())
+            appuser = AppUser.me()
             book_asin = self.request.get('book_asin')
             try:
                 dewey_num = Amz().get_dewey(book_asin)
@@ -322,7 +322,7 @@ class AllUzers(webapp.RequestHandler):
     def get(self, *args):
         fragment = self.request.get('fragment')
         matches = []
-        for user in AppUser.others():
+        for user in AppUser.friends():
             if user.matches(fragment):
                 matches.append(user)
                 if len(matches) > 6:

@@ -34,6 +34,7 @@ class BookListPage(webapp.RequestHandler):
 #      cache_for(self.response, 30)
       self.response.out.write(template.render(path, template_values)) # render o/p can be cached
     else:
+      logging.info("new user from "+self.request.headers.get('Referer',"anon"))
       url = users.create_login_url(self.request.uri)
       url_linktext = 'Login'
       self.redirect(users.create_login_url(self.request.uri))

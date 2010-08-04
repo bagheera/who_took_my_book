@@ -146,7 +146,13 @@ class AppUser(db.Model):
     
     def setMembership(self, groups):
         if len(groups) == 0:
-            groups = ['rest_of_the_world'] 
+            groups = ['rest_of_the_world']
+        for old_group in set(self.member_of) - set(groups):
+             GroupBook.group_deleted(Group.find_by_name(old_group), self)
+        for new_group_name in set(groups) - set(self.member_of):
+            new_group = Group.find_by_name(new_group_name)
+            for book in self.books_owned:
+                GroupBook(owner=self, book = book, group = new_group).put()
         self.member_of = groups
         self.put()
         MembershipChanged({"new_groups": groups, "owner_key":str(AppUser.me().key())}).fire()
@@ -169,7 +175,7 @@ class AppUser(db.Model):
         return AppUser.gql('WHERE googleUser = :1', users.get_current_user()).get()
 
     @staticmethod
-    def others():
+    def friends():
         me = AppUser.me()
         my_key = me.key()
         for user in AppUser.gql("ORDER BY last_login_date DESC"):
@@ -274,6 +280,12 @@ class Book(db.Model, Searchable):
         if self.__duplicate():
             raise DuplicateBook("Add failed: You (" + AppUser.me().display_name() + ") already have added '" + self.title + "'");
         self.put()
+        me = AppUser.me()
+        for grp in me.member_of:
+            GroupBook(
+                      owner = me,
+                      book = self, 
+                      group=Group.find_by_name(grp)).put()
         self.index()
         NewBookAdded(self).fire()
         return self
@@ -294,6 +306,7 @@ class Book(db.Model, Searchable):
             if self.borrower:
                 info['old_borrower'] = str(self.borrower.key())
             self.delete()
+            GroupBook.book_deleted(self)
             BookDeleted(info).fire()
         else:
             logging.error(AppUser.me().display_name() + "made an illegal attempt to delete " + self.title + " owned by " + self.owner.display_name())
@@ -431,3 +444,38 @@ class Group(db.Model):
     name = db.StringProperty()
     createdBy = db.StringProperty()
     description = db.StringProperty()
+    
+    @staticmethod
+    def find_by_name(groupName):
+        return Group.gql("WHERE name=:1", groupName).get()
+        
+class GroupBook(db.Model):
+    book = db.ReferenceProperty(Book)
+    owner = db.ReferenceProperty(AppUser)
+    group = db.ReferenceProperty(Group, collection_name="books")
+    added_on = db.DateTimeProperty(auto_now_add="true")
+
+    @staticmethod
+    def get_friends_books(appuser):
+        groups = map(Group.find_by_name, appuser.member_of)
+        group_keys = map(Group.key, groups)
+        result = []
+        for gb in sorted(
+                         GroupBook.gql('WHERE owner != :2 AND group IN :1', 
+                                       group_keys, appuser.key()).fetch(25), 
+                         key = lambda gb : gb.added_on, 
+                         reverse=True):
+            result.append(str(gb.book.key()))#sort
+        return result
+    
+    @staticmethod
+    def book_deleted(book):
+        tbd = GroupBook.gql('WHERE book=:1', book.key())
+        for gb in tbd:
+            gb.delete()
+    
+    @staticmethod
+    def group_deleted(group, user):
+        tbd = GroupBook.gql('WHERE owner=:1 AND group=:2', user.key(), group.key())
+        for gb in tbd:
+            gb.delete()

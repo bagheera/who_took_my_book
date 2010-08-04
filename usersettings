@@ -3,7 +3,7 @@
         <title>who took my book</title>
 		<link rel="icon" type="image/vnd.microsoft.icon" href="/s/wtmb.ico" />
         <link type="text/css" rel="stylesheet" href="/s/pres2.css" />
-		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
+		<script type="text/javascript" src="/s/jquery.js"></script>
         <script type="text/javascript">
             function gotoBooks(){
             	window.location = "http://"+window.location.hostname+":"+window.location.port+"/mybooks";
@@ -50,11 +50,10 @@
     Any books already lent/borrowed to/from outsiders will be unaffected. </p>
     <p>If you don't choose any group, you will be assigned to a default group called <em>rest_of_the_world</em></p>
     	<table id="group_table">
-    	<tr><th>Group</th><th>Created By</th><th>Description</th></tr>
+    	<tr><th>Group</th><th>Description</th></tr>
 	    	{% for row in rows%}
     	<tr class="{{row.1}}">
 		    	<td><label><input type="checkbox" name="user_group[]" id="user_group_{{row.0.name}}" value="{{row.0.name}}" {{row.1}}>{{row.0.name}}</label></td>
-		    	<td>{{row.0.createdBy}}</td>
 		    	<td>{{row.0.description}}</td>
     	</tr>
 	    	{% endfor%}

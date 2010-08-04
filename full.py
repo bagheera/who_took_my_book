@@ -45,14 +45,15 @@ class FullListing(webapp.RequestHandler):
                 logging.error("own count mismatch for %s %s in db %s in cache", me.display_name(), data['own_count'], len(CacheBookIdsOwned.get(me.key())))            
             data['mybooks'] = self.get_owned_listing(me.key())
             data['borrowedBooks'] = self.books_borrowed_by(me.key())
-            friends_books = []
-            for friend in AppUser.others():
-                batch = CacheBookIdsOwned.get(friend.key())
-                needed = 25 - len(friends_books)
-                friends_books.extend(self.books(list(batch)[:needed]))
-                if len(friends_books) >= 25:
-                    break
-            data['others'] = friends_books
+#            friends_books = []
+#            for friend in AppUser.friends():
+#                batch = CacheBookIdsOwned.get(friend.key())
+#                needed = 25 - len(friends_books)
+#                friends_books.extend(self.books(list(batch)[:needed]))
+#                if len(friends_books) >= 25:
+#                    break
+#            data['others'] = friends_books
+            data['others'] = self.friends_books()
             self.response.out.write(simplejson.dumps(data))
         except Timeout:
             self.response.clear()
@@ -70,6 +71,26 @@ class FullListing(webapp.RequestHandler):
     def books(self, books_ids):
         book_hashes = map(CachedBook.get, books_ids)
         return book_hashes
+    
+    def getFriendsBookIds(self, groupBooks, limit):
+        ids = []
+        for groupbook in groupBooks:
+            if groupbook.book.belongs_to_someone_else():
+                ids.append(str(groupbook.book.key()))
+                if len(ids) >= limit:
+                    break
+        return ids
+    
+    def friends_books(self):
+#        result = []
+#        for groupName in AppUser.me().member_of:
+#            group = Group.find_by_name(groupName)
+#            if group:
+#                needed = 25 - len(result)
+#                result.extend(self.books(self.getFriendsBookIds(group.books, needed)))
+#                if len(result) >= 25:
+#                    break
+        return self.books(GroupBook.get_friends_books(AppUser.me()))
 ###############################################3
 class Search(webapp.RequestHandler):
     def post(self):
@@ -89,8 +110,8 @@ class Search(webapp.RequestHandler):
         for bookey in result_keys:
           try:
             books.append(CachedBook.get(bookey))
-          except Exception, e:
-            logging.exception("book not found for " + bookey)
+          except (Exception, AttributeError), e:
+            logging.warning("book not found for " + bookey)
         if self.request.get('whose'):
             result = books
         else:

@@ -343,4 +343,13 @@ class PurgeInactiveUsers(webapp.RequestHandler):
         logging.info("PurgeInactiveUsers batch is:" + str(batch))
         for user in AppUser.get(batch):
             user.purge()
-            
+###################################################################        
+class MakeGroupBooks(webapp.RequestHandler):
+    def post(self):
+        batch = self.request.get('groupbooks').split('|')
+        for groupBookStr in batch:
+            parts = groupBookStr.split(',')
+            GroupBook(owner = AppUser.get(parts[0]),
+                      group = Group.get(parts[1]),
+                      book = Book.get(parts[2]),
+                      added_on = Book.get(parts[2]).created_date).put()

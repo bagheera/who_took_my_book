@@ -18,4 +18,10 @@ indexes:
 - kind: GroupBook
   properties:
   - name: group
+  - name: added_on
+    direction: desc
+
+- kind: GroupBook
+  properties:
+  - name: group
   - name: owner

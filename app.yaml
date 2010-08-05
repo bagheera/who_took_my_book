@@ -28,13 +28,20 @@ handlers:
 
 - url: /cron/keepalive
   script: mybooks.py
-
+  login: admin
+  
 - url: /indexbook
   script: mybooks.py
-
+  login: admin
+  
 - url: /purgeInactive
   script: mybooks.py
-
+  login: admin
+  
+- url: /makeGroupBooks
+  script: mybooks.py
+  login: admin
+  
 - url: /.*
   script: mybooks.py
   login: required

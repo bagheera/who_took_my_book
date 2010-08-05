@@ -162,6 +162,7 @@ class AppUser(db.Model):
     
     def purge(self):
         logging.warning("Purging user: "+ self.display_name())
+        GroupBook.user_deleted(self)
         self.delete()
     
     def hasnt_transacted(self):
@@ -460,12 +461,18 @@ class GroupBook(db.Model):
         groups = map(Group.find_by_name, appuser.member_of)
         group_keys = map(Group.key, groups)
         result = []
-        for gb in sorted(
-                         GroupBook.gql('WHERE owner != :2 AND group IN :1', 
-                                       group_keys, appuser.key()).fetch(25), 
-                         key = lambda gb : gb.added_on, 
-                         reverse=True):
-            result.append(str(gb.book.key()))#sort
+        limit = 25
+        offset = 1
+        while limit > 0:
+            noMore = True
+            for gb in GroupBook.gql('WHERE group IN :1 ORDER BY added_on DESC', group_keys).fetch(limit, offset):
+                noMore = False
+                if (gb.owner != appuser):
+                    result.append(str(gb.book.key()))
+            if noMore:
+                break
+            offset = offset + limit
+            limit = limit - len(result)
         return result
     
     @staticmethod
@@ -477,5 +484,11 @@ class GroupBook(db.Model):
     @staticmethod
     def group_deleted(group, user):
         tbd = GroupBook.gql('WHERE owner=:1 AND group=:2', user.key(), group.key())
+        for gb in tbd:
+            gb.delete()
+
+    @staticmethod
+    def user_deleted(user):
+        tbd = GroupBook.gql('WHERE owner=:1', user.key())
         for gb in tbd:
             gb.delete()

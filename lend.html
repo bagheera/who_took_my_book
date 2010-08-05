@@ -3,8 +3,11 @@
         <title>who took my book</title>
 		<link rel="icon" type="image/vnd.microsoft.icon" href="/s/wtmb.ico" />
         <link type="text/css" rel="stylesheet" href="/s/pres2.css" />
-		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.1/jquery.min.js"></script>
+		<script type="text/javascript" src="/s/jquery.js"></script>
         <script type="text/javascript">
+            function gotoBooks(){
+            	window.location = "http://"+window.location.hostname+":"+window.location.port+"/mybooks";
+            }
            	function create_lease_error(xhr, desc, exceptionobj){
                 alert(xhr.statusText);
             }
@@ -853,7 +856,12 @@ _b.Fader.prototype._tween = function(t,b,c,d)
 						function(){
 								create_lease($("#book_id").val(), null, $("#new_user_text").val(), $("#new_user_email").val());
 	            		});
-               });
+	            		
+	               $("#cancel").click(
+			        	function(){
+			        		gotoBooks();
+			        	});	               
+                  });
         </script>
     </head>
     <body>
@@ -882,6 +890,7 @@ _b.Fader.prototype._tween = function(t,b,c,d)
 					<small>To inform about this book and to invite to use <q>who took my book</q></small> 
 					<br><button id="new_user_submit">submit</button>
                 </div>
+		        <button id="cancel">cancel</button><br><br>
             </div>
         </div>
     </body>

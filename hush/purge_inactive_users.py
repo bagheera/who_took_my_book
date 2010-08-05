@@ -23,3 +23,4 @@ for i in range(0, len(purgatory), 100):
     batches.append(purgatory[i:i+100])
 for batch in batches:
     taskqueue.add(url='/purgeInactive', params={'keycsv': ','.join(batch)})
+    

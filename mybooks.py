@@ -97,6 +97,7 @@ def real_main():
                                         ('/cron/keepalive', FullListing),
                                         ('/indexbook', IndexBook),
                                         ('/purgeInactive', PurgeInactiveUsers),
+                                        ('/makeGroupBooks', MakeGroupBooks),
                                         ('/settings', SettingsPage),
                                         (r'(/?)(.*)', BookListPage)],
                                        debug = True)

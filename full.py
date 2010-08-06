@@ -95,8 +95,11 @@ class Search(webapp.RequestHandler):
                 result_keys_minus_mine = set(book_keys_str) - set(CacheBookIdsOwned.get(me.key()))
                 result_keys_str = []
                 for book_key_str in result_keys_minus_mine:
-                    if(Book.get(book_key_str).belongs_to_friend(me)):
-                        result_keys_str.append(book_key_str)
+                    try:
+                        if(Book.get(book_key_str).belongs_to_friend(me)):
+                            result_keys_str.append(book_key_str)
+                    except (Exception, AttributeError), e:
+                        logging.warning("book not found for " + book_key_str)
                 result = self.getBooksFor(result_keys_str)
         self.response.out.write( simplejson.dumps(result))
       except Exception, e:

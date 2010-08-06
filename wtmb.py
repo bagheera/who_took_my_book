@@ -156,6 +156,10 @@ class AppUser(db.Model):
         self.member_of = groups
         self.put()
         MembershipChanged({"new_groups": groups, "owner_key":str(AppUser.me().key())}).fire()
+    
+    def group_keys(self):
+        groups = map(Group.find_by_name, self.member_of)
+        return map(Group.key, groups)
 
     def belongs_to(self, group):
         return group in self.member_of
@@ -457,15 +461,12 @@ class GroupBook(db.Model):
     added_on = db.DateTimeProperty(auto_now_add="true")
 
     @staticmethod
-    def get_friends_books(appuser):
-        groups = map(Group.find_by_name, appuser.member_of)
-        group_keys = map(Group.key, groups)
+    def get_friends_books(appuser, limit = 25):
         result = []
-        limit = 25
         offset = 1
         while limit > 0:
             noMore = True
-            for gb in GroupBook.gql('WHERE group IN :1 ORDER BY added_on DESC', group_keys).fetch(limit, offset):
+            for gb in GroupBook.gql('WHERE group IN :1 ORDER BY added_on DESC', appuser.group_keys()).fetch(limit, offset):
                 noMore = False
                 if (gb.owner != appuser):
                     result.append(str(gb.book.key()))
@@ -475,6 +476,13 @@ class GroupBook(db.Model):
             limit = limit - len(result)
         return result
     
+    @staticmethod
+    def get_friends_book_keys_str(appuser):
+        result = set()
+        for groupbook in GroupBook.gql('WHERE group IN :1 and owner != :2', appuser.group_keys(), appuser.key()).fetch(1000):
+            result.add(str(groupbook.book.key()))
+        return result
+        
     @staticmethod
     def book_deleted(book):
         tbd = GroupBook.gql('WHERE book=:1', book.key())

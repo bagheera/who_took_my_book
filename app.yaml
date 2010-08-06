@@ -1,5 +1,5 @@
 application: whotookmybook
-version: groupbook
+version: simplesearch
 runtime: python
 api_version: 1
 default_expiration: "1d"

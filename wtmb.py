@@ -270,6 +270,9 @@ class Book(db.Model, Searchable):
     def belongs_to_me(self):
         return users.get_current_user() == self.owner.googleUser
 
+    def belongs_to_friend(self, appuser):
+        return self.owner.friend_of(appuser)
+    
     def borrowed_by_me(self):
         if self.borrower:
             return users.get_current_user() == self.borrower.googleUser

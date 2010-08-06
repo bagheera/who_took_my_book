@@ -87,14 +87,17 @@ class Search(webapp.RequestHandler):
         me = AppUser.me()
         matches = Book.search(term, 1000, keys_only=True)
         if len(matches) > 0:
-            book_keys = map(lambda b : str(b[0]), matches)
+            book_keys_str = map(lambda b : str(b[0]), matches)
             if self.request.get('whose'):
-                result_keys = set(CacheBookIdsOwned.get(me.key())).intersection(set(book_keys))
+                result_keys = set(CacheBookIdsOwned.get(me.key())).intersection(set(book_keys_str))
                 result = self.getBooksFor(result_keys)
             else:
-                result_keys = set(book_keys) - set(CacheBookIdsOwned.get(me.key()))
-                friends_book_keys = GroupBook.get_friends_book_keys_str(me)
-                result = self.getBooksFor(result_keys.intersection(friends_book_keys))
+                result_keys_minus_mine = set(book_keys_str) - set(CacheBookIdsOwned.get(me.key()))
+                result_keys_str = []
+                for book_key_str in result_keys_minus_mine:
+                    if(Book.get(book_key_str).belongs_to_friend(me)):
+                        result_keys_str.append(book_key_str)
+                result = self.getBooksFor(result_keys_str)
         self.response.out.write( simplejson.dumps(result))
       except Exception, e:
             logging.exception("search failed")

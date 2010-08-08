@@ -27,7 +27,10 @@ var last_login_date = null;
 		if (book.asin && book.asin.length == 10) return  text + ' <a target="_blank" title="explore this book @ amazon" href="'+amz_url.replace("asin", book.asin)+'">'+'&#187;&#187;'+'</a>';
 		return text;
 	}
-
+    oddOrEven = 'oddrow';
+	function toggleOddEven(){
+		return oddOrEven == 'oddrow' ? oddOrEven = 'evenrow' : oddOrEven='oddrow';
+	}
 /**********************************************************************************/
 var myBooks = {
 
@@ -134,6 +137,9 @@ var borrowedBooks = {
         else {
             $("#others_table").append('<tr class="nothing"><td>No books found.</td></tr>');
         }
+        $(".groupmbr").click(function(){
+          alert("got it");
+        });
     }
     
     function borrow_link(book){
@@ -144,11 +150,17 @@ var borrowedBooks = {
 		if(book.added_on - last_login_date > 0) return "class=\"nslv\""; //new since last visit - nslv
 		return "";
 	}
-    
+ 
     function othersbookrow(){
         if (not_to_be_shown(this)) 
             return;
-        $("#others_table").append("<tr id=" + this.key  + new_indicator(this) +"><td>" + this.owner + "</td><td>" + book_link(this) +
+        $("#others_table").append(
+        "<tr id=" + this.key  + new_indicator(this) +
+        " class=\""+ toggleOddEven()
+        +"\"><td><a href=\"#\" class=\"groupmbr\" id=\""+
+        this.owner_key+
+        "\" title=\"see all books of "+ this.owner +
+        "\">" + this.owner + "</a></td><td>" + book_link(this) +
         "</td><td>" +
         borrower(this) +
         "</td><td class='action'>" +
@@ -156,25 +168,6 @@ var borrowedBooks = {
         "</td></tr>");
     }
 
-/**********************************************************************************/
-var Mediator = {
-    registry: {},
-    
-    init: function(){
-        return this._super();
-    },
-    trigger: function(event, data){
-    
-    },
-    register: function(event, callback){
-        list = registry[event];
-        if (!list) {
-            list = new Array();
-            registry[event] = list;
-        }
-        list.push(callback);
-    }
-};
 /**********************************************************************************/
 function showgif(){
 
@@ -224,11 +217,12 @@ function showAvailableTab(){
     		$("#others_div").show();
 }
 function renderBooks(data){
-    book_data = data;
+  book_data = data;
 	last_login_date = data.user.last_login
-    updateBookCount(data);
-    myBooks.render(data.mybooks);
-		$("a.reminder").click(
+  updateBookCount(data);
+  myBooks.render(data.mybooks);
+
+  $("a.reminder").click(
 			function(){
 				cursor_wait();
 			    $.ajax({
@@ -345,6 +339,67 @@ function post_new_book(title, author, asin){
     });
 }
 
+function onEnterDo(e, handler, arg){
+    c = e.which ? e.which : e.keyCode;
+    if (c == 13) {
+        handler(arg);
+  return false;
+    }
+  return true;
+}
+
+function changeNickname(newNick){
+          $.ajax({
+              url: "/nickname",
+              type: "POST",
+              data: {
+                  "new_nick": newNick
+              },
+              success: function(msg){
+                  $("#nick_text").hide();
+                  $("#hi_msg").text("Hi " + newNick);
+              },
+              error: on_ajax_fail
+          });
+}
+
+function searchAvailable(term){
+    if(term.length < 4){
+      alert("search term should be at least 4 characters long!");
+      return;
+    }
+    $("#search_progress").show();
+        $.ajax({
+            url: "/search",
+            type: "POST",
+            data: {"term": term},
+            success: function(books){
+                      $("#search_progress").hide();
+                    renderOtherBooks(books); showAvailableTab();
+      },
+            error: on_ajax_fail,
+            dataType: "json"
+        });
+}
+
+function searchMine(term){
+    $("#searchmine_progress").show();
+        $.ajax({
+            url: "/search",
+            type: "POST",
+            data: {
+                "term": term,
+                "whose": 'mine'
+            },
+            success: function(books){
+                      $("#searchmine_progress").hide();
+                    myBooks.render(books); showOwnedTab();
+      },
+            error: on_ajax_fail,
+            dataType: "json"
+        });
+}
+
 function setup_handlers(){
     var options = {
         script: "/lookup_amz?",
@@ -368,86 +423,24 @@ function setup_handlers(){
     $("#nick_text").keypress(function(e){
     	onEnterDo(e, changeNickname, jQuery(this).val());
     });
-    
-    function onEnterDo(e, handler, arg){
-        c = e.which ? e.which : e.keyCode;
-        if (c == 13) {
-            handler(arg);
-			return false;
-        }
-		return true;
-    }
-	
-	function changeNickname(newNick){
-            $.ajax({
-                url: "/nickname",
-                type: "POST",
-                data: {
-                    "new_nick": newNick
-                },
-                success: function(msg){
-                    $("#nick_text").hide();
-                    $("#hi_msg").text("Hi " + newNick);
-                },
-                error: on_ajax_fail
-            });
-	}
-
+    	
     $("#search").keypress(function(e){
     	onEnterDo(e, searchAvailable, jQuery(this).val());
     });
     
-    function searchAvailable(term){
-        if(term.length < 4){
-          alert("search term should be at least 4 characters long!");
-          return;
-        }
-    		$("#search_progress").show();
-            $.ajax({
-                url: "/search",
-                type: "POST",
-                data: {"term": term},
-                success: function(books){
-			                    $("#search_progress").hide();
-			                	renderOtherBooks(books); showAvailableTab();
-			    },
-                error: on_ajax_fail,
-                dataType: "json"
-            });
-    }
-
     $("#searchmine").keypress(function(e){
     	onEnterDo(e, searchMine, jQuery(this).val());
     });
-    
-    function searchMine(term){
-    		$("#searchmine_progress").show();
-            $.ajax({
-                url: "/search",
-                type: "POST",
-                data: {
-                    "term": term,
-                    "whose": 'mine'
-                },
-                success: function(books){
-			                    $("#searchmine_progress").hide();
-			                	myBooks.render(books); showOwnedTab();
-			    },
-                error: on_ajax_fail,
-                dataType: "json"
-            });
-    }
-    
-/**    
-    $("#bookshelf_inner").keypress(function(e){//not working??
-        c = e.which ? e.which : e.keyCode;
-        if (c == 97) {
-            $("#suggestbox").focus();
-        }
-    });
-**/    
-
-}
+        
+  /**    
+      $("#bookshelf_inner").keypress(function(e){//not working??
+          c = e.which ? e.which : e.keyCode;
+          if (c == 97) {
+              $("#suggestbox").focus();
+          }
+      });
+  **/    
+}//end setup handlers
 
 function cursor_wait(){
     document.body.style.cursor = 'wait';
@@ -458,6 +451,7 @@ function cursor_ok(){
 
 $(document).ready(function(){
     $("#nick_text").hide();
+    $("#tabFriend").hide();
     $("#manual").hide();
     $("#lookup_progress").hide();
     $("#search_progress").hide();

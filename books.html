@@ -4,7 +4,7 @@
 		<link rel="icon" type="image/vnd.microsoft.icon" href="/s/wtmb.ico" />
         <link type="text/css" rel="stylesheet" href="/s/pres2.css"/>
         <script type="text/javascript" src="/s/jquery.js"></script>
-        <script type="text/javascript" src="/s/bookshelf5.js"></script>
+        <script type="text/javascript" src="/s/bookshelf6.js"></script>
 <link rel="alternate" type="application/atom+xml" title="Who took my Book - recent book additions - atom" href="http://feeds.feedburner.com/WhoTookMyBook-RecentBookAdditions" />
     </head>
     <body>
@@ -68,6 +68,7 @@
                 </div>
                 <div id='bookshelf_inner' class="panes">
                 <div id="tabber">
+                <span id="tabFriend" class="tab"><a href="#" id="hrefTabFriend"></a></span>
                 <span id="tabOwned" class="tab" title="Books you own (showing max 25)"><a href="#">Owned</a></span>
                 <span id="tabBorrowed" class="tab" title="Books you have borrowed"><a href="#">Borrowed</a></span>
                 <span id="tabAvailable" class="tab" title="lists a few books added by others recently">
@@ -92,18 +93,12 @@
                         </table>
                     </div>
                     <div id="others_div">
+                    <small id="max25">listing a maximum of 25 books at a time (of total 1400+)</small>
                         <table id="others_table">
                         </table>
-                    <small id="max25">listing a maximum of 25 books at a time (of total 1400+)</small>
                     </div>
                 </div>
             </div>
-            <p>
-                <em>note: the actions lend, borrow, return are merely meant to track offline book transactions.</em>
-            </p>
-            <!--	<p>
-            <em><sup>1</sup>experimental feature</em>
-            </p> -->
         </div>
     </body>
 </html>

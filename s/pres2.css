@@ -25,9 +25,9 @@ table {
 }
 th {
     background-color: #D9FFCC;
+    border-bottom: 1px #000000 solid;
 }
 td, th {
-    border-bottom: 1px #000000 solid;
     padding: 5px;
     text-align: left;
 }
@@ -35,7 +35,7 @@ input:focus{
    background-color:#FFE38F;
 }
 #page{
-    margin: 1% 10% 3% 10%;
+    margin: 1% 10% 0% 10%;
 }
 #dataentry{
     padding: 0px  0px 20px 0px;
@@ -59,6 +59,8 @@ input:focus{
 }
 
 #max25{
+	float: right;
+	width: 200px;
 	background-color: #FFE38F;
 }
 #bookshelf, #userlist, #about_wtmb, #group_table{
@@ -68,6 +70,12 @@ input:focus{
     padding: 10px;
    -moz-border-radius: 5px;
    -webkit-border-radius: 5px;
+}
+#bookshelf{
+	border-bottom-width: 0px;
+}
+.evenrow{
+	background-color: silver;
 }
 
 #group_table.td {

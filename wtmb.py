@@ -246,7 +246,8 @@ class Book(db.Model, Searchable):
                                         "owner_groups": ','.join(self.owner.member_of),
                                         "key": str(self.key()),
                                         "asin":self.asin,
-                                        "added_on": self.created_date.toordinal()
+                                        "added_on": self.created_date.toordinal(),
+                                        "owner_key":str(self.owner.key())
                                         }
 
     def summary(self):
@@ -480,7 +481,7 @@ class GroupBook(db.Model):
         return result
     
     @staticmethod
-    def get_friends_book_keys_str(appuser):
+    def get_friends_book_keys_str(appuser):   #not used?
         result = set()
         for groupbook in GroupBook.gql('WHERE group IN :1 and owner != :2', appuser.group_keys(), appuser.key()).fetch(1000):
             result.add(str(groupbook.book.key()))

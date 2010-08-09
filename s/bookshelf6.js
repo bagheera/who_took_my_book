@@ -3,480 +3,537 @@ var show = "all";
 var amz_url = "http://www.amazon.com/dp/asin?tag=whotookmybook-20";
 var last_login_date = null;
 
-    function not_to_be_shown(book){
-        if (show == "all") 
-            return false;
-        if (show == "tech" && book.is_tech) 
-            return false;
-        if (show == "non-tech" && (!book.is_tech)) 
-            return false;
-        return true;
-    }
-    
-    function borrower(book){
-        return (available(book) ? "" : book.borrowed_by);
-    }
-	
-    function return_link(book, link_text, tooltip){
-        return '<a title="'+tooltip+'" href="/return/' + book.key + '">'+ link_text +'</a>';
-    }
-    
-	function book_link(book){
-		text = book.title;
-		if(book.author != "unknown") text = text + " by " +   book.author; 
-		if (book.asin && book.asin.length == 10) return  text + ' <a target="_blank" title="explore this book @ amazon" href="'+amz_url.replace("asin", book.asin)+'">'+'&#187;&#187;'+'</a>';
-		return text;
-	}
-    oddOrEven = 'oddrow';
-	function toggleOddEven(){
-		return oddOrEven == 'oddrow' ? oddOrEven = 'evenrow' : oddOrEven='oddrow';
-	}
-/**********************************************************************************/
+function not_to_be_shown(book){
+	if (show == "all") 
+		return false;
+	if (show == "tech" && book.is_tech) 
+		return false;
+	if (show == "non-tech" && (!book.is_tech)) 
+		return false;
+	return true;
+}
+
+function borrower(book){
+	return (available(book) ? "" : book.borrowed_by);
+}
+
+function return_link(book, link_text, tooltip){
+	return '<a title="'+tooltip+'" href="/return/' + book.key + '">'+ link_text +'</a>';
+}
+
+function book_link(book){
+	text = book.title;
+	if(book.author != "unknown") text = text + " by " +   book.author; 
+	if (book.asin && book.asin.length == 10) return  text + ' <a target="_blank" title="explore this book @ amazon" href="'+amz_url.replace("asin", book.asin)+'">'+'&#187;&#187;'+'</a>';
+	return text;
+}
+oddOrEven = 'oddrow';
+function toggleOddEven(){
+	return oddOrEven == 'oddrow' ? oddOrEven = 'evenrow' : oddOrEven='oddrow';
+}
+/** ******************************************************************************* */
 var myBooks = {
 
-    empty: function(){
-        $("#my_table").empty();
-    },
-    
-    render_header: function(){
-        $("#my_table").append('<thead><tr><th class="colone"></th><th class="coltwo">Book</th><th class="colthree">Lent to</th><th class="colfour"></th></tr></thead><tbody id="my_table_body"><tr/></tbody>');
-    },
-    
-    render: function(books){
-        myBooks.empty();
-        if (books.length > 0) {
-            myBooks.render_header();
-            $.each(books, this.mybookrow);
-        }
-        else {
-            $("#my_table").append('<tr class="nothing"><td>Nothing yet. Use the lookup box above to start adding to your collection.</td></tr>');
-        }
-    },
-    
-    del_link: function(book){
-        return '<a href="/delete/' + book.key + '">delete</a>';
-    },
-    
-    lend_link: function(book){
-        return '<a href="/lend/' + book.key + '">lend</a>';
-    },
-    
-    mybookrow: function(i){
-        myBooks.newRow(this);
-    },
-    
-    borrower: function(book){
-		result = borrower(book);
-		if(result != ""){
-			result += "  " + return_link(book, "&#215;", "Not lent. I have this book with me.");
-			result = "<a title='send gentle reminder email' href='#' class='reminder' name='"+book.key+"'>&#174;</a> " + result;
-		}
-		return result;
-    },
-    
-    newRow: function(book){
-        if (not_to_be_shown(this))
-            return;
-        if ($("#my_table tr.nothing").length > 0) {
-            myBooks.empty();
-            myBooks.render_header();
-        }
-        $("#my_table_body tr:first").before("<tr id=" + book.key + "><td>" + myBooks.del_link(book) + "</td><td>" + book_link(book) +
-        "</td><td>" +
-        myBooks.borrower(book) +
-        "</td><td class='action'>" +
-        myBooks.lend_link(book) +
-        "</td></tr>");
-    },
-    lent_count: function(list){
-        count = 0;
-        if (list) {
-            $.each(list, function(i){
-                if (!available(this)) 
-                    count++;
-            });
-        }
-        return count;
-    },
-    
-    handle_event: function(event, book){
-        if (event == "evt_book_added") {
-            myBooks.newRow(book);
-        }
-    }
-};
-/**********************************************************************************/
-var borrowedBooks = {
-    render: function(books){
-        $("#borrowed_table").empty();
-        if (books.length > 0) {
-            $("#borrowed_table").append('<tr><th class="colone">From</th><th class="coltwo">Book</th><th class="colthree"></th><th class="colfour"></th></tr>');
-            $.each(books, this.borrowedBookrow);
-        }
-        else {
-            $("#borrowed_table").append('<tr class="nothing"><td>Nothing yet. Don&apos;t you want to read any of the available books?</td></tr>');
-        }
-    },
+		empty: function(){
+	$("#my_table").empty();
+},
 
-    borrowedBookrow: function(){
-        if (not_to_be_shown(this)) 
-            return;
-        $("#borrowed_table").append("<tr id=" + this.key + "><td>" + this.owner + "</td><td>" + book_link(this) +
-        "</td><td></td><td class='action'>" +
-        return_link(this, "return", "return book to owner") +
-        "</td></tr>");
-    }
-};
-/**********************************************************************************/
-    function renderOtherBooks(books){
-        $("#others_table").empty();
-        if (books.length > 0) {
-            $("#others_table").append('<tr><th class="colone">Owner</th><th class="coltwo">Book</th><th class="colthree">Lent to</th><th class="colfour"></th></tr>');
-            $.each(books, othersbookrow);
-        }
-        else {
-            $("#others_table").append('<tr class="nothing"><td>No books found.</td></tr>');
-        }
-        $(".groupmbr").click(function(){
-          alert("got it");
-        });
-    }
-    
-    function borrow_link(book){
-        return available(book) ? '<a href="/borrow/' + book.key + '">borrow</a>' : "";
-    }
-	
-	function new_indicator(book){
-		if(book.added_on - last_login_date > 0) return "class=\"nslv\""; //new since last visit - nslv
-		return "";
+render_header: function(){
+	$("#my_table").append('<thead><tr><th class="colone"></th><th class="coltwo">Book</th><th class="colthree">Lent to</th><th class="colfour"></th></tr></thead><tbody id="my_table_body"><tr/></tbody>');
+},
+
+render: function(books){
+	myBooks.empty();
+	if (books.length > 0) {
+		myBooks.render_header();
+		$.each(books, this.mybookrow);
 	}
- 
-    function othersbookrow(){
-        if (not_to_be_shown(this)) 
-            return;
-        $("#others_table").append(
-        "<tr id=" + this.key  + new_indicator(this) +
-        " class=\""+ toggleOddEven()
-        +"\"><td><a href=\"#\" class=\"groupmbr\" id=\""+
-        this.owner_key+
-        "\" title=\"see all books of "+ this.owner +
-        "\">" + this.owner + "</a></td><td>" + book_link(this) +
-        "</td><td>" +
-        borrower(this) +
-        "</td><td class='action'>" +
-        borrow_link(this) +
-        "</td></tr>");
-    }
+	else {
+		$("#my_table").append('<tr class="nothing"><td>Nothing yet. Use the lookup box above to start adding to your collection.</td></tr>');
+	}
+},
 
-/**********************************************************************************/
+del_link: function(book){
+	return '<a href="/delete/' + book.key + '">delete</a>';
+},
+
+lend_link: function(book){
+	return '<a href="/lend/' + book.key + '">lend</a>';
+},
+
+mybookrow: function(i){
+	myBooks.newRow(this);
+},
+
+borrower: function(book){
+	result = borrower(book);
+	if(result != ""){
+		result += "  " + return_link(book, "&#215;", "Not lent. I have this book with me.");
+		result = "<a title='send gentle reminder email' href='#' class='reminder' name='"+book.key+"'>&#174;</a> " + result;
+	}
+	return result;
+},
+
+newRow: function(book){
+	if (not_to_be_shown(this))
+		return;
+	if ($("#my_table tr.nothing").length > 0) {
+		myBooks.empty();
+		myBooks.render_header();
+	}
+	$("#my_table_body tr:first").before("<tr id=" + book.key + "><td>" + myBooks.del_link(book) + "</td><td>" + book_link(book) +
+			"</td><td>" +
+			myBooks.borrower(book) +
+			"</td><td class='action'>" +
+			myBooks.lend_link(book) +
+	"</td></tr>");
+},
+lent_count: function(list){
+	count = 0;
+	if (list) {
+		$.each(list, function(i){
+			if (!available(this)) 
+				count++;
+		});
+	}
+	return count;
+},
+
+handle_event: function(event, book){
+	if (event == "evt_book_added") {
+		myBooks.newRow(book);
+	}
+}
+};
+/** ******************************************************************************* */
+var borrowedBooks = {
+		render: function(books){
+	$("#borrowed_table").empty();
+	if (books.length > 0) {
+		$("#borrowed_table").append('<tr><th class="colone">From</th><th class="coltwo">Book</th><th class="colthree"></th><th class="colfour"></th></tr>');
+		$.each(books, this.borrowedBookrow);
+	}
+	else {
+		$("#borrowed_table").append('<tr class="nothing"><td>Nothing yet. Don&apos;t you want to read any of the available books?</td></tr>');
+	}
+},
+
+borrowedBookrow: function(){
+	if (not_to_be_shown(this)) 
+		return;
+	$("#borrowed_table").append("<tr id=" + this.key + "><td>" + this.owner + "</td><td>" + book_link(this) +
+			"</td><td></td><td class='action'>" +
+			return_link(this, "return", "return book to owner") +
+	"</td></tr>");
+}
+};
+/** ******************************************************************************* */
+function renderFriendsBooks(books){
+	$("#hrefTabFriend").text("All books of "+currentFriend);
+	$("#friend_table").empty();
+	if (books.length > 0) {
+		$("#friend_table").append('<tr><th class="coltwo">Book</th><th class="colthree">Lent to</th><th class="colfour"></th></tr>');
+		$.each(books, friendBookRow);
+	}
+	else {
+		$("#friend_table").append('<tr class="nothing"><td>No books yet.</td></tr>');
+	}
+}
+
+function renderOtherBooks(books){
+	$("#others_table").empty();
+	if (books.length > 0) {
+		$("#others_table").append('<tr><th class="colone">Owner</th><th class="coltwo">Book</th><th class="colthree">Lent to</th><th class="colfour"></th></tr>');
+		$.each(books, othersbookrow);
+	}
+	else {
+		$("#others_table").append('<tr class="nothing"><td>No books found.</td></tr>');
+	}
+	$(".groupmbr").click(function(){
+		currentFriend = $(this).text();
+		booksOf($(this).attr('name'));
+	});
+}
+
+function borrow_link(book){
+	return available(book) ? '<a href="/borrow/' + book.key + '">borrow</a>' : "";
+}
+
+function new_indicator(book){
+	if(book.added_on - last_login_date > 0) return "class=\"nslv\""; // new
+	// since
+	// last
+	// visit
+	// -
+	// nslv
+	return "";
+}
+
+function othersbookrow(){
+	if (not_to_be_shown(this)) 
+		return;
+	$("#others_table").append(
+			"<tr id=" + this.key  + new_indicator(this) +
+			" class=\""+ toggleOddEven()
+			+"\"><td><a href=\"#\" class=\"groupmbr\" name=\""+
+			this.owner_key+
+			"\" title=\"see all books of "+ this.owner +
+			"\">" + this.owner + "</a></td><td>" + book_link(this) +
+			"</td><td>" +
+			borrower(this) +
+			"</td><td class='action'>" +
+			borrow_link(this) +
+	"</td></tr>");
+}
+function friendBookRow(){
+	if (not_to_be_shown(this)) 
+		return;
+	$("#friend_table").append(
+			"<tr class=\""+ toggleOddEven()
+			+"\"><td>" + book_link(this) +
+			"</td><td>" +
+			borrower(this) +
+			"</td><td class='action'>" +
+			borrow_link(this) +
+	"</td></tr>");
+}
+
+/** ******************************************************************************* */
 function showgif(){
 
-    //script from: http://www.sitepoint.com/forums/showthread.php?t=581377
-    // loading.gif from http://www.ajaxload.info/
-    
-    $('<div id="overlay"/>').css({
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: $(window).height() + 'px',
-        background: 'white url(/s/loading.gif) no-repeat center'
-    }).appendTo('body');
+	// script from: http://www.sitepoint.com/forums/showthread.php?t=581377
+	// loading.gif from http://www.ajaxload.info/
+
+	$('<div id="overlay"/>').css({
+		position: 'fixed',
+		top: 0,
+		left: 0,
+		width: '100%',
+		height: $(window).height() + 'px',
+		background: 'white url(/s/loading.gif) no-repeat center'
+	}).appendTo('body');
 }
 
 function updateBookCount(data){
-    $("#book_count").empty();
-    own_count = data['own_count'] ? data['own_count'] : 0
-    borrow_count = data.borrowedBooks ? data.borrowedBooks.length : 0
-    $("#book_count").append("<strong>Your book stats:</strong>&nbsp;&nbsp;<big class='bignum'> " + own_count + "</big> owned &nbsp;&nbsp; <big class='bignum'>" +
-    myBooks.lent_count(data.mybooks) +
-    "</big> lent&nbsp;&nbsp; <big class='bignum'>" +
-    borrow_count +
-    "</big> borrowed");
+	$("#book_count").empty();
+	own_count = data['own_count'] ? data['own_count'] : 0
+			borrow_count = data.borrowedBooks ? data.borrowedBooks.length : 0
+					$("#book_count").append("<strong>Your book stats:</strong>&nbsp;&nbsp;<big class='bignum'> " + own_count + "</big> owned &nbsp;&nbsp; <big class='bignum'>" +
+							myBooks.lent_count(data.mybooks) +
+							"</big> lent&nbsp;&nbsp; <big class='bignum'>" +
+							borrow_count +
+					"</big> borrowed");
 }
 
 function available(book){
-    return (book.borrowed_by == "None");
+	return (book.borrowed_by == "None");
 }
 
 function showOwnedTab(){
-    	    $("#tabOwned").css('background-color', highlight);
-    	    $("#tabAvailable").css('background-color', silver);
-    	    $("#tabBorrowed").css('background-color', silver);
-    	    if (own_count > 25) $("#searchMineBar").show();
-    		$("#borrowed_div").hide();
-    		$("#others_div").hide();
-		    $("#my_div").show();
+	$("#tabOwned").css('background-color', highlight);
+	$("#tabAvailable").css('background-color', silver);
+	$("#tabBorrowed").css('background-color', silver);
+	$("#tabFriend").css('background-color', silver);
+	if (own_count > 25) $("#searchMineBar").show();
+	$("#borrowed_div").hide();
+	$("#others_div").hide();
+	$("#friend_div").hide();
+	$("#my_div").show();
 }
 function showAvailableTab(){
-    	    $("#tabAvailable").css('background-color', highlight);
-    	    $("#tabBorrowed").css('background-color', silver);
-    	    $("#tabOwned").css('background-color', silver);
-		    $("#my_div").hide();
-    		$("#borrowed_div").hide();
-    		$("#others_div").show();
+	$("#tabAvailable").css('background-color', highlight);
+	$("#tabBorrowed").css('background-color', silver);
+	$("#tabOwned").css('background-color', silver);
+	$("#tabFriend").css('background-color', silver);
+	$("#my_div").hide();
+	$("#borrowed_div").hide();
+	$("#friend_div").hide();
+	$("#others_div").show();
+}
+function showFriendsTab(){
+	$("#tabFriend").css('background-color', highlight);
+	$("#tabFriend").show();
+	$("#tabAvailable").css('background-color', silver);
+	$("#tabBorrowed").css('background-color', silver);
+	$("#tabOwned").css('background-color', silver);
+	$("#my_div").hide();
+	$("#borrowed_div").hide();
+	$("#others_div").hide();
+	$("#friend_div").show();
 }
 function renderBooks(data){
-  book_data = data;
+	book_data = data;
 	last_login_date = data.user.last_login
-  updateBookCount(data);
-  myBooks.render(data.mybooks);
+	updateBookCount(data);
+	myBooks.render(data.mybooks);
 
-  $("a.reminder").click(
+	$("a.reminder").click(
 			function(){
 				cursor_wait();
-			    $.ajax({
-			        url: "/remind",
-			        type: "POST",
-			        data: {
-			            "book_id": $(this).attr('name')
-			        },
-			        success: function(){cursor_ok(); alert ('Reminder sent')},
-			        error: on_ajax_fail
-			    });				
+				$.ajax({
+					url: "/remind",
+					type: "POST",
+					data: {
+					"book_id": $(this).attr('name')
+				},
+				success: function(){cursor_ok(); alert ('Reminder sent')},
+				error: on_ajax_fail
+				});				
 			}
-		); 
+	); 
 
+
+	borrowedBooks.render(data.borrowedBooks);
+	renderOtherBooks(data.others);
+	$("#borrowed_div").hide();
+	$("#my_div").hide();
+	silver = 'silver'; highlight = '#D9FFCC';
+	$("#tabAvailable").css('background-color', highlight);
+	$("#tabBorrowed").css('background-color', silver);
+	$("#tabOwned").css('background-color', silver);
+	$("#tabOwned").click(
+			function(){
+				showOwnedTab();
+			}
+	);
+	$("#tabBorrowed").click(
+			function(){
+				$(this).css('background-color', highlight);
+				$("#tabAvailable").css('background-color', silver);
+				$("#tabOwned").css('background-color', silver);
+				$("#tabFriend").css('background-color', silver);
+				$("#others_div").hide();
+				$("#my_div").hide();
+				$("#friend_div").hide();
+				$("#borrowed_div").show();
+			}
+	);
+	$("#tabAvailable").click(
+			function(){
+				showAvailableTab();
+			}
+	);
+	$("#tabFriend").click(
+			function(){
+				showFriendsTab();
+			}
+	);
 	
-    borrowedBooks.render(data.borrowedBooks);
-    renderOtherBooks(data.others);
-    $("#borrowed_div").hide();
-    $("#my_div").hide();
-    silver = 'silver'; highlight = '#D9FFCC';
-    $("#tabAvailable").css('background-color', highlight);
-    $("#tabBorrowed").css('background-color', silver);
-    $("#tabOwned").css('background-color', silver);
-    $("#tabOwned").click(
-    	function(){
-    		showOwnedTab();
-    	}
-    );
-    $("#tabBorrowed").click(
-    	function(){
-    	    $(this).css('background-color', highlight);
-    	    $("#tabAvailable").css('background-color', silver);
-    	    $("#tabOwned").css('background-color', silver);
-    		$("#others_div").hide();
-		    $("#my_div").hide();
-    		$("#borrowed_div").show();
-    	}
-    );
-    $("#tabAvailable").click(
-    	function(){
-    		showAvailableTab();
-    	}
-    );
-    $('#overlay').hide();
+	$('#overlay').hide();
 }
 
 function show_tech_only(){
-    show = "tech";
-    renderBooks(book_data);
+	show = "tech";
+	renderBooks(book_data);
 }
 
 function show_non_tech_only(){
-    show = "non-tech";
-    renderBooks(book_data);
+	show = "non-tech";
+	renderBooks(book_data);
 }
 
 function show_all(){
-    show = "all";
-    renderBooks(book_data);
+	show = "all";
+	renderBooks(book_data);
 }
 
 function fetch_and_render_books(){
-    showgif();
-    $.ajax({
-	    url: "/mybooksj",
-	    type: "GET",
+	showgif();
+	$.ajax({
+		url: "/mybooksj",
+		type: "GET",
 		success: renderBooks,
 		errror: on_ajax_fail,
 		dataType: "json"
 	}); 
-    $("#tech_only").click(show_tech_only);
-    $("#non_tech_only").click(show_non_tech_only);
-    $("#show_all").click(show_all);
+	$("#tech_only").click(show_tech_only);
+	$("#non_tech_only").click(show_non_tech_only);
+	$("#show_all").click(show_all);
 }
 
 function on_add(book){
-    myBooks.newRow(book);
+	myBooks.newRow(book);
 	$("#my_table_body tr:first").css('background-color', '#D9FFCC');
-    if (!book_data['mybooks']) {
-        book_data['mybooks'] = [];
-    }
-    book_data['mybooks'].push(book);
-    book_data['own_count'] += 1;
-    updateBookCount(book_data);
-    $("#book_title").val("");
-    $("#book_author").val("");
-    $("#suggestbox").focus();
-    showOwnedTab();
-    cursor_ok();
+	if (!book_data['mybooks']) {
+		book_data['mybooks'] = [];
+	}
+	book_data['mybooks'].push(book);
+	book_data['own_count'] += 1;
+	updateBookCount(book_data);
+	$("#book_title").val("");
+	$("#book_author").val("");
+	$("#suggestbox").focus();
+	showOwnedTab();
+	cursor_ok();
 }
 
 function on_ajax_fail(xhr, desc, exceptionobj){
 	cursor_ok();
-    if( xhr != null && (xhr.status === 400 || xhr.status === 412))
-      alert(xhr.responseText);
-    else
-    	alert("oops. Action failed. Please retry");
+	if( xhr != null && (xhr.status === 400 || xhr.status === 412))
+		alert(xhr.responseText);
+	else
+		alert("oops. Action failed. Please retry");
 }
 
 function post_new_book(title, author, asin){
 	cursor_wait();
-    $("#suggestbox").val("");
-    $.ajax({
-        url: "/addBook",
-        type: "POST",
-        data: {
-            "book_title": title,
-            "book_author": author,
-            "book_asin": asin
-        },
-        success: on_add,
-        error: on_ajax_fail,
-        dataType: "json"
-    });
+	$("#suggestbox").val("");
+	$.ajax({
+		url: "/addBook",
+		type: "POST",
+		data: {
+		"book_title": title,
+		"book_author": author,
+		"book_asin": asin
+	},
+	success: on_add,
+	error: on_ajax_fail,
+	dataType: "json"
+	});
 }
 
 function onEnterDo(e, handler, arg){
-    c = e.which ? e.which : e.keyCode;
-    if (c == 13) {
-        handler(arg);
-  return false;
-    }
-  return true;
+	c = e.which ? e.which : e.keyCode;
+	if (c == 13) {
+		handler(arg);
+		return false;
+	}
+	return true;
 }
 
 function changeNickname(newNick){
-          $.ajax({
-              url: "/nickname",
-              type: "POST",
-              data: {
-                  "new_nick": newNick
-              },
-              success: function(msg){
-                  $("#nick_text").hide();
-                  $("#hi_msg").text("Hi " + newNick);
-              },
-              error: on_ajax_fail
-          });
+	$.ajax({
+		url: "/nickname",
+		type: "POST",
+		data: {
+		"new_nick": newNick
+	},
+	success: function(msg){
+		$("#nick_text").hide();
+		$("#hi_msg").text("Hi " + newNick);
+	},
+	error: on_ajax_fail
+	});
+}
+
+function booksOf(friend_key){
+	$.ajax({
+		url: "/booksof/"+friend_key,
+		type: "GET",
+		success: function(books){
+		renderFriendsBooks(books); showFriendsTab();
+	},
+	error: on_ajax_fail,
+	dataType: "json"
+	});
 }
 
 function searchAvailable(term){
-    if(term.length < 4){
-      alert("search term should be at least 4 characters long!");
-      return;
-    }
-    $("#search_progress").show();
-        $.ajax({
-            url: "/search",
-            type: "POST",
-            data: {"term": term},
-            success: function(books){
-                      $("#search_progress").hide();
-                    renderOtherBooks(books); showAvailableTab();
-      },
-            error: on_ajax_fail,
-            dataType: "json"
-        });
+	if(term.length < 4){
+		alert("search term should be at least 4 characters long!");
+		return;
+	}
+	$("#search_progress").show();
+	$.ajax({
+		url: "/search",
+		type: "POST",
+		data: {"term": term},
+		success: function(books){
+			$("#search_progress").hide();
+			renderOtherBooks(books); showAvailableTab();
+		},
+		error: on_ajax_fail,
+		dataType: "json"
+	});
 }
 
 function searchMine(term){
-    $("#searchmine_progress").show();
-        $.ajax({
-            url: "/search",
-            type: "POST",
-            data: {
-                "term": term,
-                "whose": 'mine'
-            },
-            success: function(books){
-                      $("#searchmine_progress").hide();
-                    myBooks.render(books); showOwnedTab();
-      },
-            error: on_ajax_fail,
-            dataType: "json"
-        });
+	$("#searchmine_progress").show();
+	$.ajax({
+		url: "/search",
+		type: "POST",
+		data: {
+		"term": term,
+		"whose": 'mine'
+	},
+	success: function(books){
+		$("#searchmine_progress").hide();
+		myBooks.render(books); showOwnedTab();
+	},
+	error: on_ajax_fail,
+	dataType: "json"
+	});
 }
 
 function setup_handlers(){
-    var options = {
-        script: "/lookup_amz?",
-        varname: "fragment",
-        json: true,
-        callback: function(obj){
-            post_new_book(obj.value, obj.info, obj.id);
-        }
-    };
-    new bsn.AutoSuggest('suggestbox', options);
-    
-    $("#btn_add_book").click(function(){
-        post_new_book($("#book_title").val(), $("#book_author").val(), 0);
-    });
-    
-    $("#edit_nick").click(function(){
-        $(this).hide();
-        $("#nick_text").show().focus();
-    });
-    
-    $("#nick_text").keypress(function(e){
-    	onEnterDo(e, changeNickname, jQuery(this).val());
-    });
-    	
-    $("#search").keypress(function(e){
-    	onEnterDo(e, searchAvailable, jQuery(this).val());
-    });
-    
-    $("#searchmine").keypress(function(e){
-    	onEnterDo(e, searchMine, jQuery(this).val());
-    });
-        
-  /**    
-      $("#bookshelf_inner").keypress(function(e){//not working??
-          c = e.which ? e.which : e.keyCode;
-          if (c == 97) {
-              $("#suggestbox").focus();
-          }
-      });
-  **/    
-}//end setup handlers
+	var options = {
+			script: "/lookup_amz?",
+			varname: "fragment",
+			json: true,
+			callback: function(obj){
+		post_new_book(obj.value, obj.info, obj.id);
+	}
+	};
+	new bsn.AutoSuggest('suggestbox', options);
+
+	$("#btn_add_book").click(function(){
+		post_new_book($("#book_title").val(), $("#book_author").val(), 0);
+	});
+
+	$("#edit_nick").click(function(){
+		$(this).hide();
+		$("#nick_text").show().focus();
+	});
+
+	$("#nick_text").keypress(function(e){
+		onEnterDo(e, changeNickname, jQuery(this).val());
+	});
+
+	$("#search").keypress(function(e){
+		onEnterDo(e, searchAvailable, jQuery(this).val());
+	});
+
+	$("#searchmine").keypress(function(e){
+		onEnterDo(e, searchMine, jQuery(this).val());
+	});
+
+	/**
+	 * $("#bookshelf_inner").keypress(function(e){//not working?? c = e.which ?
+	 * e.which : e.keyCode; if (c == 97) { $("#suggestbox").focus(); } });
+	 */    
+}// end setup handlers
 
 function cursor_wait(){
-    document.body.style.cursor = 'wait';
+	document.body.style.cursor = 'wait';
 }
 function cursor_ok(){
-    document.body.style.cursor = 'default';
+	document.body.style.cursor = 'default';
 }
 
 $(document).ready(function(){
-    $("#nick_text").hide();
-    $("#tabFriend").hide();
-    $("#manual").hide();
-    $("#lookup_progress").hide();
-    $("#search_progress").hide();
-    $("#searchmine_progress").hide();
-    $("#searchMineBar").hide();
-    $("#show_manual").click(function(){
-        $("#show_manual_span").hide();
-        $("#manual").show();
-        $("#book_title").focus();
-    });
-    fetch_and_render_books();
-    setup_handlers();
-    cursor_ok();
+	$("#nick_text").hide();
+	$("#tabFriend").hide();
+	$("#manual").hide();
+	$("#lookup_progress").hide();
+	$("#search_progress").hide();
+	$("#searchmine_progress").hide();
+	$("#searchMineBar").hide();
+	$("#show_manual").click(function(){
+		$("#show_manual_span").hide();
+		$("#manual").show();
+		$("#book_title").focus();
+	});
+	fetch_and_render_books();
+	setup_handlers();
+	cursor_ok();
 });
-/**************************************************************************************/
-/**************************************************************************************/
+/** *********************************************************************************** */
+/** *********************************************************************************** */
 /**
- *  author:		Timothy Groves - http://www.brandspankingnew.net
- *	version:	1.2 - 2006-11-17
- *              1.3 - 2006-12-04
- *              2.0 - 2007-02-07
- *              2.1.1 - 2007-04-13
- *              2.1.2 - 2007-07-07
- *              2.1.3 - 2007-07-19
- *
+ * author: Timothy Groves - http://www.brandspankingnew.net version: 1.2 -
+ * 2006-11-17 1.3 - 2006-12-04 2.0 - 2007-02-07 2.1.1 - 2007-04-13 2.1.2 -
+ * 2007-07-07 2.1.3 - 2007-07-19
+ * 
  */
 
 
@@ -506,68 +563,69 @@ _b.AutoSuggest = function (id, param)
 	//
 	if (!document.getElementById)
 		return 0;
-	
-	
-	
-	
+
+
+
+
 	// get field via DOM
 	//
 	this.fld = _b.DOM.gE(id);
 
 	if (!this.fld)
 		return 0;
-	
-	
-	
-	
+
+
+
+
 	// init variables
 	//
 	this.sInp 	= "";
 	this.nInpC 	= 0;
 	this.aSug 	= [];
 	this.iHigh 	= 0;
-	
-	
-	
-	
+
+
+
+
 	// parameters object
 	//
 	this.oP = param ? param : {};
-	
-	// defaults	
+
+	// defaults
 	//
-    var k, def = {
-        minchars: 4,
-        meth: "get",
-        varname: "input",
-        className: "autosuggest",
-        timeout: 4000,
-        delay: 200,
-        offsety: -5,
-        shownoresults: true,
-        noresults: "No results!",
-        maxheight: 250,
-        cache: true,
-        maxentries: 10
-    };
+	var k, def = {
+			minchars: 4,
+			meth: "get",
+			varname: "input",
+			className: "autosuggest",
+			timeout: 4000,
+			delay: 200,
+			offsety: -5,
+			shownoresults: true,
+			noresults: "No results!",
+			maxheight: 250,
+			cache: true,
+			maxentries: 10
+	};
 	for (k in def)
 	{
 		if (typeof(this.oP[k]) != typeof(def[k]))
 			this.oP[k] = def[k];
 	}
-	
-	
+
+
 	// set keyup handler for field
 	// and prevent autocomplete from client
 	//
 	var p = this;
-	
+
 	// NOTE: not using addEventListener because UpArrow fired twice in Safari
-	//_b.DOM.addEvent( this.fld, 'keyup', function(ev){ return pointer.onKeyPress(ev); } );
-	
+	// _b.DOM.addEvent( this.fld, 'keyup', function(ev){ return
+	// pointer.onKeyPress(ev); } );
+
 	this.fld.onkeypress 	= function(ev){ return p.onKeyPress(ev); };
 	this.fld.onkeyup 		= function(ev){ return p.onKeyUp(ev); };
-	
+
 	this.fld.setAttribute("autocomplete","off");
 };
 
@@ -588,7 +646,7 @@ _b.AutoSuggest = function (id, param)
 
 _b.AutoSuggest.prototype.onKeyPress = function(ev)
 {
-	
+
 	var key = (window.event) ? window.event.keyCode : ev.keyCode;
 
 
@@ -601,19 +659,19 @@ _b.AutoSuggest.prototype.onKeyPress = function(ev)
 	var RETURN = 13;
 	var TAB = 9;
 	var ESC = 27;
-	
+
 	var bubble = 1;
 
 	switch(key)
 	{
-		case RETURN:
-			this.setHighlightedValue();
-			bubble = 0;
-			break;
+	case RETURN:
+		this.setHighlightedValue();
+		bubble = 0;
+		break;
 
-		case ESC:
-			this.clearSuggestions();
-			break;
+	case ESC:
+		this.clearSuggestions();
+		break;
 	}
 
 	return bubble;
@@ -624,7 +682,7 @@ _b.AutoSuggest.prototype.onKeyPress = function(ev)
 _b.AutoSuggest.prototype.onKeyUp = function(ev)
 {
 	var key = (window.event) ? window.event.keyCode : ev.keyCode;
-	
+
 
 
 	// set responses to keydown events in the field
@@ -635,31 +693,31 @@ _b.AutoSuggest.prototype.onKeyUp = function(ev)
 
 	var ARRUP = 38;
 	var ARRDN = 40;
-	
+
 	var bubble = 1;
 
 	switch(key)
 	{
 
 
-		case ARRUP:
-			this.changeHighlight(key);
-			bubble = 0;
-			break;
+	case ARRUP:
+		this.changeHighlight(key);
+		bubble = 0;
+		break;
 
 
-		case ARRDN:
-			this.changeHighlight(key);
-			bubble = 0;
-			break;
-		
-		
-		default:
-			this.getSuggestions(escape(this.fld.value));
+	case ARRDN:
+		this.changeHighlight(key);
+		bubble = 0;
+		break;
+
+
+	default:
+		this.getSuggestions(escape(this.fld.value));
 	}
 
 	return bubble;
-	
+
 
 };
 
@@ -672,21 +730,21 @@ _b.AutoSuggest.prototype.onKeyUp = function(ev)
 
 _b.AutoSuggest.prototype.getSuggestions = function (val)
 {
-	
+
 	// if input stays the same, do nothing
 	//
 	if (val == this.sInp)
 		return 0;
-	
-	
+
+
 	// kill list
 	//
 	_b.DOM.remE(this.idAs);
-	
-	
+
+
 	this.sInp = val;
-	
-	
+
+
 	// input length is less than the min required to trigger a request
 	// do nothing
 	//
@@ -696,16 +754,17 @@ _b.AutoSuggest.prototype.getSuggestions = function (val)
 		this.nInpC = val.length;
 		return 0;
 	}
-	
-	
-	
-	
+
+
+
+
 	var ol = this.nInpC; // old length
 	this.nInpC = val.length ? val.length : 0;
-	
-	
-	
-	// if caching enabled, and user is typing (ie. length of input is increasing)
+
+
+
+	// if caching enabled, and user is typing (ie. length of input is
+	// increasing)
 	// filter results out of aSuggestions from last request
 	//
 	var l = this.aSug.length;
@@ -718,18 +777,18 @@ _b.AutoSuggest.prototype.getSuggestions = function (val)
 				arr.push( this.aSug[i] );
 		}
 		this.aSug = arr;
-		
+
 		this.createList(this.aSug);
-		
-		
-		
+
+
+
 		return false;
 	}
 	else
-	// do new request
-	//
+		// do new request
+		//
 	{
-	    $("#lookup_progress").show();
+		$("#lookup_progress").show();
 		var pointer = this;
 		var input = this.sInp;
 		clearTimeout(this.ajID);
@@ -749,24 +808,24 @@ _b.AutoSuggest.prototype.doAjaxRequest = function (input)
 	//
 	if (input != escape(this.fld.value))
 		return false;
-	
-	
+
+
 	var pointer = this;
-	
-	
+
+
 	// create ajax request
 	//
 	if (typeof(this.oP.script) == "function")
 		var url = this.oP.script(encodeURIComponent(this.sInp));
 	else
 		var url = this.oP.script+this.oP.varname+"="+encodeURIComponent(this.sInp);
-	
+
 	if (!url)
 		return false;
-	
+
 	var meth = this.oP.meth;
 	var input = this.sInp;
-	
+
 	var onSuccessFunc = function (req) { pointer.setSuggestions(req, input) };
 	var onErrorFunc = function (status) { alert("AJAX error: "+status); };
 
@@ -785,15 +844,15 @@ _b.AutoSuggest.prototype.setSuggestions = function (req, input)
 	//
 	if (input != escape(this.fld.value))
 		return false;
-	
-	
+
+
 	this.aSug = [];
-	
-	
+
+
 	if (this.oP.json)
 	{
 		var jsondata = eval('(' + req.responseText + ')');
-		
+
 		for (var i=0;i<jsondata.results.length;i++)
 		{
 			this.aSug.push(  { 'id':jsondata.results[i].id, 'value':jsondata.results[i].value, 'info':jsondata.results[i].info }  );
@@ -803,7 +862,7 @@ _b.AutoSuggest.prototype.setSuggestions = function (req, input)
 	{
 
 		var xml = req.responseXML;
-	
+
 		// traverse xml
 		//
 		var results = xml.getElementsByTagName('results')[0].childNodes;
@@ -813,11 +872,11 @@ _b.AutoSuggest.prototype.setSuggestions = function (req, input)
 			if (results[i].hasChildNodes())
 				this.aSug.push(  { 'id':results[i].getAttribute('id'), 'value':results[i].childNodes[0].nodeValue, 'info':results[i].getAttribute('info') }  );
 		}
-	
+
 	}
-	
+
 	this.idAs = "as_"+this.fld.id;
-	
+
 
 	this.createList(this.aSug);
 
@@ -839,44 +898,44 @@ _b.AutoSuggest.prototype.setSuggestions = function (req, input)
 _b.AutoSuggest.prototype.createList = function(arr)
 {
 	var pointer = this;
-	
-	
-	
-	
+
+
+
+
 	// get rid of old list
 	// and clear the list removal timeout
 	//
 	_b.DOM.remE(this.idAs);
 	this.killTimeout();
-	
-	
+
+
 	// if no results, and shownoresults is false, do nothing
 	//
 	if (arr.length == 0 && !this.oP.shownoresults)
 		return false;
-	
-	
+
+
 	// create holding div
 	//
 	var div = _b.DOM.cE("div", {id:this.idAs, className:this.oP.className});	
-	
+
 	var hcorner = _b.DOM.cE("div", {className:"as_corner"});
 	var hbar = _b.DOM.cE("div", {className:"as_bar"});
 	var header = _b.DOM.cE("div", {className:"as_header"});
 	header.appendChild(hcorner);
 	header.appendChild(hbar);
 	div.appendChild(header);
-	
-	
-	
-	
+
+
+
+
 	// create and populate ul
 	//
 	var ul = _b.DOM.cE("ul", {id:"as_ul"});
-	
-	
-	
-	
+
+
+
+
 	// loop throught arr of suggestions
 	// creating an LI element for each suggestion
 	//
@@ -888,8 +947,8 @@ _b.AutoSuggest.prototype.createList = function(arr)
 		var val = arr[i].value;
 		var st = val.toLowerCase().indexOf( this.sInp.toLowerCase() );
 		var output = val.substring(0,st) + "<em>" + val.substring(st, st+this.sInp.length) + "</em>" + val.substring(st+this.sInp.length);
-		
-		
+
+
 		var span 		= _b.DOM.cE("span", {}, output, true);
 		if (arr[i].info != "")
 		{
@@ -898,27 +957,27 @@ _b.AutoSuggest.prototype.createList = function(arr)
 			var small		= _b.DOM.cE("small", {}, arr[i].info);
 			span.appendChild(small);
 		}
-		
+
 		var a 			= _b.DOM.cE("a", { href:"#" });
-		
+
 		var tl 		= _b.DOM.cE("span", {className:"tl"}, " ");
 		var tr 		= _b.DOM.cE("span", {className:"tr"}, " ");
 		a.appendChild(tl);
 		a.appendChild(tr);
-		
+
 		a.appendChild(span);
-		
+
 		a.name = i+1;
-		//a.id = "asa_" + (i+1);
+		// a.id = "asa_" + (i+1);
 		a.onclick = function () { pointer.setHighlightedValue(); return false; };
 		a.onmouseover = function () { pointer.setHighlight(this.name); };
-		
+
 		var li = _b.DOM.cE(  "li", {}, a  );
-		
+
 		ul.appendChild( li );
 	}
-	
-	
+
+
 	// no results
 	//
 	if (arr.length == 0 && this.oP.shownoresults)
@@ -926,34 +985,35 @@ _b.AutoSuggest.prototype.createList = function(arr)
 		var li = _b.DOM.cE(  "li", {className:"as_warning"}, this.oP.noresults  );
 		ul.appendChild( li );
 	}
-	
-	
+
+
 	div.appendChild( ul );
-	
-	
+
+
 	var fcorner = _b.DOM.cE("div", {className:"as_corner"});
 	var fbar = _b.DOM.cE("div", {className:"as_bar"});
 	var footer = _b.DOM.cE("div", {className:"as_footer"});
 	footer.appendChild(fcorner);
 	footer.appendChild(fbar);
 	div.appendChild(footer);
-	
-	
-	
+
+
+
 	// get position of target textfield
 	// position holding div below it
 	// set width of holding div to width of field
 	//
 	var pos = _b.DOM.getPos(this.fld);
-	
+
 	div.style.left 		= pos.x + "px";
 	div.style.top 		= ( pos.y + this.fld.offsetHeight + this.oP.offsety ) + "px";
 	div.style.width 	= (this.fld.offsetWidth * 3) + "px";
-	
-	
-	
+
+
+
 	// set mouseover functions for div
-	// when mouse pointer leaves div, set a timeout to remove the list after an interval
+	// when mouse pointer leaves div, set a timeout to remove the list after an
+	// interval
 	// when mouse enters div, kill the timeout so the list won't be removed
 	//
 	div.onmouseover 	= function(){ pointer.killTimeout() };
@@ -963,18 +1023,18 @@ _b.AutoSuggest.prototype.createList = function(arr)
 	// add DIV to document
 	//
 	document.getElementsByTagName("body")[0].appendChild(div);
-	
-	
-	
+
+
+
 	// currently no item is highlighted
 	//
 	this.iHigh = 0;
-	
-	
+
+
 	$("#lookup_progress").hide();
-	
-	
-	
+
+
+
 	// remove list after an interval
 	//
 	var pointer = this;
@@ -1000,21 +1060,21 @@ _b.AutoSuggest.prototype.changeHighlight = function(key)
 	var list = _b.DOM.gE("as_ul");
 	if (!list)
 		return false;
-	
+
 	var n;
 
 	if (key == 40)
 		n = this.iHigh + 1;
 	else if (key == 38)
 		n = this.iHigh - 1;
-	
-	
+
+
 	if (n > list.childNodes.length)
 		n = list.childNodes.length;
 	if (n < 1)
 		n = 1;
-	
-	
+
+
 	this.setHighlight(n);
 };
 
@@ -1025,12 +1085,12 @@ _b.AutoSuggest.prototype.setHighlight = function(n)
 	var list = _b.DOM.gE("as_ul");
 	if (!list)
 		return false;
-	
+
 	if (this.iHigh > 0)
 		this.clearHighlight();
-	
+
 	this.iHigh = Number(n);
-	
+
 	list.childNodes[this.iHigh-1].className = "as_highlight";
 
 
@@ -1043,7 +1103,7 @@ _b.AutoSuggest.prototype.clearHighlight = function()
 	var list = _b.DOM.gE("as_ul");
 	if (!list)
 		return false;
-	
+
 	if (this.iHigh > 0)
 	{
 		list.childNodes[this.iHigh-1].className = "";
@@ -1057,16 +1117,16 @@ _b.AutoSuggest.prototype.setHighlightedValue = function ()
 	if (this.iHigh)
 	{
 		this.sInp = this.fld.value = this.aSug[ this.iHigh-1 ].value;
-		
+
 		// move cursor to end of input (safari)
 		//
 		this.fld.focus();
 		if (this.fld.selectionStart)
 			this.fld.setSelectionRange(this.sInp.length, this.sInp.length);
-		
+
 
 		this.clearSuggestions();
-		
+
 		// pass selected object to callback function, if exists
 		//
 		if (typeof(this.oP.callback) == "function")
@@ -1106,14 +1166,14 @@ _b.AutoSuggest.prototype.resetTimeout = function()
 
 _b.AutoSuggest.prototype.clearSuggestions = function ()
 {
-  this.killTimeout();
-  _b.DOM.remE(this.idAs);
+	this.killTimeout();
+	_b.DOM.remE(this.idAs);
 };
-	
 
 
 
-// AJAX PROTOTYPE _____________________________________________
+
+//AJAX PROTOTYPE _____________________________________________
 
 
 if (typeof(_b.Ajax) == "undefined")
@@ -1131,15 +1191,15 @@ _b.Ajax = function ()
 
 _b.Ajax.prototype.makeRequest = function (url, meth, onComp, onErr)
 {
-	
+
 	if (meth != "POST")
 		meth = "GET";
-	
+
 	this.onComplete = onComp;
 	this.onError = onErr;
-	
+
 	var pointer = this;
-	
+
 	// branch for native XMLHttpRequest object
 	if (window.XMLHttpRequest)
 	{
@@ -1147,7 +1207,7 @@ _b.Ajax.prototype.makeRequest = function (url, meth, onComp, onErr)
 		this.req.onreadystatechange = function () { pointer.processReqChange() };
 		this.req.open("GET", url, true); //
 		this.req.send(null);
-	// branch for IE/Windows ActiveX version
+		// branch for IE/Windows ActiveX version
 	}
 	else if (window.ActiveXObject)
 	{
@@ -1164,7 +1224,7 @@ _b.Ajax.prototype.makeRequest = function (url, meth, onComp, onErr)
 
 _b.Ajax.prototype.processReqChange = function()
 {
-	
+
 	// only if req shows "loaded"
 	if (this.req.readyState == 4) {
 		// only if "OK"
@@ -1186,7 +1246,7 @@ _b.Ajax.prototype.processReqChange = function()
 
 
 
-// DOM PROTOTYPE _____________________________________________
+//DOM PROTOTYPE _____________________________________________
 
 
 if (typeof(_b.DOM) == "undefined")
@@ -1200,12 +1260,12 @@ _b.DOM.cE = function ( type, attr, cont, html )
 	var ne = document.createElement( type );
 	if (!ne)
 		return 0;
-		
+
 	for (var a in attr)
 		ne[a] = attr[a];
-	
+
 	var t = typeof(cont);
-	
+
 	if (t == "string" && !html)
 		ne.appendChild( document.createTextNode(cont) );
 	else if (t == "string" && html)
@@ -1246,7 +1306,7 @@ _b.DOM.gE = function ( e )
 _b.DOM.remE = function ( ele )
 {
 	var e = this.gE(ele);
-	
+
 	if (!e)
 		return 0;
 	else if (e.parentNode.removeChild(e))
@@ -1275,9 +1335,9 @@ _b.DOM.getPos = function ( e )
 	}
 	else if (obj.x)
 		curleft += obj.x;
-	
+
 	var obj = e;
-	
+
 	var curtop = 0;
 	if (obj.offsetParent)
 	{
@@ -1302,7 +1362,7 @@ _b.DOM.getPos = function ( e )
 
 
 
-// FADER PROTOTYPE _____________________________________________
+//FADER PROTOTYPE _____________________________________________
 
 
 
@@ -1317,19 +1377,19 @@ _b.Fader = function (ele, from, to, fadetime, callback)
 {	
 	if (!ele)
 		return 0;
-	
+
 	this.e = ele;
-	
+
 	this.from = from;
 	this.to = to;
-	
+
 	this.cb = callback;
-	
+
 	this.nDur = fadetime;
-		
+
 	this.nInt = 50;
 	this.nTime = 0;
-	
+
 	var p = this;
 	this.nID = setInterval(function() { p._fade() }, this.nInt);
 };
@@ -1340,17 +1400,18 @@ _b.Fader = function (ele, from, to, fadetime, callback)
 _b.Fader.prototype._fade = function()
 {
 	this.nTime += this.nInt;
-	
+
 	var ieop = Math.round( this._tween(this.nTime, this.from, this.to, this.nDur) * 100 );
 	var op = ieop / 100;
-	
+
 	if (this.e.filters) // internet explorer
 	{
 		try
 		{
 			this.e.filters.item("DXImageTransform.Microsoft.Alpha").opacity = ieop;
 		} catch (e) { 
-			// If it is not set initially, the browser will throw an error.  This will set it if it is not set yet.
+			// If it is not set initially, the browser will throw an error. This
+			// will set it if it is not set yet.
 			this.e.style.filter = 'progid:DXImageTransform.Microsoft.Alpha(opacity='+ieop+')';
 		}
 	}
@@ -1358,8 +1419,8 @@ _b.Fader.prototype._fade = function()
 	{
 		this.e.style.opacity = op;
 	}
-	
-	
+
+
 	if (this.nTime == this.nDur)
 	{
 		clearInterval( this.nID );

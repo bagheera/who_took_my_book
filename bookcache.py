@@ -88,7 +88,7 @@ class CachedBook:
     @classmethod
     def reset(cls, book_id):
         memcache.delete(cls.key(book_id))
-        
+
     @classmethod
     def on_group_change(cls, info):
         affected_book_keys = CacheBookIdsOwned.get(info['owner_key'])

@@ -6,7 +6,7 @@ from google.appengine.ext.webapp import template
 from wtmb import *
 from bookactions import *
 from bookcache import *
-from full import *
+from listing import *
 
 class BookListPage(webapp.RequestHandler):
   #args is necessary, but why?
@@ -34,7 +34,7 @@ class BookListPage(webapp.RequestHandler):
 #      cache_for(self.response, 30)
       self.response.out.write(template.render(path, template_values)) # render o/p can be cached
     else:
-      logging.info("new user from "+self.request.headers.get('Referer',"anon"))
+      logging.info("new user from " + self.request.headers.get('Referer', "anon"))
       url = users.create_login_url(self.request.uri)
       url_linktext = 'Login'
       self.redirect(users.create_login_url(self.request.uri))
@@ -88,11 +88,12 @@ def real_main():
                                         (r'/lend/(.*)', LendPage),
                                         (r'/lendTo', LendTo),
                                         ('/mybooksj', FullListing),
+                                        ('/booksof/(.*)', FullListing),
                                         ('/asin-import', ImportASINs),
                                         ('/nickname', Nickname),
                                         ('/feed/whats_new', WhatsNewFeed),
                                         ('/remind', Remind),
-                                        ('/alluzers', AllUzers),
+                                        ('/alluzers', LookupUzer),
                                         ('/search', Search),
                                         ('/cron/keepalive', FullListing),
                                         ('/indexbook', IndexBook),
@@ -100,7 +101,7 @@ def real_main():
                                         ('/makeGroupBooks', MakeGroupBooks),
                                         ('/settings', SettingsPage),
                                         (r'(/?)(.*)', BookListPage)],
-                                       debug = True)
+                                       debug=True)
   wsgiref.handlers.CGIHandler().run(application)
 
 def profile_main():
@@ -117,7 +118,7 @@ def profile_main():
     # stats.print_callees()
     # stats.print_callers()
     logging.info("Profile data:\n%s", stream.getvalue())
-    
+
 if __name__ == "__main__":
 #  profile_main()
     real_main()

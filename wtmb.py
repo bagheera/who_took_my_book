@@ -57,10 +57,10 @@ class AppUser(db.Model):
 
     def __ne__(self, other):
         return not self.__eq__(other)
-    
+
     def book_count(self):
         return Book.gql("WHERE owner=:1", self).count()
-        
+
     def is_outsider(self):
         return not self.googleUser
 
@@ -70,7 +70,7 @@ class AppUser(db.Model):
             raise ValueError("Name cannot be empty")
         if AppUser.gql('WHERE googleUser = :1 and wtmb_nickname= :2', None, name).get():
             raise ValueError("This name is taken")
-        new_user = AppUser(wtmb_nickname=name, unregistered_email=email, member_of = for_book.owner.member_of)
+        new_user = AppUser(wtmb_nickname=name, unregistered_email=email, member_of=for_book.owner.member_of)
         new_user.put()
         NewOutsider({'outsider':new_user, 'for_book':for_book}).fire()
         return new_user
@@ -137,44 +137,44 @@ class AppUser(db.Model):
     def matches(self, fragment):
         fragment = fragment.upper()
         return self.email().upper().find(fragment) != -1 or self.display_name().upper().find(fragment) != -1
-    
+
     def friend_of(self, other):
         for group in self.member_of:
             if group in other.member_of:
                 return True
         return False
-    
+
     def setMembership(self, groups):
         if len(groups) == 0:
             groups = ['rest_of_the_world']
         for old_group in set(self.member_of) - set(groups):
-             GroupBook.group_deleted(Group.find_by_name(old_group), self)
+            GroupBook.group_deleted(Group.find_by_name(old_group), self)
         for new_group_name in set(groups) - set(self.member_of):
             new_group = Group.find_by_name(new_group_name)
             for book in self.books_owned:
-                GroupBook(owner=self, book = book, group = new_group).put()
+                GroupBook(owner=self, book=book, group=new_group).put()
         self.member_of = groups
         self.put()
         MembershipChanged({"new_groups": groups, "owner_key":str(AppUser.me().key())}).fire()
-    
+
     def group_keys(self):
         groups = map(Group.find_by_name, self.member_of)
         return map(Group.key, groups)
 
     def belongs_to(self, group):
         return group in self.member_of
-    
+
     def purge(self):
-        logging.warning("Purging user: "+ self.display_name())
+        logging.warning("Purging user: " + self.display_name())
         GroupBook.user_deleted(self)
         self.delete()
-    
+
     def hasnt_transacted(self):
         return self.books_owned.get() is None and self.books_borrowed.get() is None
-    
+
     def just_created(self):
-        return datetime.utcnow() - self.created_date < timedelta(0,4,0)
-    
+        return datetime.utcnow() - self.created_date < timedelta(0, 4, 0)
+
     @staticmethod
     def me():
         return AppUser.gql('WHERE googleUser = :1', users.get_current_user()).get()
@@ -273,7 +273,7 @@ class Book(db.Model, Searchable):
 
     def belongs_to_friend(self, appuser):
         return self.owner.friend_of(appuser)
-    
+
     def borrowed_by_me(self):
         if self.borrower:
             return users.get_current_user() == self.borrower.googleUser
@@ -292,8 +292,8 @@ class Book(db.Model, Searchable):
         me = AppUser.me()
         for grp in me.member_of:
             GroupBook(
-                      owner = me,
-                      book = self, 
+                      owner=me,
+                      book=self,
                       group=Group.find_by_name(grp)).put()
         self.index()
         NewBookAdded(self).fire()
@@ -353,11 +353,11 @@ class Book(db.Model, Searchable):
         else:
             logging.error(AppUser.me().display_name() + "made an illegal attempt to remind about " + self.title + " owned by " + self.owner.display_name())
             raise WtmbException("illegal attempt to remind")
-    
+
     @staticmethod
     def all_books():
-        return db.GqlQuery('SELECT __key__ from Book  ORDER BY created_date DESC LIMIT 1000'  ).fetch(1000)
-        
+        return db.GqlQuery('SELECT __key__ from Book  ORDER BY created_date DESC LIMIT 1000').fetch(1000)
+
     @staticmethod
     def owned_by(appuser_key):
         return db.GqlQuery("SELECT __key__ from Book WHERE owner = :1 LIMIT 1000", appuser_key).fetch(1000)
@@ -384,7 +384,7 @@ class Book(db.Model, Searchable):
         message = None
         if (returner != book.owner):
             message = " has returned this book to " + book.owner.display_name()
-        else: 
+        else:
             message = returner.display_name() + " has reclaimed this book"
 
         mail.send_mail(
@@ -453,11 +453,11 @@ class Group(db.Model):
     name = db.StringProperty()
     createdBy = db.StringProperty()
     description = db.StringProperty()
-    
+
     @staticmethod
     def find_by_name(groupName):
         return Group.gql("WHERE name=:1", groupName).get()
-        
+
 class GroupBook(db.Model):
     book = db.ReferenceProperty(Book)
     owner = db.ReferenceProperty(AppUser)
@@ -465,7 +465,7 @@ class GroupBook(db.Model):
     added_on = db.DateTimeProperty(auto_now_add="true")
 
     @staticmethod
-    def get_friends_books(appuser, limit = 25):
+    def get_friends_books(appuser, limit=25):
         result = []
         offset = 1
         while limit > 0:
@@ -479,20 +479,13 @@ class GroupBook(db.Model):
             offset = offset + limit
             limit = limit - len(result)
         return result
-    
-    @staticmethod
-    def get_friends_book_keys_str(appuser):   #not used?
-        result = set()
-        for groupbook in GroupBook.gql('WHERE group IN :1 and owner != :2', appuser.group_keys(), appuser.key()).fetch(1000):
-            result.add(str(groupbook.book.key()))
-        return result
-        
+
     @staticmethod
     def book_deleted(book):
         tbd = GroupBook.gql('WHERE book=:1', book.key())
         for gb in tbd:
             gb.delete()
-    
+
     @staticmethod
     def group_deleted(group, user):
         tbd = GroupBook.gql('WHERE owner=:1 AND group=:2', user.key(), group.key())

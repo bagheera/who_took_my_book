@@ -68,13 +68,13 @@
                 </div>
                 <div id='bookshelf_inner' class="panes">
                 <div id="tabber">
-                <span id="tabFriend" class="tab"><a href="#" id="hrefTabFriend"></a></span>
                 <span id="tabOwned" class="tab" title="Books you own (showing max 25)"><a href="#">Owned</a></span>
                 <span id="tabBorrowed" class="tab" title="Books you have borrowed"><a href="#">Borrowed</a></span>
                 <span id="tabAvailable" class="tab" title="lists a few books added by others recently">
                 	<a href="#">Available</a>&nbsp;&nbsp;
                 	<a href="http://feeds.feedburner.com/WhoTookMyBook-RecentBookAdditions" title="subscribe to feed of new books"><img src="/s/feed_icon.gif" alt="subscribe to feed of new books"></img></a>
                 </span>
+                <span id="tabFriend" class="tab"><a href="#" id="hrefTabFriend"></a></span>
                 <span id="searchBar">
 	                    <strong><label for="search">Search:</label></strong><img id="search_progress" src="/s/lookup_progress.gif"></img>
 	                    <input type="text" name="search" id="search"/>
@@ -95,6 +95,10 @@
                     <div id="others_div">
                     <small id="max25">listing a maximum of 25 books at a time (of total 1400+)</small>
                         <table id="others_table">
+                        </table>
+                    </div>
+                    <div id="friend_div">
+                        <table id="friend_table">
                         </table>
                     </div>
                 </div>

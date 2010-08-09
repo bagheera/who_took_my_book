@@ -34,7 +34,7 @@ class BookListPage(webapp.RequestHandler):
 #      cache_for(self.response, 30)
       self.response.out.write(template.render(path, template_values)) # render o/p can be cached
     else:
-      logging.info("new user from " + self.request.headers.get('Referer', "anon"))
+      logging.info("new user from %s" % self.request.headers.get('Referer', "anon"))
       url = users.create_login_url(self.request.uri)
       url_linktext = 'Login'
       self.redirect(users.create_login_url(self.request.uri))
@@ -64,7 +64,7 @@ class SettingsPage(webapp.RequestHandler):
 #  have to purge cached books of this guy on group change
   def post(self):
         groups = self.request.get("membership")
-        logging.info("groups: " + groups)
+        logging.info("groups: %s" % groups)
         if groups.strip() == '':
             groups = []
         else:

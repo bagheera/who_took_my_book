@@ -17,9 +17,9 @@ class FullListing(webapp.RequestHandler):
 
     def __get_owned_listing(self, me):
             my_unlent_book_keys = map(str, Book.unlent_by(me))
-            logging.info(str(len(my_unlent_book_keys)) + ' unlent')
+            logging.info('%d unlent' % (len(my_unlent_book_keys),))
             all_my_book_keys = CacheBookIdsOwned.get(me)
-            logging.info(str(len(all_my_book_keys)) + ' in all')
+            logging.info('%d in all' % (len(all_my_book_keys),))
             lent_keyset = set(all_my_book_keys) - set(my_unlent_book_keys)
             needed = 25 - len(lent_keyset)
             if needed < 0:
@@ -28,7 +28,7 @@ class FullListing(webapp.RequestHandler):
             keys_for_display = my_unlent_book_keys[:needed]
             #hack: putting lent_keys last bcoz javascript reverses it again, where?
             keys_for_display.extend(lent_keys)
-            logging.info(str(len(keys_for_display)) + ' to display')
+            logging.info('%d to display' % (len(keys_for_display),))
             return self.__books(keys_for_display)
 
     def get(self, friend_key=None):
@@ -83,7 +83,7 @@ class Search(webapp.RequestHandler):
     def post(self):
       try:
         term = self.request.get('term')
-        logging.info("search term is " + term)
+        logging.info("search term is %s" % term)
         self.response.headers['content-type'] = "application/json"
         result = []
         me = AppUser.me()

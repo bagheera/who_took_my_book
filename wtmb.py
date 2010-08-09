@@ -7,6 +7,7 @@ import cgi
 import logging
 from eventregistry import *
 from wtmbsearch import Searchable
+import textwrap
 ###################################################################
 WTMB_SENDER = "whotookmybook@gmail.com"
 #from http://code.activestate.com/recipes/52282/#c2
@@ -119,7 +120,7 @@ class AppUser(db.Model):
         if self.unregistered_email:
             return self.unregistered_email
         else:
-            return "whotookmybook+unregistered_user_" + self.wtmb_nickname + "@gmail.com"
+            return "whotookmybook+unregistered_user_%s@gmail.com" % self.wtmb_nickname
 
     def change_nickname(self, new_nick):
         self.wtmb_nickname = new_nick
@@ -165,7 +166,7 @@ class AppUser(db.Model):
         return group in self.member_of
 
     def purge(self):
-        logging.warning("Purging user: " + self.display_name())
+        logging.warning("Purging user: %s" % self.display_name())
         GroupBook.user_deleted(self)
         self.delete()
 
@@ -194,10 +195,10 @@ class AppUser(db.Model):
             book = info['for_book']
             #current thread coupling - bad
             import urllib
-            msg_text = "Hi " + outsider.display_name() + \
-                                "\nI just made use of a free app called who_took_my_book to track that I have lent the book '" + book.summary() + \
-                                "' to you.\nIf you'd like to register for this app to keep track of your books, just click http://whotookmybook.appspot.com/mybooks?u=" + \
-                                str(outsider.key()) + '&e=' + urllib.quote(outsider.unregistered_email)
+            msg_text = textwrap.dedent("""Hi %s\n
+                        I just made use of a free app called who_took_my_book to track that I have lent you the book:\n\n%s\n
+                        If you''d like to use this app to keep track of your books, just click http://whotookmybook.appspot.com/mybooks?u=%s&e=%s"""
+                        % (outsider.display_name(), book.summary(), outsider.key(), urllib.quote(outsider.unregistered_email)))
             logging.debug(msg_text)
             try:
                 mail.send_mail(
@@ -251,7 +252,7 @@ class Book(db.Model, Searchable):
                                         }
 
     def summary(self):
-        return self.title + ' by ' + self.author
+        return '%s by %s' % (self.title, self.author)
 
     def borrower_name(self):
         try:
@@ -347,9 +348,11 @@ class Book(db.Model, Searchable):
                      sender=AppUser.me().email(),
                      to=self.borrower.email(),
                      cc=(WTMB_SENDER, AppUser.me().email()),
-                     subject='[whotookmybook] ' + self.title,
-                     body="Hi " + self.borrower.display_name() + "\n" \
-                        + self.owner.display_name() + " would like to gently remind you to return '" + self.title + "' if you have finished with it. \n email sent by http://whotookmybook.appspot.com")
+                     subject='[whotookmybook] %s' % self.title,
+                     body=textwrap.dedent("""Hi %s\n
+                                            %s would like to gently remind you to return '%s' if you have finished with it.\n
+                                            \np.s. email triggered by %s and sent by http://whotookmybook.appspot.com"""
+                                            % (self.borrower.display_name(), self.owner.display_name(), self.title, self.owner.display_name())))
         else:
             logging.error(AppUser.me().display_name() + "made an illegal attempt to remind about " + self.title + " owned by " + self.owner.display_name())
             raise WtmbException("illegal attempt to remind")
@@ -383,15 +386,15 @@ class Book(db.Model, Searchable):
         old_borrower = info['old_borrower']
         message = None
         if (returner != book.owner):
-            message = " has returned this book to " + book.owner.display_name()
+            message = " has returned this book to %s" % book.owner.display_name()
         else:
-            message = returner.display_name() + " has reclaimed this book"
+            message = "%s has reclaimed this book" % returner.display_name()
 
         mail.send_mail(
                      sender=AppUser.me().email(),
                      to=book.owner.email(),
                      cc=(WTMB_SENDER, AppUser.me().email()),
-                     subject='[whotookmybook] ' + book.title,
+                     subject='[whotookmybook] %s' % book.title,
                      body=message)
         from bookcache import CachedBook, CacheBookIdsBorrowed
         book_key_str = str(book.key())
@@ -404,9 +407,11 @@ class Book(db.Model, Searchable):
                  sender=AppUser.me().email(),
                  to=book.owner.email(),
                  cc=(WTMB_SENDER, AppUser.me().email()),
-                 subject='[whotookmybook] ' + book.title,
-                 body="Hi " + book.owner.display_name() + "\n" + book.borrower.display_name()
-                 + " has requested or borrowed this book from you. \n email sent by http://whotookmybook.appspot.com")
+                 subject='[whotookmybook] %s' % book.title,
+                 body=textwrap.dedent("""Hi %s\n
+                                        %s has requested or borrowed this book from you.\n
+                                        p.s.email sent by http://whotookmybook.appspot.com"""
+                                        % (book.owner.display_name(), book.borrower.display_name())))
         from bookcache import CachedBook, CacheBookIdsBorrowed
         book_key_str = str(book.key())
         CacheBookIdsBorrowed.add_book(str(book.borrower.key()), book_key_str)
@@ -418,8 +423,8 @@ class Book(db.Model, Searchable):
                      sender=AppUser.me().email(),
                      to=book.borrower.email(),
                      cc=(WTMB_SENDER, AppUser.me().email()),
-                     subject='[whotookmybook] ' + book.title,
-                     body=book.owner.display_name() + " has lent this book to " + book.borrower.display_name())
+                     subject='[whotookmybook] %s' % book.title,
+                     body="%s has lent this book to %s" % (book.owner.display_name(), book.borrower.display_name()))
         from bookcache import CachedBook, CacheBookIdsBorrowed
         book_key_str = str(book.key())
         CacheBookIdsBorrowed.add_book(str(book.borrower.key()), book_key_str)

@@ -7,7 +7,7 @@ from amz import Amz
 
 ###################################################################
 def cache_for(response, ndays, nhours=0):
-      response.headers['Cache-Control'] = 'public, max-age=' + str(86400 * ndays + (3600 * nhours))
+      response.headers['Cache-Control'] = 'public, max-age=%d' % (86400 * ndays + (3600 * nhours),)
       lastmod = datetime.utcnow()
       response.headers['Last-Modified'] = lastmod.strftime('%a, %d %b %Y %H:%M:%S GMT')
       expires = lastmod + timedelta(days=ndays, hours=nhours)
@@ -32,9 +32,9 @@ class ImportASINs(webapp.RequestHandler):
         if users.get_current_user():
             appuser = AppUser.getAppUserFor(users.get_current_user())
         asins = self.request.get("asins")
-        report("asins= " + asins)
+        report("asins= %s" % asins)
         asin_lst = asins.split(',')
-        report(str(len(asin_lst)) + " ASINs")
+        report("ASINs %s" % (len(asin_lst)))
         try:
             chunks = self.breakup(asin_lst)
             for chunk in chunks:
@@ -46,11 +46,11 @@ class ImportASINs(webapp.RequestHandler):
                    try:
                        book.owner = appuser
                        book.create()
-                       report("added:  " + book.summary())
+                       report("added: %s" % book.summary())
                    except DuplicateBook:
-                        report("duplicate book: " + book.summary())
+                        report("duplicate book: %s" % book.summary())
                    except:
-                        report("could not add: " + book.summary())
+                        report("could not add: %s" % book.summary())
             self.response.headers['Content-Type'] = "text/plain"
             self.response.out.write('\n'.join(messages))
             del messages[:]
@@ -104,7 +104,7 @@ class DeleteBook(webapp.RequestHandler):
         if doomedBook:
             doomedBook.obliterate()
         else:
-            logging.warning("Cant find book to be deleted id " + bookid)
+            logging.warning("Cant find book to be deleted: %s" % bookid)
         self.redirect('/mybooks')
     except IllegalStateTransition:
         self.error(403)
@@ -117,8 +117,7 @@ class ReturnBook(webapp.RequestHandler):
         if rtnd_book.borrower: #move this check to book
             rtnd_book.return_to_owner()
         else:
-            logging.warning(users.get_current_user().email() +
-                                " attempted to return book that wasn't borrowed " + rtnd_book.summary())
+            logging.warning("%s attempted to return book that wasn't borrowed %s" % (users.get_current_user().email(), rtnd_book.summary()))
         self.redirect('/mybooks')
     except IllegalStateTransition:
         self.error(403)
@@ -163,7 +162,7 @@ class LendTo(webapp.RequestHandler):
 ###################################################################    
 class Suggest(webapp.RequestHandler):
   def get(self, *args):
-    logging.info("looking up amz for: " + self.request.get('fragment'))
+    logging.info("looking up amz for: %s" % self.request.get('fragment'))
     r = '{ results: ['
     list = Amz().search_by(self.request.get('fragment'))
     r += ','.join(list)
@@ -211,14 +210,14 @@ class LookupUzer(webapp.RequestHandler):
 class IndexBook(webapp.RequestHandler):
     def post(self):
         batch = self.request.get('keycsv').split(',')
-        logging.debug("IndexBook batch is:" + str(batch))
+        logging.debug("IndexBook batch is: %d" % (batch,))
         for book in Book.get(batch):
             book.index()
 ###################################################################        
 class PurgeInactiveUsers(webapp.RequestHandler):
     def post(self):
         batch = self.request.get('keycsv').split(',')
-        logging.info("PurgeInactiveUsers batch is:" + str(batch))
+        logging.info("PurgeInactiveUsers batch is: %d" % (batch,))
         for user in AppUser.get(batch):
             user.purge()
 ###################################################################        

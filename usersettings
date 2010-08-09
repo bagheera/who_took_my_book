@@ -1,65 +1,74 @@
 <html>
-    <head>
-        <title>who took my book</title>
-		<link rel="icon" type="image/vnd.microsoft.icon" href="/s/wtmb.ico" />
-        <link type="text/css" rel="stylesheet" href="/s/pres2.css" />
-		<script type="text/javascript" src="/s/jquery.js"></script>
-        <script type="text/javascript">
-            function gotoBooks(){
-            	window.location = "http://"+window.location.hostname+":"+window.location.port+"/mybooks";
-            }
-            function save_error(){
-            	    alert("oops. Action failed. Please retry");
-            }
-            $(document).ready(function(){
-            $("input:checkbox").change(
-            	function() {
-            		if (this.checked)
-						$(this).parent().parent().parent().css({"background" : "#FFE38F"});
-					else
-						$(this).parent().parent().parent().css({"background" : "#FFFFFF"});
-				});
-        	$("#save").click(
-        	function(){
-	        	document.body.style.cursor = 'wait';
+<head>
+<title>who took my book</title>
+<link rel="icon" type="image/vnd.microsoft.icon" href="/s/wtmb.ico" />
+<link type="text/css" rel="stylesheet" href="/s/pres2.css" />
+<script type="text/javascript" src="/s/jquery.js"></script>
+<script type="text/javascript">
+function gotoBooks(){
+	window.location = "http://"+window.location.hostname+":"+window.location.port+"/mybooks";
+}
+function save_error(){
+	alert("oops. Action failed. Please retry");
+}
+$(document).ready(function(){
+	$("input:checkbox").change(
+			function() {
+				if (this.checked)
+					$(this).parent().parent().parent().css({"background" : "#FFE38F"});
+				else
+					$(this).parent().parent().parent().css({"background" : "#FFFFFF"});
+			});
+	$("#save").click(
+			function(){
+				document.body.style.cursor = 'wait';
 				var values = new Array();
 				$.each($("input[@name='user_group[]']:checked"), 
-					function() {
-  						values.push($(this).val());
-		            });
-		        $.ajax({
-			        url: "/settings",
-			        type: "POST",
-			        data: {"membership" : values.join(',')},
+						function() {
+					values.push($(this).val());
+				});
+				$.ajax({
+					url: "/settings",
+					type: "POST",
+					data: {"membership" : values.join(',')},
 					success: gotoBooks,
-			        error: save_error
-			    });					
-		        
+					error: save_error
+				});					
+
 			});
 
-        	$("#cancel").click(
-        	function(){
-        		gotoBooks();
-        	});
-			
+	$("#cancel").click(
+			function(){
+				gotoBooks();
 			});
-        </script>
-    <body>        <div id="page">
-    <H4>Choose your group(s)</H4>
-    <p>Your books will only be shown to people in your group(s). You will also get to see/search only books from people in your group(s). 
-    Any books already lent/borrowed to/from outsiders will be unaffected. </p>
-    <p>If you don't choose any group, you will be assigned to a default group called <em>rest_of_the_world</em></p>
-    	<table id="group_table">
-    	<tr><th>Group</th><th>Description</th></tr>
-	    	{% for row in rows%}
-    	<tr class="{{row.1}}">
-		    	<td><label><input type="checkbox" name="user_group[]" id="user_group_{{row.0.name}}" value="{{row.0.name}}" {{row.1}}>{{row.0.name}}</label></td>
-		    	<td>{{row.0.description}}</td>
-    	</tr>
-	    	{% endfor%}
-        </table><br><br>
-        <button id="save">save</button>&nbsp;&nbsp;&nbsp;
-        <button id="cancel">cancel</button><br><br>
-        <p>To create a new group, please send an email <em>from your Google account id</em> to whotookmybook@gmail.com. Be sure to include a name and description for the group</p></div>
-    </body>
+
+});
+</script>
+<body>
+<div id="page">
+<H4>Choose your group(s)</H4>
+
+<p>Your books will only be shown to people in your group(s). You will also get to see/search only books from people in your group(s). 
+Any books already lent/borrowed to/from outsiders will be unaffected. </p>
+
+<p>If you don't choose any group, you will be assigned to a default group called <em>rest_of_the_world</em></p>
+
+<table id="group_table">
+<tr><th>Group</th><th>Description</th></tr>
+{% for row in rows%}
+<tr class="{{row.1}}">
+<td><label><input type="checkbox" name="user_group[]" id="user_group_{{row.0.name}}" value="{{row.0.name}}" {{row.1}}>{{row.0.name}}</label></td>
+<td>{{row.0.description}}</td>
+</tr>
+{% endfor%}
+</table><br><br>
+
+<button id="save">save</button>&nbsp;&nbsp;&nbsp;
+<button id="cancel">cancel</button><br><br>
+
+<p>To create a new group, please send an email <em>from your Google account id</em> to whotookmybook@gmail.com.
+Be sure to include a name and description for the group</p>
+
+</div>
+</body>
 </html>        

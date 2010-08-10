@@ -147,6 +147,7 @@ function renderOtherBooks(books){
 			noMoreAvailable = true;
 	}
 	$(".groupmbr").click(function(){
+		showLoadingGif();
 		currentFriend = $(this).text();
 		booksOf($(this).attr('name'));
 	});
@@ -334,6 +335,7 @@ function on_ajax_fail(xhr, desc, exceptionobj){
 		alert(xhr.responseText);
 	else
 		alert("oops. Action failed. Please retry");
+	hideLoadingGif();
 }
 
 function post_new_book(title, author, asin){
@@ -385,6 +387,7 @@ function booksOf(friend_key){
 		type: "GET",
 		success: function(books){
 		renderFriendsBooks(books); showFriendsTab();
+		hideLoadingGif();
 	},
 	error: on_ajax_fail,
 	dataType: "json"
@@ -396,10 +399,12 @@ function myall(){
 		url: "/booksof/"+book_data.user.key,
 		type: "GET",
 		success: function(books){
-		myBooks.render(books);
-	},
-	error: on_ajax_fail,
-	dataType: "json"
+			myBooks.render(books);
+			$("#showAllMyBooks").hide();
+			hideLoadingGif();
+		},
+		error: on_ajax_fail,
+		dataType: "json"
 	});
 }
 
@@ -490,7 +495,8 @@ function setup_handlers(){
 		onEnterDo(e, searchMine, jQuery(this).val());
 	});
 	$("#showAllMyBooks").click(function(){
-		myall();//todo
+		showLoadingGif();
+		myall();
 	});
 
 	$(window).scroll(function() {//from:http://blog.wekeroad.com/2009/11/27/paging-records-sucks--use-jquery-to-scroll-just-in-time

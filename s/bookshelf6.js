@@ -227,7 +227,7 @@ function showAvailableTab(){
 	$("#friend_div").hide();
 	$("#others_div").show();
 	paging = true;
-	if(argument[0]==false) paging = false;//no pagination for search results
+	if(arguments[0]==false) paging = false;//no pagination for search results
 }
 function showFriendsTab(){
 	$("#tabFriend").css('background-color', highlight);

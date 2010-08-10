@@ -94,8 +94,10 @@ class AppUser(db.Model):
 
     @staticmethod
     def getAppUserFor(aGoogleUser, outsider_key=None, outsider_email=None):
+        justCreated = False
         appuser = AppUser.gql('WHERE googleUser = :1', aGoogleUser).get()
         if appuser is None:
+            justCreated = True
             if outsider_key and outsider_email and AppUser.get(outsider_key) and AppUser.get(outsider_key).unregistered_email == outsider_email:
                 appuser = AppUser.get(outsider_key).regularize()
             else:
@@ -103,7 +105,7 @@ class AppUser(db.Model):
                 appuser = AppUser(googleUser=current_user, wtmb_nickname=current_user.nickname())
                 appuser.put()
                 NewUserRegistered(appuser).fire()
-        return appuser
+        return appuser, justCreated
 
     def regularize(self):
         self.googleUser = users.get_current_user()
@@ -125,12 +127,16 @@ class AppUser(db.Model):
     def change_nickname(self, new_nick):
         self.wtmb_nickname = new_nick
         self.put()
+        from bookcache import CachedBook, CacheBookIdsOwned
+        for book_key_str in CacheBookIdsOwned.get(self.key()):
+            CachedBook.reset(book_key_str)
 
     def update_last_login(self):
         self.put()
 
     def to_hash(self):
         return {
+                                 "key": str(self.key()),
                                  "nickname": self.display_name(),
                                  "email": self.email(),
                                  "last_login": self.last_login_date.toordinal() #isoformat() + 'Z'
@@ -172,9 +178,6 @@ class AppUser(db.Model):
 
     def hasnt_transacted(self):
         return self.books_owned.get() is None and self.books_borrowed.get() is None
-
-    def just_created(self):
-        return datetime.utcnow() - self.created_date < timedelta(0, 4, 0)
 
     @staticmethod
     def me():
@@ -396,8 +399,8 @@ class Book(db.Model, Searchable):
                      cc=(WTMB_SENDER, AppUser.me().email()),
                      subject='[whotookmybook] %s' % book.title,
                      body=message)
-        from bookcache import CachedBook, CacheBookIdsBorrowed
         book_key_str = str(book.key())
+        from bookcache import CachedBook, CacheBookIdsBorrowed
         CacheBookIdsBorrowed.remove_book(str(old_borrower.key()), book_key_str)
         CachedBook.reset(book_key_str)
 
@@ -470,15 +473,19 @@ class GroupBook(db.Model):
     added_on = db.DateTimeProperty(auto_now_add="true")
 
     @staticmethod
-    def get_friends_books(appuser, limit=25):
+    def get_friends_books(appuser, limit=25, page=1):
         result = []
-        offset = 1
+        offset = (page - 1) * limit + 1
         while limit > 0:
             noMore = True
             for gb in GroupBook.gql('WHERE group IN :1 ORDER BY added_on DESC', appuser.group_keys()).fetch(limit, offset):
                 noMore = False
                 if (gb.owner != appuser):
-                    result.append(str(gb.book.key()))
+                    book_key_str = str(gb.book.key())
+                    try:
+                        result.index(book_key_str)
+                    except ValueError:
+                        result.append(book_key_str)
             if noMore:
                 break
             offset = offset + limit

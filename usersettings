@@ -6,10 +6,11 @@
 <script type="text/javascript" src="/s/jquery.js"></script>
 <script type="text/javascript">
 function gotoBooks(){
-	window.location = "http://"+window.location.hostname+":"+window.location.port+"/mybooks";
+	var url = "http://"+window.location.hostname+":"+window.location.port+"/mybooks"; 
+	window.location.href = url;
 }
 function save_error(){
-	alert("oops. Action failed. Please retry");
+	window.alert("oops. Action failed. Please retry");
 }
 $(document).ready(function(){
 	$("input:checkbox").change(
@@ -31,8 +32,12 @@ $(document).ready(function(){
 					url: "/settings",
 					type: "POST",
 					data: {"membership" : values.join(',')},
-					success: gotoBooks,
-					error: save_error
+					success: function (){
+						gotoBooks();
+					},
+					error: function (){
+						save_error();
+					}
 				});					
 
 			});
@@ -63,7 +68,7 @@ Any books already lent/borrowed to/from outsiders will be unaffected. </p>
 {% endfor%}
 </table><br><br>
 
-<button id="save">save</button>&nbsp;&nbsp;&nbsp;
+<button id="save">OK</button>&nbsp;&nbsp;&nbsp;
 <button id="cancel">cancel</button><br><br>
 
 <p>To create a new group, please send an email <em>from your Google account id</em> to whotookmybook@gmail.com.

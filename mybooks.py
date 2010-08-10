@@ -17,16 +17,14 @@ class BookListPage(webapp.RequestHandler):
     if user:
       url = users.create_logout_url('/thanks')
       url_linktext = 'Logout from Google'
-      me = AppUser.getAppUserFor(user, self.request.get('u'), self.request.get('e')) #registers new user
+      me, justCreated = AppUser.getAppUserFor(user, self.request.get('u'), self.request.get('e')) #registers new user
       me.update_last_login()
-      if me.just_created():
-          next = SettingsPage()
-          next.initialize(self.request, self.response)
-          return next.get()
+      if justCreated:
+          self.redirect('/settings')
       template_values = {
         'url': url,
         'url_linktext': url_linktext,
-        "username": me.display_name(),
+        "username": cgi.escape(me.display_name()),
         "groups": ', '.join(me.member_of)
       }
       path = os.path.join(os.path.dirname(__file__), 'books.html')
@@ -89,6 +87,7 @@ def real_main():
                                         (r'/lendTo', LendTo),
                                         ('/mybooksj', FullListing),
                                         ('/booksof/(.*)', FullListing),
+                                        ('/friendsbooks.*/(.*)', FriendsBooks),
                                         ('/asin-import', ImportASINs),
                                         ('/nickname', Nickname),
                                         ('/feed/whats_new', WhatsNewFeed),

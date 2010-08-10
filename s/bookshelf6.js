@@ -1,18 +1,8 @@
 var book_data = null;
-var show = "all";
 var amz_url = "http://www.amazon.com/dp/asin?tag=whotookmybook-20";
-var last_login_date = null;
-
-function not_to_be_shown(book){
-	if (show == "all") 
-		return false;
-	if (show == "tech" && book.is_tech) 
-		return false;
-	if (show == "non-tech" && (!book.is_tech)) 
-		return false;
-	return true;
-}
-
+var availablePage = 2;
+var noMoreAvailable=false;
+var availableTabInFocus = false;
 function borrower(book){
 	return (available(book) ? "" : book.borrowed_by);
 }
@@ -75,13 +65,13 @@ borrower: function(book){
 },
 
 newRow: function(book){
-	if (not_to_be_shown(this))
-		return;
 	if ($("#my_table tr.nothing").length > 0) {
 		myBooks.empty();
 		myBooks.render_header();
 	}
-	$("#my_table_body tr:first").before("<tr id=" + book.key + "><td>" + myBooks.del_link(book) + "</td><td>" + book_link(book) +
+	$("#my_table_body tr:first").before("<tr id=" +	book.key +
+			"\" class=\""+ toggleOddEven() +
+			"\"><td>" + myBooks.del_link(book) + "</td><td>" + book_link(book) +
 			"</td><td>" +
 			myBooks.borrower(book) +
 			"</td><td class='action'>" +
@@ -119,9 +109,9 @@ var borrowedBooks = {
 },
 
 borrowedBookrow: function(){
-	if (not_to_be_shown(this)) 
-		return;
-	$("#borrowed_table").append("<tr id=" + this.key + "><td>" + this.owner + "</td><td>" + book_link(this) +
+	$("#borrowed_table").append("<tr id=" + this.key +
+			"\" class=\""+ toggleOddEven() +
+			"\"><td>" + this.owner + "</td><td>" + book_link(this) +
 			"</td><td></td><td class='action'>" +
 			return_link(this, "return", "return book to owner") +
 	"</td></tr>");
@@ -141,13 +131,20 @@ function renderFriendsBooks(books){
 }
 
 function renderOtherBooks(books){
-	$("#others_table").empty();
+	var appendMode = false;
+	if(arguments[1]==true) appendMode=true;
+	if(!appendMode) $("#others_table").empty(); 
 	if (books.length > 0) {
-		$("#others_table").append('<tr><th class="colone">Owner</th><th class="coltwo">Book</th><th class="colthree">Lent to</th><th class="colfour"></th></tr>');
+		if(!appendMode)
+			$("#others_table").
+			  append('<tr><th class="colone">Owner</th><th class="coltwo">Book</th><th class="colthree">Lent to</th><th class="colfour"></th></tr>');
 		$.each(books, othersbookrow);
 	}
 	else {
-		$("#others_table").append('<tr class="nothing"><td>No books found.</td></tr>');
+		if(!appendMode)
+			$("#others_table").append('<tr class="nothing"><td>No books found.</td></tr>');
+		else
+			noMoreAvailable = true;
 	}
 	$(".groupmbr").click(function(){
 		currentFriend = $(this).text();
@@ -159,21 +156,9 @@ function borrow_link(book){
 	return available(book) ? '<a href="/borrow/' + book.key + '">borrow</a>' : "";
 }
 
-function new_indicator(book){
-	if(book.added_on - last_login_date > 0) return "class=\"nslv\""; // new
-	// since
-	// last
-	// visit
-	// -
-	// nslv
-	return "";
-}
-
 function othersbookrow(){
-	if (not_to_be_shown(this)) 
-		return;
 	$("#others_table").append(
-			"<tr id=" + this.key  + new_indicator(this) +
+			"<tr id=" + this.key  +
 			" class=\""+ toggleOddEven()
 			+"\"><td><a href=\"#\" class=\"groupmbr\" name=\""+
 			this.owner_key+
@@ -186,8 +171,6 @@ function othersbookrow(){
 	"</td></tr>");
 }
 function friendBookRow(){
-	if (not_to_be_shown(this)) 
-		return;
 	$("#friend_table").append(
 			"<tr class=\""+ toggleOddEven()
 			+"\"><td>" + book_link(this) +
@@ -197,21 +180,13 @@ function friendBookRow(){
 			borrow_link(this) +
 	"</td></tr>");
 }
-
 /** ******************************************************************************* */
-function showgif(){
+function showLoadingGif(){
+	$('#overlay').show();
+}
 
-	// script from: http://www.sitepoint.com/forums/showthread.php?t=581377
-	// loading.gif from http://www.ajaxload.info/
-
-	$('<div id="overlay"/>').css({
-		position: 'fixed',
-		top: 0,
-		left: 0,
-		width: '100%',
-		height: $(window).height() + 'px',
-		background: 'white url(/s/loading.gif) no-repeat center'
-	}).appendTo('body');
+function hideLoadingGif(){
+	$('#overlay').hide();
 }
 
 function updateBookCount(data){
@@ -239,6 +214,7 @@ function showOwnedTab(){
 	$("#others_div").hide();
 	$("#friend_div").hide();
 	$("#my_div").show();
+	availableTabInFocus = false;
 }
 function showAvailableTab(){
 	$("#tabAvailable").css('background-color', highlight);
@@ -249,6 +225,7 @@ function showAvailableTab(){
 	$("#borrowed_div").hide();
 	$("#friend_div").hide();
 	$("#others_div").show();
+	availableTabInFocus = true;
 }
 function showFriendsTab(){
 	$("#tabFriend").css('background-color', highlight);
@@ -260,10 +237,12 @@ function showFriendsTab(){
 	$("#borrowed_div").hide();
 	$("#others_div").hide();
 	$("#friend_div").show();
+	availableTabInFocus = false;
 }
+
+
 function renderBooks(data){
 	book_data = data;
-	last_login_date = data.user.last_login
 	updateBookCount(data);
 	myBooks.render(data.mybooks);
 
@@ -306,6 +285,7 @@ function renderBooks(data){
 				$("#my_div").hide();
 				$("#friend_div").hide();
 				$("#borrowed_div").show();
+				availableTabInFocus = false;
 			}
 	);
 	$("#tabAvailable").click(
@@ -318,27 +298,11 @@ function renderBooks(data){
 				showFriendsTab();
 			}
 	);
-	
-	$('#overlay').hide();
-}
-
-function show_tech_only(){
-	show = "tech";
-	renderBooks(book_data);
-}
-
-function show_non_tech_only(){
-	show = "non-tech";
-	renderBooks(book_data);
-}
-
-function show_all(){
-	show = "all";
-	renderBooks(book_data);
+	hideLoadingGif();
 }
 
 function fetch_and_render_books(){
-	showgif();
+	showLoadingGif();
 	$.ajax({
 		url: "/mybooksj",
 		type: "GET",
@@ -346,9 +310,6 @@ function fetch_and_render_books(){
 		errror: on_ajax_fail,
 		dataType: "json"
 	}); 
-	$("#tech_only").click(show_tech_only);
-	$("#non_tech_only").click(show_non_tech_only);
-	$("#show_all").click(show_all);
 }
 
 function on_add(book){
@@ -402,6 +363,7 @@ function onEnterDo(e, handler, arg){
 }
 
 function changeNickname(newNick){
+	showLoadingGif();
 	$.ajax({
 		url: "/nickname",
 		type: "POST",
@@ -414,6 +376,7 @@ function changeNickname(newNick){
 	},
 	error: on_ajax_fail
 	});
+	hideLoadingGif();
 }
 
 function booksOf(friend_key){
@@ -422,6 +385,18 @@ function booksOf(friend_key){
 		type: "GET",
 		success: function(books){
 		renderFriendsBooks(books); showFriendsTab();
+	},
+	error: on_ajax_fail,
+	dataType: "json"
+	});
+}
+
+function myall(){
+	$.ajax({
+		url: "/booksof/"+book_data.user.key,
+		type: "GET",
+		success: function(books){
+		myBooks.render(books);
 	},
 	error: on_ajax_fail,
 	dataType: "json"
@@ -465,19 +440,35 @@ function searchMine(term){
 	});
 }
 
+function loadMore(){
+	if (noMoreAvailable) return;
+	$.ajax({
+		url: "/friendsbooks" + book_data.user.key + '/' + (availablePage++),
+		type: "GET",
+		success: function(books){
+		renderOtherBooks(books, true);
+	},
+	error: on_ajax_fail,
+	dataType: "json"
+	});
+}
 function setup_handlers(){
 	var options = {
 			script: "/lookup_amz?",
 			varname: "fragment",
 			json: true,
 			callback: function(obj){
-		post_new_book(obj.value, obj.info, obj.id);
-	}
+				showLoadingGif();
+				post_new_book(obj.value, obj.info, obj.id);
+				hideLoadingGif();
+			}
 	};
 	new bsn.AutoSuggest('suggestbox', options);
 
 	$("#btn_add_book").click(function(){
+		showLoadingGif();
 		post_new_book($("#book_title").val(), $("#book_author").val(), 0);
+		hideLoadingGif();
 	});
 
 	$("#edit_nick").click(function(){
@@ -496,11 +487,18 @@ function setup_handlers(){
 	$("#searchmine").keypress(function(e){
 		onEnterDo(e, searchMine, jQuery(this).val());
 	});
+	$("#showAllMyBooks").click(function(){
+		myall();//todo
+	});
 
-	/**
-	 * $("#bookshelf_inner").keypress(function(e){//not working?? c = e.which ?
-	 * e.which : e.keyCode; if (c == 97) { $("#suggestbox").focus(); } });
-	 */    
+	$(window).scroll(function() {//from:http://blog.wekeroad.com/2009/11/27/paging-records-sucks--use-jquery-to-scroll-just-in-time
+	    if(!availableTabInFocus) return;
+		var gap = $(document).height() - $(window).height() - $(window).scrollTop();
+		if (gap < 2) {
+	        loadMore();
+	    }
+	});
+	
 }// end setup handlers
 
 function cursor_wait(){
@@ -509,8 +507,21 @@ function cursor_wait(){
 function cursor_ok(){
 	document.body.style.cursor = 'default';
 }
+function addOverlay(){
+	// script from: http://www.sitepoint.com/forums/showthread.php?t=581377
+	// loading.gif from http://www.ajaxload.info/
 
+	$('<div id="overlay"/>').css({
+		position: 'fixed',
+		top: 0,
+		left: 0,
+		width: '100%',
+		height: $(window).height() + 'px',
+		background: 'white url(/s/loading.gif) no-repeat center'
+	}).appendTo('body');	
+}
 $(document).ready(function(){
+	addOverlay();
 	$("#nick_text").hide();
 	$("#tabFriend").hide();
 	$("#manual").hide();

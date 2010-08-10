@@ -12,6 +12,9 @@ def belongs_to_friend(groups, me):
             return True
     return False
 #################################################
+def books(books_ids):
+    book_hashes = map(CachedBook.get, books_ids)
+    return book_hashes
 
 class FullListing(webapp.RequestHandler):
 
@@ -29,15 +32,15 @@ class FullListing(webapp.RequestHandler):
             #hack: putting lent_keys last bcoz javascript reverses it again, where?
             keys_for_display.extend(lent_keys)
             logging.info('%d to display' % (len(keys_for_display),))
-            return self.__books(keys_for_display)
+            return books(keys_for_display)
 
     def get(self, friend_key=None):
         try:
             self.response.headers['content-type'] = "application/json"
+            me = AppUser.me()
             if friend_key:
                 return self.__booksOf(friend_key)
             data = {}
-            me = AppUser.me()
             data['user'] = me.to_hash()
             data['own_count'] = me.book_count()
             if(data['own_count'] != len(CacheBookIdsOwned.get(me.key()))):
@@ -53,14 +56,10 @@ class FullListing(webapp.RequestHandler):
 
     def __books_borrowed_by(self, appUser_key):
         books_owned_ids = CacheBookIdsBorrowed.get(appUser_key)
-        return self.__books(books_owned_ids) if books_owned_ids else []
-
-    def __books(self, books_ids):
-        book_hashes = map(CachedBook.get, books_ids)
-        return book_hashes
+        return books(books_owned_ids) if books_owned_ids else []
 
     def __friends_books(self):
-        return self.__books(GroupBook.get_friends_books(AppUser.me()))
+        return books(GroupBook.get_friends_books(AppUser.me()))
 
     def __booksOf(self, friend_key_str):
         result = []
@@ -68,7 +67,7 @@ class FullListing(webapp.RequestHandler):
         for book_key in book_keys_str:
             result.append(CachedBook.get(book_key))
         self.response.out.write(simplejson.dumps(result))
-###############################################3
+####################################################################################
 class Search(webapp.RequestHandler):
 
     def __getBooksFor(self, result_keys):
@@ -109,3 +108,7 @@ class Search(webapp.RequestHandler):
             self.response.clear()
             self.response.set_status(400, str(e))
             self.response.out.write("oops. something wen't wrong. Please try again.")
+####################################################################################
+class FriendsBooks(webapp.RequestHandler):
+    def get(self, page):
+        self.response.out.write(simplejson.dumps(books(GroupBook.get_friends_books(AppUser.me(), 25, int(page)))))

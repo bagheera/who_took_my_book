@@ -29,8 +29,6 @@ class ImportASINs(webapp.RequestHandler):
      return list_of_lists
 
     def post(self):
-        if users.get_current_user():
-            appuser = AppUser.getAppUserFor(users.get_current_user())
         asins = self.request.get("asins")
         report("asins= %s" % asins)
         asin_lst = asins.split(',')
@@ -44,7 +42,7 @@ class ImportASINs(webapp.RequestHandler):
                    report("Amazon returned no results for these ASINs")
                for book in books:
                    try:
-                       book.owner = appuser
+                       book.owner = AppUser.me()
                        book.create()
                        report("added: %s" % book.summary())
                    except DuplicateBook:
@@ -53,6 +51,7 @@ class ImportASINs(webapp.RequestHandler):
                         report("could not add: %s" % book.summary())
             self.response.headers['Content-Type'] = "text/plain"
             self.response.out.write('\n'.join(messages))
+            #todo :add a back button 
             del messages[:]
         except:
             raise

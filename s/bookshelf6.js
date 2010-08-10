@@ -2,7 +2,7 @@ var book_data = null;
 var amz_url = "http://www.amazon.com/dp/asin?tag=whotookmybook-20";
 var availablePage = 2;
 var noMoreAvailable=false;
-var availableTabInFocus = false;
+var availableTabInFocus = true;
 function borrower(book){
 	return (available(book) ? "" : book.borrowed_by);
 }
@@ -442,11 +442,13 @@ function searchMine(term){
 
 function loadMore(){
 	if (noMoreAvailable) return;
+	$("#paging_progress").show();
 	$.ajax({
 		url: "/friendsbooks" + book_data.user.key + '/' + (availablePage++),
 		type: "GET",
 		success: function(books){
 		renderOtherBooks(books, true);
+		$("#paging_progress").hide();
 	},
 	error: on_ajax_fail,
 	dataType: "json"
@@ -528,6 +530,7 @@ $(document).ready(function(){
 	$("#lookup_progress").hide();
 	$("#search_progress").hide();
 	$("#searchmine_progress").hide();
+	$("#paging_progress").hide();
 	$("#searchMineBar").hide();
 	$("#show_manual").click(function(){
 		$("#show_manual_span").hide();

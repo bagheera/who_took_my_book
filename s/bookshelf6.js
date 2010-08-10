@@ -2,7 +2,7 @@ var book_data = null;
 var amz_url = "http://www.amazon.com/dp/asin?tag=whotookmybook-20";
 var availablePage = 2;
 var noMoreAvailable=false;
-var availableTabInFocus = true;
+var paging = true;
 function borrower(book){
 	return (available(book) ? "" : book.borrowed_by);
 }
@@ -215,7 +215,7 @@ function showOwnedTab(){
 	$("#others_div").hide();
 	$("#friend_div").hide();
 	$("#my_div").show();
-	availableTabInFocus = false;
+	paging = false;
 }
 function showAvailableTab(){
 	$("#tabAvailable").css('background-color', highlight);
@@ -226,7 +226,8 @@ function showAvailableTab(){
 	$("#borrowed_div").hide();
 	$("#friend_div").hide();
 	$("#others_div").show();
-	availableTabInFocus = true;
+	paging = true;
+	if(argument[0]==false) paging = false;//no pagination for search results
 }
 function showFriendsTab(){
 	$("#tabFriend").css('background-color', highlight);
@@ -238,7 +239,7 @@ function showFriendsTab(){
 	$("#borrowed_div").hide();
 	$("#others_div").hide();
 	$("#friend_div").show();
-	availableTabInFocus = false;
+	paging = false;
 }
 
 
@@ -286,7 +287,7 @@ function renderBooks(data){
 				$("#my_div").hide();
 				$("#friend_div").hide();
 				$("#borrowed_div").show();
-				availableTabInFocus = false;
+				paging = false;
 			}
 	);
 	$("#tabAvailable").click(
@@ -420,7 +421,7 @@ function searchAvailable(term){
 		data: {"term": term},
 		success: function(books){
 			$("#search_progress").hide();
-			renderOtherBooks(books); showAvailableTab();
+			renderOtherBooks(books); showAvailableTab(false);
 		},
 		error: on_ajax_fail,
 		dataType: "json"
@@ -500,7 +501,7 @@ function setup_handlers(){
 	});
 
 	$(window).scroll(function() {//from:http://blog.wekeroad.com/2009/11/27/paging-records-sucks--use-jquery-to-scroll-just-in-time
-	    if(!availableTabInFocus) return;
+	    if(!paging) return;
 		var gap = $(document).height() - $(window).height() - $(window).scrollTop();
 		if (gap < 2) {
 	        loadMore();

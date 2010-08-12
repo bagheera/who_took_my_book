@@ -48,7 +48,9 @@ class CacheBookIdsOwned:
     def get(cls, owner_key):
       books_owned = memcache.get(cls.key(owner_key))
       if not books_owned:
-        books_owned = set(str(book_key) for book_key in Book.owned_by(owner_key))
+        books_owned = []
+        for book_key in Book.owned_by(owner_key):
+            books_owned.append(str(book_key))
         memcache.set(cls.key(owner_key), books_owned)
       return books_owned
 

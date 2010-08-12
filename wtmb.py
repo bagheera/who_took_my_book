@@ -127,8 +127,10 @@ class AppUser(db.Model):
     def change_nickname(self, new_nick):
         self.wtmb_nickname = new_nick
         self.put()
-        from bookcache import CachedBook, CacheBookIdsOwned
+        from bookcache import CachedBook, CacheBookIdsOwned, CacheBookIdsBorrowed
         for book_key_str in CacheBookIdsOwned.get(self.key()):
+            CachedBook.reset(book_key_str)
+        for book_key_str in CacheBookIdsBorrowed.get(self.key()):
             CachedBook.reset(book_key_str)
 
     def update_last_login(self):
@@ -366,7 +368,7 @@ class Book(db.Model, Searchable):
 
     @staticmethod
     def owned_by(appuser_key):
-        return db.GqlQuery("SELECT __key__ from Book WHERE owner = :1 LIMIT 1000", appuser_key).fetch(1000)
+        return db.GqlQuery("SELECT __key__ from Book WHERE owner = :1 ORDER BY created_date LIMIT 1000", appuser_key).fetch(1000)
 
     @staticmethod
     def borrowed_by(appuser_key):

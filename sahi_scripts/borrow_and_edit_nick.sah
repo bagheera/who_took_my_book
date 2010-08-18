@@ -1,0 +1,43 @@
+/*
+tests manual book entry, borrow, edit nickname, verify lent to shows new nickname
+*/
+function changeNickTo($newNick){
+	_click(_link("edit nick"));
+	_setValue(_textbox("nick_text"), $newNick);
+	_keyPress(_textbox("nick_text"), 13);
+}
+function loginAs($userid){
+	_click(_link("Login to whotookmybook"));
+	_setValue(_textbox("email"), $userid);
+	_click(_submit("Login"));
+}
+
+_setValue(_textbox("email"), "sriram.narayan@gmail.com");
+_click(_submit("Login"));
+_click(_link("manual entry"));
+_setValue(_textbox("book_title"), "java");
+_setValue(_textbox("book_author"), "ruby");
+_click(_submit("Add Book"));
+_click(_link("Logout from Google"));
+loginAs("habibpagarkar@gmail.com");
+_assertNotNull(_strong("Hi habib"));
+_setValue(_textbox("search"), "java ruby");
+_keyPress(_textbox("search"), 13);
+_click(_link("borrow"));
+_click(_link("Borrowed"));
+var $book = _cell(/java by ruby/);
+_assertNotNull($book);
+_assertEqual("sriram", $book.previousSibling.textContent);
+changeNickTo("habibubbles");
+_assertNull(_strong("Hi habib"));
+_assertNotNull(_strong("Hi habibubbles"));
+_click(_link("Logout from Google"));
+loginAs("sriram.narayan@gmail.com");
+_click(_link("Owned"));
+$book = _cell(/java by ruby/);
+_assertContainsText("habibubbles",$book.nextSibling);
+_click(_link("delete",_in(_row("/java by ruby/"))));
+_click(_link("Logout from Google"));
+loginAs("habibpagarkar@gmail.com");
+changeNickTo("habib");
+_click(_link("Logout from Google"));

@@ -1,0 +1,23 @@
+/**
+Tests:
+login, book lookup, adding, lend lookup, lending, send reminder, reclaim, search my books, delete, logout
+**/
+_setValue(_textbox("email"), "sriram.narayan@gmail.com");
+_click(_submit("Login"));
+_click(_div("dataentry"));
+_setValue(_textbox("suggestbox"), "clutch");
+_click(_span("/Clutch/"));
+_click(_link("lend", _near(_cell("/Clutch/"))));
+_setValue(_textbox("choose_borrower"), "habib");
+_click(_span("habib habibpagarkar@gmail.com"));
+_click(_link("Owned"));
+_assertEqual("® habib  ×", _cell("/Clutch/").nextSibling.textContent, "assert that book was lent to habib");
+var $book = _cell("/Clutch/");
+_click(_link("®"), _near($book));
+_assertEqual("Reminder sent", _lastAlert());
+_click(_link("×", _near($book)));
+_click(_link("Owned"));
+_setValue(_textbox("searchmine"), "clutch");
+_keyPress(_textbox("searchmine"), 13);
+_click(_link("delete",_in(_row("/Clutch/"))));
+_click(_link("Logout from Google"));

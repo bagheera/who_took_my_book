@@ -9,7 +9,7 @@ function borrower(book){
 }
 
 function return_link(book, link_text, tooltip){
-	return '<a title="'+tooltip+'" href="/return/' + book.key + '">'+ link_text +'</a>';
+	return '<a title="'+tooltip+'" href=\"#\" class=\"rtnlnk\" name=\"' + book.key + '">'+ link_text +'</a>';
 }
 
 function book_link(book){
@@ -98,20 +98,21 @@ handle_event: function(event, book){
 };
 /** ******************************************************************************* */
 var borrowedBooks = {
-		render: function(books){
-	$("#borrowed_table").empty();
-	if (books.length > 0) {
-		$("#borrowed_table").append('<tr><th class="colone">From</th><th class="coltwo">Book</th><th class="colthree"></th><th class="colfour"></th></tr>');
-		$.each(books, this.borrowedBookrow);
-	}
-	else {
-		$("#borrowed_table").append('<tr class="nothing"><td>Nothing yet. Don&apos;t you want to read any of the available books?</td></tr>');
-	}
-},
+	render: function(books){
+		$("#borrowed_table").empty();
+		if (books.length > 0) {
+			$("#borrowed_table").append('<tr><th class="colone">From</th><th class="coltwo">Book</th><th class="colthree"></th><th class="colfour"></th></tr>');
+			$.each(books, this.borrowedBookrow);
+		}
+		else {
+			$("#borrowed_table").append('<tr class="nothing"><td>Nothing yet. Don&apos;t you want to read any of the available books?</td></tr>');
+		}
+		setup_return_handlers();
+	},
 
 borrowedBookrow: function(){
 	$("#borrowed_table").append("<tr id=" + this.key +
-			"\" class=\""+ toggleOddEven() +
+			"\" class=bor-row,\""+ toggleOddEven() +
 			"\"><td>" + this.owner + "</td><td>" + book_link(this) +
 			"</td><td></td><td class='action'>" +
 			return_link(this, "return", "return book to owner") +
@@ -129,6 +130,7 @@ function renderFriendsBooks(books){
 	else {
 		$("#friend_table").append('<tr class="nothing"><td>No books yet.</td></tr>');
 	}
+	setup_borrow_handlers();
 }
 
 function renderOtherBooks(books){
@@ -147,18 +149,30 @@ function renderOtherBooks(books){
 		else
 			noMoreAvailable = true;
 	}
-	$(".groupmbr").click(function(){
+	$(".groupmbr").unbind('click').click(function(){
 		showLoadingGif();
 		currentFriend = $(this).text();
 		booksOf($(this).attr('name'));
+		return false;
 	});
-	$(".borrowlnk").click(function(){
+	setup_borrow_handlers();
+}
+function setup_borrow_handlers(){
+	$(".borrowlnk").unbind('click').click(function(){
 		$(this).hide();
 		showLoadingGif();
 		doBorrow($(this).attr('name'));
+		return false;
+	});	
+}
+function setup_return_handlers(){	
+	$(".rtnlnk").unbind('click').click(function(){
+		$(this).parent(".bor-row").remove();//so that it won't work for mybooks tab
+		showLoadingGif();
+		doReturn($(this).attr('name'));
+		return false;
 	});
 }
-
 function borrow_link(book){
 	return available(book) ? "<a href=\"#\" class=\"borrowlnk\" name=\"" + book.key + '">borrow</a>' : "";
 }
@@ -227,7 +241,10 @@ function showOwnedTab(){
 	$("#tabAvailable").css('background-color', silver);
 	$("#tabBorrowed").css('background-color', silver);
 	$("#tabFriend").css('background-color', silver);
-	if (own_count > 25) $("#searchMineBar").show();
+	if (own_count > 25){
+		$("#searchMineBar").show();
+		$("#showAllMyBooks").show();
+	}
 	$("#borrowed_div").hide();
 	$("#others_div").hide();
 	$("#friend_div").hide();
@@ -265,7 +282,7 @@ function renderBooks(data){
 	updateBookCount();
 	myBooks.render(data.mybooks);
 
-	$("a.reminder").click(
+	$("a.reminder").unbind('click').click(
 			function(){
 				cursor_wait();
 				$.ajax({
@@ -276,7 +293,8 @@ function renderBooks(data){
 				},
 				success: function(){cursor_ok(); alert ('Reminder sent')},
 				error: on_ajax_fail
-				});				
+				});	
+				return false;
 			}
 	); 
 
@@ -289,24 +307,28 @@ function renderBooks(data){
 	$("#tabAvailable").css('background-color', highlight);
 	$("#tabBorrowed").css('background-color', silver);
 	$("#tabOwned").css('background-color', silver);
-	$("#tabOwned").click(
+	$("#tabOwned").unbind('click').click(
 			function(){
 				showOwnedTab();
+				return false;
 			}
 	);
-	$("#tabBorrowed").click(
+	$("#tabBorrowed").unbind('click').click(
 			function(){
 				showBorrowedTab();
+				return false;
 			}
 	);
-	$("#tabAvailable").click(
+	$("#tabAvailable").unbind('click').click(
 			function(){
 				showAvailableTab();
+				return false;
 			}
 	);
-	$("#tabFriend").click(
+	$("#tabFriend").unbind('click').click(
 			function(){
 				showFriendsTab();
+				return false;
 			}
 	);
 	hideLoadingGif();
@@ -338,17 +360,29 @@ function on_add(book){
 	showOwnedTab();
 	cursor_ok();
 }
-function replaceOthersBook(changedBook){
-	var not_found = true;
-	var list = book_data.others;
+function replaceBook(changedBook, shelf){
+	var found = false;
+	var list = shelf;
 	for(var i=0; i < list.length; i++){
 		if(changedBook.key == list[i].key){
-			not_found = false;
+			found = true;
 			list[i] = changedBook;
 			break;
 		}
 	}
-	if(not_found) alert("Oops. Something went wrong. Please refresh the page");
+	return found;
+}
+function removeBook(book, shelf){
+	var found = false;
+	var list = shelf;
+	for(var i=0; i < list.length; i++){
+		if(book.key == list[i].key){
+			found = true;
+			list.splice(i,1);
+			break;
+		}
+	}
+	return found;	
 }
 function on_ajax_fail(xhr, desc, exceptionobj){
 	cursor_ok();
@@ -424,9 +458,30 @@ function doBorrow(book_key){
 			borrowedBooks.render(book_data.borrowedBooks);
 			showBorrowedTab();
 			updateBookCount();
-			replaceOthersBook(newly_borrowed_book);
+			replaceBook(newly_borrowed_book, book_data.others);
 			renderOtherBooks(book_data.others);			
 			hideLoadingGif();
+	},
+	error: on_ajax_fail,
+	dataType: "json"
+	});
+}
+function doReturn(book_key){
+	$.ajax({
+		url: "/return/"+book_key,
+		type: "POST",
+		success: function(rtnd_book){
+		if(removeBook(rtnd_book, book_data.borrowedBooks)){
+			borrowedBooks.render(book_data.borrowedBooks);
+		}
+		if(replaceBook(rtnd_book, book_data.mybooks)){
+			myBooks.render(book_data.mybooks);
+		}
+		if(replaceBook(rtnd_book, book_data.others)){
+			renderOtherBooks(book_data.others);
+		}
+		updateBookCount();
+		hideLoadingGif();
 	},
 	error: on_ajax_fail,
 	dataType: "json"
@@ -515,11 +570,13 @@ function setup_handlers(){
 		showLoadingGif();
 		post_new_book($("#book_title").val(), $("#book_author").val(), 0);
 		hideLoadingGif();
+		return false;
 	});
 
 	$("#edit_nick").click(function(){
 		$(this).hide();
 		$("#nick_text").show().focus();
+		return false;
 	});
 
 	$("#nick_text").keypress(function(e){
@@ -536,6 +593,7 @@ function setup_handlers(){
 	$("#showAllMyBooks").click(function(){
 		showLoadingGif();
 		myall();
+		return false;
 	});
 
 	$(window).scroll(function() {//from:http://blog.wekeroad.com/2009/11/27/paging-records-sucks--use-jquery-to-scroll-just-in-time
@@ -577,10 +635,12 @@ $(document).ready(function(){
 	$("#searchmine_progress").hide();
 	$("#paging_progress").hide();
 	$("#searchMineBar").hide();
+	$("#showAllMyBooks").hide();
 	$("#show_manual").click(function(){
 		$("#show_manual_span").hide();
 		$("#manual").show();
 		$("#book_title").focus();
+		return false;
 	});
 	fetch_and_render_books();
 	setup_handlers();

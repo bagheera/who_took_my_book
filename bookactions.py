@@ -111,14 +111,15 @@ class DeleteBook(webapp.RequestHandler):
 
 ###################################################################    
 class ReturnBook(webapp.RequestHandler):
-  def get(self, bookid):
+  def post(self, bookid):
     rtnd_book = Book.get(bookid)
     try:
         if rtnd_book.borrower: #move this check to book
             rtnd_book.return_to_owner()
         else:
             logging.warning("%s attempted to return book that wasn't borrowed %s" % (users.get_current_user().email(), rtnd_book.summary()))
-        self.redirect('/mybooks')
+        self.response.headers['content-type'] = "application/json"
+        self.response.out.write(simplejson.dumps(CachedBook.get(bookid)))
     except IllegalStateTransition:
         self.error(403)
 

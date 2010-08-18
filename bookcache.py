@@ -63,9 +63,9 @@ class CacheBookIdsOwned:
     def add_book(cls, owner_key_str, book_key_str):
         cls.get(owner_key_str); #just to make sure we have an entry
         owner_key_mc = cls.key(owner_key_str)
-        book_set = memcache.get(owner_key_mc)
-        book_set.add(book_key_str)
-        memcache.set(owner_key_mc, book_set)
+        book_list = memcache.get(owner_key_mc)
+        book_list.append(book_key_str)
+        memcache.set(owner_key_mc, book_list)
 
     @classmethod
     def remove_book(cls, owner_key_str, book_key_str):

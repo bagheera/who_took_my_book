@@ -1,3 +1,4 @@
+//http://images.amazon.com/images/P/1576834573.01._SCMZZZZZZZ
 var book_data = null;
 var amz_url = "http://www.amazon.com/dp/asin?tag=whotookmybook-20";
 var availablePage = 2;

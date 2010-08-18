@@ -10,12 +10,6 @@ from wtmbsearch import Searchable
 import textwrap
 ###################################################################
 WTMB_SENDER = "whotookmybook@gmail.com"
-#from http://code.activestate.com/recipes/52282/#c2
-def ternary(condition, trueVal, falseVal):
-    if condition:
-        return trueVal
-    else:
-        return falseVal
 
 class IllegalStateTransition(Exception):
     def __init__(self, value):
@@ -67,10 +61,8 @@ class AppUser(db.Model):
 
     @staticmethod
     def create_outsider(name, for_book, email=None):
-        if not name or name.strip() == "":
-            raise ValueError("Name cannot be empty")
-        if AppUser.gql('WHERE googleUser = :1 and wtmb_nickname= :2', None, name).get():
-            raise ValueError("This name is taken")
+        if not name or name.strip() == "": raise ValueError("Name cannot be empty")
+        if AppUser.gql('WHERE googleUser = :1 and wtmb_nickname= :2', None, name).get(): raise ValueError("This name is taken")
         new_user = AppUser(wtmb_nickname=name, unregistered_email=email, member_of=for_book.owner.member_of)
         new_user.put()
         NewOutsider({'outsider':new_user, 'for_book':for_book}).fire()
@@ -117,8 +109,7 @@ class AppUser(db.Model):
         return self.wtmb_nickname if self.wtmb_nickname else self.googleUser.nickname()
 
     def email(self):
-        if self.googleUser:
-            return self.googleUser.email()
+        if self.googleUser: return self.googleUser.email()
         if self.unregistered_email:
             return self.unregistered_email
         else:
@@ -149,13 +140,11 @@ class AppUser(db.Model):
 
     def friend_of(self, other):
         for group in self.member_of:
-            if group in other.member_of:
-                return True
+            if group in other.member_of: return True
         return False
 
     def setMembership(self, groups):
-        if len(groups) == 0:
-            groups = ['rest_of_the_world']
+        if len(groups) == 0: groups = ['rest_of_the_world']
         for old_group in set(self.member_of) - set(groups):
             GroupBook.group_deleted(Group.find_by_name(old_group), self)
         for new_group_name in set(groups) - set(self.member_of):
@@ -190,8 +179,7 @@ class AppUser(db.Model):
         me = AppUser.me()
         my_key = me.key()
         for user in AppUser.gql("ORDER BY last_login_date DESC"):
-            if user.key() != my_key and me.friend_of(user):
-                yield user
+            if user.key() != my_key and me.friend_of(user): yield user
 
     @staticmethod
     def on_new_outsider(info):
@@ -236,10 +224,8 @@ class Book(db.Model, Searchable):
 
     def __init__(self, parent=None, key_name=None, **kw):
         super(Book, self).__init__(parent, key_name, **kw)
-        if self.title.strip() == "":
-            raise BookWithoutTitle("Title required")
-        if self.author.strip() == "":
-            self.author = "unknown"
+        if self.title.strip() == "": raise BookWithoutTitle("Title required")
+        if self.author.strip() == "": self.author = "unknown"
 
     def to_hash(self):
         return {
@@ -281,8 +267,7 @@ class Book(db.Model, Searchable):
         return self.owner.friend_of(appuser)
 
     def borrowed_by_me(self):
-        if self.borrower:
-            return users.get_current_user() == self.borrower.googleUser
+        if self.borrower: return users.get_current_user() == self.borrower.googleUser
         return False
 
     def __change_borrower(self, new_borrower):
@@ -318,8 +303,7 @@ class Book(db.Model, Searchable):
     def obliterate(self):
         if self.belongs_to_me():
             info = {'book_key': str(self.key()), 'owner': str(self.owner.key())}
-            if self.borrower:
-                info['old_borrower'] = str(self.borrower.key())
+            if self.borrower: info['old_borrower'] = str(self.borrower.key())
             self.delete()
             GroupBook.book_deleted(self)
             BookDeleted(info).fire()
@@ -450,8 +434,7 @@ class Book(db.Model, Searchable):
         from bookcache import CacheBookIdsOwned, CacheBookIdsBorrowed, CachedBook
         CacheBookIdsOwned.remove_book(owner, book_key_str)
         CachedBook.reset(book_key_str)
-        if old_borrower:
-            CacheBookIdsBorrowed.remove_book(old_borrower, book_key_str)
+        if old_borrower: CacheBookIdsBorrowed.remove_book(old_borrower, book_key_str)
 
 BookReturned().subscribe(Book.on_return)
 BookLent().subscribe(Book.on_lent)
@@ -484,12 +467,8 @@ class GroupBook(db.Model):
                 noMore = False
                 if (gb.owner != appuser):
                     book_key_str = str(gb.book.key())
-                    try:
-                        result.index(book_key_str)
-                    except ValueError:
-                        result.append(book_key_str)
-            if noMore:
-                break
+                    if book_key_str not in result: result.append(book_key_str)
+            if noMore: break
             offset = offset + limit
             limit = limit - len(result)
         return result

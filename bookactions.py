@@ -3,7 +3,7 @@ from django.utils import simplejson
 from google.appengine.ext import webapp
 from wtmb import *
 from amz import Amz
-
+from bookcache import CachedBook
 
 ###################################################################
 def cache_for(response, ndays, nhours=0):
@@ -87,11 +87,12 @@ class AddToBookshelf(webapp.RequestHandler):
 
 ###################################################################
 class Borrow(webapp.RequestHandler):
-    def get(self, bookid):
+    def post(self, bookid):
         bookToLoan = Book.get(bookid)
         try:
             bookToLoan.borrow()
-            self.redirect('/mybooks')
+            self.response.headers['content-type'] = "application/json"
+            self.response.out.write(simplejson.dumps(CachedBook.get(bookid)))
         except IllegalStateTransition:
             self.error(403)
 

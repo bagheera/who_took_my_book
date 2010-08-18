@@ -152,10 +152,15 @@ function renderOtherBooks(books){
 		currentFriend = $(this).text();
 		booksOf($(this).attr('name'));
 	});
+	$(".borrowlnk").click(function(){
+		$(this).hide();
+		showLoadingGif();
+		doBorrow($(this).attr('name'));
+	});
 }
 
 function borrow_link(book){
-	return available(book) ? '<a href="/borrow/' + book.key + '">borrow</a>' : "";
+	return available(book) ? "<a href=\"#\" class=\"borrowlnk\" name=\"" + book.key + '">borrow</a>' : "";
 }
 
 function othersbookrow(){
@@ -191,12 +196,12 @@ function hideLoadingGif(){
 	$('#overlay').hide();
 }
 
-function updateBookCount(data){
+function updateBookCount(){
 	$("#book_count").empty();
-	own_count = data['own_count'] ? data['own_count'] : 0
-			borrow_count = data.borrowedBooks ? data.borrowedBooks.length : 0
+	own_count = book_data.own_count ? book_data.own_count : 0
+			borrow_count = book_data.borrowedBooks ? book_data.borrowedBooks.length : 0
 					$("#book_count").append("<strong>Your book stats:</strong>&nbsp;&nbsp;<big class='bignum'> " + own_count + "</big> owned &nbsp;&nbsp; <big class='bignum'>" +
-							myBooks.lent_count(data.mybooks) +
+							myBooks.lent_count(book_data.mybooks) +
 							"</big> lent&nbsp;&nbsp; <big class='bignum'>" +
 							borrow_count +
 					"</big> borrowed");
@@ -204,6 +209,17 @@ function updateBookCount(data){
 
 function available(book){
 	return (book.borrowed_by == "None");
+}
+function showBorrowedTab(){
+	$("#tabBorrowed").css('background-color', highlight);
+	$("#tabAvailable").css('background-color', silver);
+	$("#tabOwned").css('background-color', silver);
+	$("#tabFriend").css('background-color', silver);
+	$("#others_div").hide();
+	$("#my_div").hide();
+	$("#friend_div").hide();
+	$("#borrowed_div").show();
+	paging = false;
 }
 
 function showOwnedTab(){
@@ -246,7 +262,7 @@ function showFriendsTab(){
 
 function renderBooks(data){
 	book_data = data;
-	updateBookCount(data);
+	updateBookCount();
 	myBooks.render(data.mybooks);
 
 	$("a.reminder").click(
@@ -280,15 +296,7 @@ function renderBooks(data){
 	);
 	$("#tabBorrowed").click(
 			function(){
-				$(this).css('background-color', highlight);
-				$("#tabAvailable").css('background-color', silver);
-				$("#tabOwned").css('background-color', silver);
-				$("#tabFriend").css('background-color', silver);
-				$("#others_div").hide();
-				$("#my_div").hide();
-				$("#friend_div").hide();
-				$("#borrowed_div").show();
-				paging = false;
+				showBorrowedTab();
 			}
 	);
 	$("#tabAvailable").click(
@@ -318,19 +326,30 @@ function fetch_and_render_books(){
 function on_add(book){
 	myBooks.newRow(book);
 	$("#my_table_body tr:first").css('background-color', '#D9FFCC');
-	if (!book_data['mybooks']) {
+	if (!book_data.mybooks) {
 		book_data['mybooks'] = [];
 	}
-	book_data['mybooks'].push(book);
-	book_data['own_count'] += 1;
-	updateBookCount(book_data);
+	book_data.mybooks.push(book);
+	book_data.own_count += 1;
+	updateBookCount();
 	$("#book_title").val("");
 	$("#book_author").val("");
 	$("#suggestbox").focus();
 	showOwnedTab();
 	cursor_ok();
 }
-
+function replaceOthersBook(changedBook){
+	var not_found = true;
+	var list = book_data.others;
+	for(var i=0; i < list.length; i++){
+		if(changedBook.key == list[i].key){
+			not_found = false;
+			list[i] = changedBook;
+			break;
+		}
+	}
+	if(not_found) alert("Oops. Something went wrong. Please refresh the page");
+}
 function on_ajax_fail(xhr, desc, exceptionobj){
 	cursor_ok();
 	if( xhr != null && (xhr.status === 400 || xhr.status === 412))
@@ -390,6 +409,24 @@ function booksOf(friend_key){
 		success: function(books){
 		renderFriendsBooks(books); showFriendsTab();
 		hideLoadingGif();
+	},
+	error: on_ajax_fail,
+	dataType: "json"
+	});
+}
+
+function doBorrow(book_key){
+	$.ajax({
+		url: "/borrow/"+book_key,
+		type: "POST",
+		success: function(newly_borrowed_book){
+			book_data.borrowedBooks.push(newly_borrowed_book);
+			borrowedBooks.render(book_data.borrowedBooks);
+			showBorrowedTab();
+			updateBookCount();
+			replaceOthersBook(newly_borrowed_book);
+			renderOtherBooks(book_data.others);			
+			hideLoadingGif();
 	},
 	error: on_ajax_fail,
 	dataType: "json"

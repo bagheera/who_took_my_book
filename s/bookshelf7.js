@@ -38,6 +38,7 @@ render: function(books){
 	if (books.length > 0) {
 		myBooks.render_header();
 		$.each(books, this.mybookrow);
+		setup_delete_handlers();
 	}
 	else {
 		$("#my_table").append('<tr class="nothing"><td>Nothing yet. Use the lookup box above to start adding to your collection.</td></tr>');
@@ -45,7 +46,7 @@ render: function(books){
 },
 
 del_link: function(book){
-	return '<a href="/delete/' + book.key + '">delete</a>';
+	return "<a href=\"#\" class=\"dellnk\" name=\"" + book.key + '">delete</a>';
 },
 
 lend_link: function(book){
@@ -159,9 +160,16 @@ function renderOtherBooks(books){
 }
 function setup_borrow_handlers(){
 	$(".borrowlnk").unbind('click').click(function(){
-		$(this).hide();
 		showLoadingGif();
 		doBorrow($(this).attr('name'));
+		return false;
+	});	
+}
+function setup_delete_handlers(){
+	$(".dellnk").unbind('click').click(function(){
+		$(this).parents("tr:first").remove();
+		showLoadingGif();
+		doDelete($(this).attr('name'));
 		return false;
 	});	
 }
@@ -358,6 +366,7 @@ function on_add(book){
 	$("#book_author").val("");
 	$("#suggestbox").focus();
 	showOwnedTab();
+	setup_delete_handlers();//overkill
 	cursor_ok();
 }
 function replaceBook(changedBook, shelf){
@@ -441,11 +450,11 @@ function booksOf(friend_key){
 		url: "/booksof/"+friend_key,
 		type: "GET",
 		success: function(books){
-		renderFriendsBooks(books); showFriendsTab();
-		hideLoadingGif();
-	},
-	error: on_ajax_fail,
-	dataType: "json"
+			renderFriendsBooks(books); showFriendsTab();
+			hideLoadingGif();
+		},
+		error: on_ajax_fail,
+		dataType: "json"
 	});
 }
 
@@ -461,9 +470,24 @@ function doBorrow(book_key){
 			replaceBook(newly_borrowed_book, book_data.others);
 			renderOtherBooks(book_data.others);			
 			hideLoadingGif();
-	},
-	error: on_ajax_fail,
-	dataType: "json"
+		},
+		error: on_ajax_fail,
+		dataType: "json"
+	});
+}
+function doDelete(book_key){
+	$.ajax({
+		url: "/delete/"+book_key,
+		type: "POST",
+		success: function(deleted_book){
+			book_data.own_count -= 1;
+			removeBook(deleted_book, book_data.mybooks);
+			showOwnedTab();
+			updateBookCount();
+			hideLoadingGif();
+		},
+		error: on_ajax_fail,
+		dataType: "json"
 	});
 }
 function doReturn(book_key){
@@ -615,7 +639,7 @@ function cursor_ok(){
 function addOverlay(){
 	// script from: http://www.sitepoint.com/forums/showthread.php?t=581377
 	// loading.gif from http://www.ajaxload.info/
-
+//	https://developer.mozilla.org/en/css/opacity
 	$('<div id="overlay"/>').css({
 		position: 'fixed',
 		top: 0,

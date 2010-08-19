@@ -98,14 +98,16 @@ class Borrow(webapp.RequestHandler):
 
 ###################################################################    
 class DeleteBook(webapp.RequestHandler):
-  def get(self, bookid):
+  def post(self, bookid):
     try:
         doomedBook = Book.get(bookid)
+        hash = doomedBook.to_hash()
         if doomedBook:
             doomedBook.obliterate()
         else:
             logging.warning("Cant find book to be deleted: %s" % bookid)
-        self.redirect('/mybooks')
+        self.response.headers['content-type'] = "application/json"
+        self.response.out.write(simplejson.dumps(hash))
     except IllegalStateTransition:
         self.error(403)
 

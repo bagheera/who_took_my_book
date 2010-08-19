@@ -18,10 +18,6 @@ function book_link(book){
 	if (book.asin && book.asin.length == 10) return  text + ' <a target="_blank" title="explore this book @ amazon" href="'+amz_url.replace("asin", book.asin)+'">'+'&#187;&#187;'+'</a>';
 	return text;
 }
-oddOrEven = 'oddrow';
-function toggleOddEven(){
-	return oddOrEven == 'oddrow' ? oddOrEven = 'evenrow' : oddOrEven='oddrow';
-}
 /** ******************************************************************************* */
 var myBooks = {
 
@@ -39,6 +35,7 @@ render: function(books){
 		myBooks.render_header();
 		$.each(books, this.mybookrow);
 		setup_delete_handlers();
+		zebra("my_table");
 	}
 	else {
 		$("#my_table").append('<tr class="nothing"><td>Nothing yet. Use the lookup box above to start adding to your collection.</td></tr>');
@@ -71,8 +68,7 @@ newRow: function(book){
 		myBooks.empty();
 		myBooks.render_header();
 	}
-	$("#my_table_body tr:first").before("<tr id=" +	book.key +
-			"\" class=\""+ toggleOddEven() +
+	$("#my_table_body tr:first").before("<tr id=\"" +	book.key +
 			"\"><td>" + myBooks.del_link(book) + "</td><td>" + book_link(book) +
 			"</td><td>" +
 			myBooks.borrower(book) +
@@ -91,11 +87,6 @@ lent_count: function(list){
 	return count;
 },
 
-handle_event: function(event, book){
-	if (event == "evt_book_added") {
-		myBooks.newRow(book);
-	}
-}
 };
 /** ******************************************************************************* */
 var borrowedBooks = {
@@ -104,17 +95,17 @@ var borrowedBooks = {
 		if (books.length > 0) {
 			$("#borrowed_table").append('<tr><th class="colone">From</th><th class="coltwo">Book</th><th class="colthree"></th><th class="colfour"></th></tr>');
 			$.each(books, this.borrowedBookrow);
+			setup_return_handlers();
+			zebra("borrowed_table");
 		}
 		else {
 			$("#borrowed_table").append('<tr class="nothing"><td>Nothing yet. Don&apos;t you want to read any of the available books?</td></tr>');
 		}
-		setup_return_handlers();
 	},
 
 borrowedBookrow: function(){
 	$("#borrowed_table").append("<tr id=" + this.key +
-			"\" class=bor-row,\""+ toggleOddEven() +
-			"\"><td>" + this.owner + "</td><td>" + book_link(this) +
+			"\" class=bor-row,\"><td>" + this.owner + "</td><td>" + book_link(this) +
 			"</td><td></td><td class='action'>" +
 			return_link(this, "return", "return book to owner") +
 	"</td></tr>");
@@ -127,6 +118,7 @@ function renderFriendsBooks(books){
 	if (books.length > 0) {
 		$("#friend_table").append('<tr><th class="coltwo">Book</th><th class="colthree">Lent to</th><th class="colfour"></th></tr>');
 		$.each(books, friendBookRow);
+		zebra("friend_table");
 	}
 	else {
 		$("#friend_table").append('<tr class="nothing"><td>No books yet.</td></tr>');
@@ -143,6 +135,7 @@ function renderOtherBooks(books){
 			$("#others_table").
 			  append('<tr><th class="colone">Owner</th><th class="coltwo">Book</th><th class="colthree">Lent to</th><th class="colfour"></th></tr>');
 		$.each(books, othersbookrow);
+		zebra("others_table");
 	}
 	else {
 		if(!appendMode)
@@ -167,9 +160,10 @@ function setup_borrow_handlers(){
 }
 function setup_delete_handlers(){
 	$(".dellnk").unbind('click').click(function(){
-		$(this).parents("tr:first").remove();
 		showLoadingGif();
 		doDelete($(this).attr('name'));
+		$(this).parents("tr:first").remove();
+		zebra("my_table");
 		return false;
 	});	
 }
@@ -187,9 +181,8 @@ function borrow_link(book){
 
 function othersbookrow(){
 	$("#others_table").append(
-			"<tr id=" + this.key  +
-			" class=\""+ toggleOddEven()
-			+"\"><td><a href=\"#\" class=\"groupmbr\" name=\""+
+			"<tr id=\"" + this.key  +
+			'\"><td><a href=\"#\" class=\"groupmbr\" name=\"'+
 			this.owner_key+
 			"\" title=\"see all books of "+ this.owner +
 			"\">" + this.owner + "</a></td><td>" + book_link(this) +
@@ -201,8 +194,7 @@ function othersbookrow(){
 }
 function friendBookRow(){
 	$("#friend_table").append(
-			"<tr class=\""+ toggleOddEven()
-			+"\"><td>" + book_link(this) +
+			"<tr><td>" + book_link(this) +
 			"</td><td>" +
 			borrower(this) +
 			"</td><td class='action'>" +
@@ -210,6 +202,10 @@ function friendBookRow(){
 	"</td></tr>");
 }
 /** ******************************************************************************* */
+function zebra(tableid){
+	$("#"+tableid+ " tr:visible").removeClass("evenrow");
+	$("#"+tableid+ " tr:visible:even").addClass("evenrow");	
+}
 function showLoadingGif(){
 	$('#overlay').show();
 }

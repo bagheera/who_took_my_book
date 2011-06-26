@@ -1,5 +1,5 @@
 application: whotookmybook
-version: listall
+version: unbindbug
 runtime: python
 api_version: 1
 default_expiration: "1d"

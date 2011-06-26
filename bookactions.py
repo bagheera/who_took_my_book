@@ -8,7 +8,7 @@ from bookcache import CachedBook
 ###################################################################
 def cache_for(response, ndays, nhours=0):
       response.headers['Cache-Control'] = 'public, max-age=%d' % (86400 * ndays + (3600 * nhours),)
-      lastmod = datetime.utcnow()
+      lastmod = datetime.utcnow()# this will hinder caching. use a static past time
       response.headers['Last-Modified'] = lastmod.strftime('%a, %d %b %Y %H:%M:%S GMT')
       expires = lastmod + timedelta(days=ndays, hours=nhours)
       response.headers['Expires'] = expires.strftime('%a, %d %b %Y %H:%M:%S GMT')
